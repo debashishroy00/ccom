@@ -1,0 +1,114 @@
+Metadata-Version: 2.4
+Name: ccom
+Version: 0.1.0
+Summary: CCOM - Claude Code Orchestrator and Memory system
+Home-page: https://github.com/debashishroy00/ccom
+Author: Your Name
+Author-email: your.email@example.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-python
+Dynamic: summary
+
+# CCOM v0.1 - Claude Code Orchestrator and Memory
+
+**One-command memory for Claude Code. Ships in 200 lines.**
+
+## One-Command Install
+
+```bash
+# Install once
+pip install ccom
+
+# Use in any project
+cd my-project
+ccom init
+
+# Test it immediately
+ccom status
+ccom remember "auth system"
+ccom remember "auth system"  # ⚠️ Duplicate detected!
+
+# Or install from GitHub (latest)
+pip install git+https://github.com/debashishroy00/ccom.git
+```
+
+## What It Does
+
+✅ **Remembers** features between Claude sessions
+✅ **Prevents** duplicate creation
+✅ **Injects** context on startup
+✅ **Zero config** - just works
+
+## How It Works
+
+1. **CLAUDE.md** → Claude reads this automatically
+2. **.claude/ccom.js** → 200-line memory system
+3. **.claude/memory.json** → Auto-created storage
+
+## Usage in Claude Code
+
+Once installed, Claude will:
+- Load memory on session start
+- Warn about duplicates when creating features
+- Remember what you built
+
+```
+🧠 Memory Loaded: MyProject
+Features built (3):
+• user authentication: No description
+• dashboard with charts: No description
+• API endpoints: No description
+
+⚠️ Check for duplicates before creating new features!
+```
+
+## CLI Commands
+
+```bash
+node .claude/ccom.js start    # Show memory context
+node .claude/ccom.js memory   # List all features
+node .claude/ccom.js clear    # Reset memory
+node .claude/ccom.js remember "feature name"  # Save feature
+```
+
+## Architecture (Scalable but Simple)
+
+```
+v0.1: Memory that works (200 lines) ← YOU ARE HERE
+v0.2: Safety features (if needed)
+v0.3: Smart features (if requested)
+v0.4: Plugin system (if growth demands)
+```
+
+## Philosophy
+
+**Build a mansion's foundation, but start with one room.**
+
+- ✅ Ship value immediately (Day 1)
+- ✅ Learn from real usage
+- ✅ Add complexity only when needed
+- ✅ Stay under 200 lines until forced to grow
+
+---
+
+**Total Development Time: < 1 Day**
+**Dependencies: 0**
+**Configuration Files: 1**
+**Problems Solved: Memory loss between Claude sessions**

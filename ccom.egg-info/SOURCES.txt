@@ -1,0 +1,11 @@
+README.md
+setup.py
+ccom/__init__.py
+ccom/cli.py
+ccom.egg-info/PKG-INFO
+ccom.egg-info/SOURCES.txt
+ccom.egg-info/dependency_links.txt
+ccom.egg-info/entry_points.txt
+ccom.egg-info/top_level.txt
+ccom/templates/CLAUDE.md
+ccom/templates/ccom.js

@@ -1,0 +1,2 @@
+[console_scripts]
+ccom = ccom.cli:main
