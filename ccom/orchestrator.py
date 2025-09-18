@@ -84,8 +84,12 @@ class CCOMOrchestrator:
         elif any(word in command_lower for word in ["remember", "memory", "status", "forget"]):
             return self.handle_memory_command(command)
 
+        # Init commands
+        elif any(word in command_lower for word in ["init", "initialize", "setup"]):
+            return self.handle_init_command()
+
         else:
-            print(f"❓ Unknown command. Try: deploy, quality, security, or memory commands")
+            print(f"❓ Unknown command. Try: deploy, quality, security, memory, or init commands")
             return False
 
     def deploy_sequence(self):
@@ -586,6 +590,13 @@ class CCOMOrchestrator:
         else:
             print("Memory commands: status, memory")
             return True
+
+    def handle_init_command(self):
+        """Handle init-related commands"""
+        print("🚀 CCOM natural language init detected...")
+        print("💡 For full initialization, use: ccom --init")
+        print("💡 For force refresh, use: ccom --init --force")
+        return True
 
     def show_status(self):
         """Show CCOM status"""

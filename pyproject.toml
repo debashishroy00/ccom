@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ccom"
-version = "0.1.0"
-description = "CCOM - Claude Code Orchestrator and Memory system"
+version = "0.3.0"
+description = "CCOM v0.3 - Claude Code Orchestrator and Memory with enterprise automation"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -32,4 +32,4 @@ Repository = "https://github.com/debashishroy00/ccom"
 Issues = "https://github.com/debashishroy00/ccom/issues"
 
 [project.scripts]
-ccom = "cco.cli:main"
+ccom = "ccom.cli:main"

@@ -7,7 +7,7 @@ Advanced natural language processing and enterprise automation
 import sys
 import argparse
 from pathlib import Path
-from orchestrator import CCOMOrchestrator
+from ccom.orchestrator import CCOMOrchestrator
 
 def create_enhanced_cli():
     """Create enhanced CLI with natural language support"""

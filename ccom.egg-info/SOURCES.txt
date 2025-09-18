@@ -1,7 +1,15 @@
+LICENSE
+MANIFEST.in
 README.md
+pyproject.toml
 setup.py
+cco/__init__.py
+cco/cli.py
+cco/templates/CLAUDE.md
+cco/templates/ccom.js
 ccom/__init__.py
 ccom/cli.py
+ccom/orchestrator.py
 ccom.egg-info/PKG-INFO
 ccom.egg-info/SOURCES.txt
 ccom.egg-info/dependency_links.txt
