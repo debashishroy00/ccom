@@ -34,6 +34,9 @@
 ### 🏗️ Build
 **Triggers**: "build", "compile", "package", "production build", "prepare release"
 **Actions**:
+- **CHECK MEMORY FIRST**: Use `node .claude/ccom.js check "<feature_name>"` to detect duplicates
+- If duplicate exists: Stop and warn user to enhance instead of rebuild
+- If no duplicate: Proceed with build workflow
 - Detect project type (Node/Python/Static)
 - Check code quality standards (file size, complexity)
 - Run appropriate build command
@@ -91,11 +94,16 @@
 
 1. **Build Workflow**:
 ```bash
-# Detect project type (package.json, pyproject.toml, index.html)
-# Check code quality standards
-# Run appropriate build command (npm/python/static)
-# Analyze output artifacts
-# Report bundle sizes and optimizations
+# STEP 1: Check memory for duplicates FIRST
+node .claude/ccom.js check "<feature_name>"
+# If EXISTS: Stop and warn about duplicate
+# If CLEAR: Proceed with build
+
+# STEP 2: Detect project type (package.json, pyproject.toml, index.html)
+# STEP 3: Check code quality standards
+# STEP 4: Run appropriate build command (npm/python/static)
+# STEP 5: Analyze output artifacts
+# STEP 6: Report bundle sizes and optimizations
 ```
 
 2. **Quality Check Workflow**:
