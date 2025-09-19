@@ -62,29 +62,6 @@ class CCOMOrchestrator:
             print(f"⚠️  Could not save memory: {e}")
             return False
 
-    def check_memory_for_duplicate(self, feature_name):
-        """Bridge to JavaScript memory system for duplicate checking"""
-        try:
-            import subprocess
-            result = subprocess.run(
-                ["node", ".claude/ccom.js", "check", feature_name],
-                capture_output=True, text=True, cwd=os.getcwd()
-            )
-            return "EXISTS" in result.stdout
-        except:
-            # Fallback to Python memory check
-            features = self.memory.get('features', {})
-            feature_lower = feature_name.lower()
-
-            for existing in features.keys():
-                existing_lower = existing.lower()
-                # Check for exact or fuzzy match
-                if (feature_lower in existing_lower or
-                    existing_lower in feature_lower or
-                    feature_lower == existing_lower):
-                    return True
-            return False
-
     def handle_natural_language(self, command):
         """Parse natural language commands and execute appropriate actions"""
         command_lower = command.lower().strip()
@@ -93,15 +70,6 @@ class CCOMOrchestrator:
 
         # Build commands (NEW)
         if any(word in command_lower for word in ["build", "compile", "package", "prepare release", "production build"]):
-            # Extract feature name
-            feature_name = command.replace("ccom", "").replace("build", "").strip()
-
-            # Check memory FIRST
-            if self.check_memory_for_duplicate(feature_name):
-                print(f"⚠️ DUPLICATE DETECTED: Feature '{feature_name}' already exists!")
-                print("Use 'ccom enhance' to improve existing feature instead.")
-                return False
-
             return self.build_sequence()
 
         # Deploy commands
