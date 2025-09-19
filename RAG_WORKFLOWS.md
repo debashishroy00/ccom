@@ -10,19 +10,55 @@ CCOM now includes specialized workflows for validating enterprise RAG implementa
 # Initialize CCOM in your RAG project
 ccom --init
 
-# Run comprehensive RAG validation
-ccom "workflow enterprise_rag"
-
-# Or run specific validations
-ccom "workflow vector_validation"     # Vector stores & embeddings
-ccom "workflow graph_security"        # Graph database security
-ccom "workflow hybrid_rag"           # Fusion & reranking
-ccom "workflow agentic_rag"          # Agent safety & patterns
+# Use natural language - no technical terms to remember!
+ccom validate my rag system        # Complete RAG validation
+ccom check vectors                 # Vector stores & embeddings
+ccom validate graph database       # Graph database security
+ccom check hybrid search           # Fusion & reranking
+ccom validate agents               # Agent safety & patterns
 ```
 
-## 📋 Available RAG Workflows
+## 💬 Natural Language Examples
 
-### 🧠 **`ccom "workflow rag_quality"`**
+CCOM understands these natural ways to ask for RAG validation:
+
+```bash
+# Enterprise RAG validation
+ccom validate my rag system
+ccom check my ai system
+ccom audit enterprise rag
+ccom enterprise ai validation
+
+# Vector store validation
+ccom check vectors
+ccom validate embeddings
+ccom check chromadb
+ccom validate weaviate
+ccom semantic search validation
+
+# Graph database validation
+ccom validate graph database
+ccom check neo4j security
+ccom validate cypher queries
+ccom knowledge graph validation
+
+# Hybrid RAG validation
+ccom check hybrid search
+ccom validate fusion
+ccom check reranking
+ccom vector and keyword validation
+
+# Agentic RAG validation
+ccom validate agents
+ccom check reasoning
+ccom agent safety validation
+ccom check react patterns
+ccom tool safety validation
+```
+
+## 📋 Available RAG Workflows (Natural Language)
+
+### 🧠 **`ccom validate my rag system`** or **`ccom enterprise rag`**
 Complete RAG system quality audit combining all validators.
 
 **What it checks:**
@@ -31,7 +67,7 @@ Complete RAG system quality audit combining all validators.
 - Hybrid retrieval fusion methods
 - Agentic RAG safety patterns
 
-### 📊 **`ccom "workflow vector_validation"`**
+### 📊 **`ccom check vectors`** or **`ccom validate embeddings`**
 Vector store and embedding validation for ChromaDB, Weaviate, FAISS, Pinecone, Qdrant.
 
 **Validates:**
@@ -42,7 +78,7 @@ Vector store and embedding validation for ChromaDB, Weaviate, FAISS, Pinecone, Q
 - ✅ Memory management for large datasets
 - ✅ Security patterns (API key handling)
 
-### 🔒 **`ccom "workflow graph_security"`**
+### 🔒 **`ccom validate graph database`** or **`ccom check neo4j`**
 Graph database security for Neo4j, ArangoDB, TigerGraph.
 
 **Validates:**
@@ -53,7 +89,7 @@ Graph database security for Neo4j, ArangoDB, TigerGraph.
 - ✅ Connection security (TLS, authentication)
 - ✅ Session management and cleanup
 
-### 🔄 **`ccom "workflow hybrid_rag"`**
+### 🔄 **`ccom check hybrid search`** or **`ccom validate fusion`**
 Hybrid RAG patterns: vector + keyword + graph fusion, reranking.
 
 **Validates:**
@@ -64,7 +100,7 @@ Hybrid RAG patterns: vector + keyword + graph fusion, reranking.
 - ✅ Performance thresholds
 - ✅ Result quality filters
 
-### 🤖 **`ccom "workflow agentic_rag"`**
+### 🤖 **`ccom validate agents`** or **`ccom check reasoning`**
 Agentic RAG safety: ReAct, Chain-of-Thought, tool usage.
 
 **Validates:**
@@ -75,7 +111,7 @@ Agentic RAG safety: ReAct, Chain-of-Thought, tool usage.
 - ✅ Context window management
 - ✅ Agent privilege restrictions
 
-### 🏢 **`ccom "workflow enterprise_rag"`**
+### 🏢 **`ccom enterprise ai`** or **`ccom complete validation`**
 Complete enterprise validation combining all RAG checks + standard quality/security.
 
 **Includes:**

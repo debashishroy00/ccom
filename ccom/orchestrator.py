@@ -91,8 +91,59 @@ class CCOMOrchestrator:
 
         print(f"🎯 Processing command: '{command}'")
 
-        # Workflow commands (NEW)
-        if any(word in command_lower for word in ["workflow", "pipeline", "ci", "automation"]):
+        # === RAG-SPECIFIC NATURAL LANGUAGE PATTERNS ===
+
+        # Enterprise RAG validation
+        if any(phrase in command_lower for phrase in [
+            "enterprise rag", "complete rag", "full rag", "rag system", "rag validation",
+            "validate my rag", "check my rag", "audit my rag", "enterprise ai",
+            "validate rag system", "check rag system", "audit rag system"
+        ]):
+            return self.run_workflow("enterprise_rag")
+
+        # Vector store validation
+        elif any(phrase in command_lower for phrase in [
+            "vector", "embedding", "chromadb", "weaviate", "faiss", "pinecone", "qdrant",
+            "check vectors", "validate embeddings", "vector store", "semantic search",
+            "validate vectors", "check embedding", "vector validation"
+        ]):
+            return self.run_workflow("vector_validation")
+
+        # Graph database validation
+        elif any(phrase in command_lower for phrase in [
+            "graph", "neo4j", "cypher", "arangodb", "knowledge graph", "graph database",
+            "check graph", "graph security", "validate graph", "graph patterns",
+            "validate neo4j", "check cypher", "knowledge graph security"
+        ]):
+            return self.run_workflow("graph_security")
+
+        # Hybrid RAG validation
+        elif any(phrase in command_lower for phrase in [
+            "hybrid", "fusion", "rerank", "multi", "combine", "blend",
+            "vector and keyword", "dense and sparse", "hybrid search", "fusion search",
+            "check hybrid", "validate fusion", "reranking validation"
+        ]):
+            return self.run_workflow("hybrid_rag")
+
+        # Agentic RAG validation
+        elif any(phrase in command_lower for phrase in [
+            "agent", "agentic", "react", "chain of thought", "cot", "reasoning",
+            "tool", "agent safety", "agent validation", "reasoning patterns",
+            "validate agents", "check reasoning", "agent security", "tool safety"
+        ]):
+            return self.run_workflow("agentic_rag")
+
+        # RAG Quality validation
+        elif any(phrase in command_lower for phrase in [
+            "rag quality", "rag patterns", "ai quality", "llm quality", "retrieval quality",
+            "validate ai", "check llm", "ai validation", "llm validation"
+        ]):
+            return self.run_workflow("rag_quality")
+
+        # === STANDARD WORKFLOW PATTERNS ===
+
+        # Workflow commands (traditional)
+        elif any(word in command_lower for word in ["workflow", "pipeline", "ci", "automation"]):
             return self.handle_workflow_command(command)
 
         # Build commands
@@ -766,11 +817,56 @@ class CCOMOrchestrator:
             return False
 
     def handle_workflow_command(self, command):
-        """Handle workflow automation commands"""
+        """Handle workflow automation commands with natural language"""
         command_lower = command.lower()
 
-        # Extract workflow type
-        if "quality" in command_lower:
+        # === RAG-SPECIFIC NATURAL LANGUAGE PATTERNS ===
+
+        # Enterprise RAG - comprehensive validation
+        if any(phrase in command_lower for phrase in [
+            "enterprise rag", "complete rag", "full rag", "rag system", "rag validation",
+            "validate my rag", "check my rag", "audit my rag", "enterprise ai"
+        ]):
+            return self.run_workflow("enterprise_rag")
+
+        # Vector stores - ChromaDB, Weaviate, FAISS, etc.
+        elif any(phrase in command_lower for phrase in [
+            "vector", "embedding", "chromadb", "weaviate", "faiss", "pinecone", "qdrant",
+            "check vectors", "validate embeddings", "vector store", "semantic search"
+        ]):
+            return self.run_workflow("vector_validation")
+
+        # Graph databases - Neo4j, ArangoDB, etc.
+        elif any(phrase in command_lower for phrase in [
+            "graph", "neo4j", "cypher", "arangodb", "knowledge graph", "graph database",
+            "check graph", "graph security", "validate graph", "graph patterns"
+        ]):
+            return self.run_workflow("graph_security")
+
+        # Hybrid RAG - fusion, reranking, multi-modal
+        elif any(phrase in command_lower for phrase in [
+            "hybrid", "fusion", "rerank", "multi", "combine", "blend",
+            "vector and keyword", "dense and sparse", "hybrid search", "fusion search"
+        ]):
+            return self.run_workflow("hybrid_rag")
+
+        # Agentic RAG - ReAct, CoT, agents, tools
+        elif any(phrase in command_lower for phrase in [
+            "agent", "agentic", "react", "chain of thought", "cot", "reasoning",
+            "tool", "agent safety", "agent validation", "reasoning patterns"
+        ]):
+            return self.run_workflow("agentic_rag")
+
+        # RAG Quality - general RAG patterns
+        elif any(phrase in command_lower for phrase in [
+            "rag quality", "rag patterns", "ai quality", "llm quality", "retrieval quality"
+        ]):
+            return self.run_workflow("rag_quality")
+
+        # === STANDARD WORKFLOWS ===
+
+        # Quality workflows
+        elif "quality" in command_lower:
             return self.run_workflow("quality")
         elif "security" in command_lower:
             return self.run_workflow("security")
@@ -781,12 +877,19 @@ class CCOMOrchestrator:
         elif "setup" in command_lower:
             return self.run_workflow("setup")
         else:
-            print("🔄 **CCOM WORKFLOWS** – Solo developer automation")
-            print("Available workflows:")
-            print("  ccom 'workflow quality'   → Quality gates (lint, format, tests)")
-            print("  ccom 'workflow security'  → Security scan (audit, secrets)")
-            print("  ccom 'workflow deploy'    → Full deployment pipeline")
-            print("  ccom 'workflow setup'     → Create GitHub Actions")
+            print("🔄 **CCOM WORKFLOWS** – Natural language automation")
+            print("\n📖 Standard workflows:")
+            print("  ccom check quality             → Quality gates (lint, format, tests)")
+            print("  ccom scan security             → Security audit (dependencies, secrets)")
+            print("  ccom deploy my app             → Full deployment pipeline")
+            print("  ccom setup github actions      → Create CI/CD workflows")
+            print("\n🧠 Enterprise RAG workflows:")
+            print("  ccom validate my rag system    → Complete RAG validation")
+            print("  ccom check vectors              → ChromaDB, Weaviate, FAISS")
+            print("  ccom validate graph database   → Neo4j, ArangoDB security")
+            print("  ccom check hybrid search       → Fusion & reranking")
+            print("  ccom validate agents            → ReAct, CoT, tool safety")
+            print("\n💡 Use natural language - CCOM understands your intent!")
             return True
 
     def run_workflow(self, workflow_name):

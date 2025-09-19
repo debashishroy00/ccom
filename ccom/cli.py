@@ -13,7 +13,7 @@ def create_enhanced_cli():
     """Create enhanced CLI with natural language support"""
     parser = argparse.ArgumentParser(
         description="CCOM v0.3 - Claude Code Orchestrator and Memory",
-        epilog="Natural language examples: 'deploy my app', 'check security', 'quality audit'",
+        epilog="Natural language examples: ccom deploy my app, ccom check security, ccom quality audit",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
@@ -90,17 +90,42 @@ def init_ccom_project(force=False):
     claude_dir.mkdir(exist_ok=True)
     agents_dir = claude_dir / "agents"
     agents_dir.mkdir(exist_ok=True)
+    configs_dir = claude_dir / "configs"
+    configs_dir.mkdir(exist_ok=True)
+    validators_dir = claude_dir / "validators"
+    validators_dir.mkdir(exist_ok=True)
 
-    # Copy agents from CCOM installation
+    # Copy all CCOM files from installation
     ccom_dir = Path(__file__).parent.parent
-    source_agents = ccom_dir / ".claude" / "agents"
+    source_claude = ccom_dir / ".claude"
 
+    import shutil
+
+    # Copy agents
+    source_agents = source_claude / "agents"
     if source_agents.exists():
-        import shutil
         for agent_file in source_agents.glob("*.md"):
             dest_file = agents_dir / agent_file.name
             shutil.copy2(agent_file, dest_file)
             print(f"✅ Installed agent: {agent_file.name}")
+
+    # Copy RAG configurations
+    source_configs = source_claude / "configs"
+    if source_configs.exists():
+        for config_file in source_configs.glob("*"):
+            if config_file.is_file():
+                dest_file = configs_dir / config_file.name
+                shutil.copy2(config_file, dest_file)
+                print(f"✅ Installed RAG config: {config_file.name}")
+
+    # Copy RAG validators
+    source_validators = source_claude / "validators"
+    if source_validators.exists():
+        for validator_file in source_validators.glob("*"):
+            if validator_file.is_file():
+                dest_file = validators_dir / validator_file.name
+                shutil.copy2(validator_file, dest_file)
+                print(f"✅ Installed RAG validator: {validator_file.name}")
 
     # Handle CLAUDE.md - backup existing and create v0.3
     claude_md = current_dir / "CLAUDE.md"
@@ -143,10 +168,16 @@ def init_ccom_project(force=False):
 
     print("\n🎉 CCOM v0.3 initialized successfully!")
     print("\n📖 Try these CCOM commands:")
-    print("  ccom 'deploy my app'")
-    print("  ccom 'check security'")
-    print("  ccom 'quality audit'")
+    print("  ccom deploy my app")
+    print("  ccom check security")
+    print("  ccom quality audit")
     print("  ccom --status")
+    print("\n🧠 NEW: Enterprise RAG workflows (natural language):")
+    print("  ccom validate my rag system       # Complete RAG validation")
+    print("  ccom check vectors                # ChromaDB, Weaviate, FAISS")
+    print("  ccom validate graph database      # Neo4j, ArangoDB security")
+    print("  ccom check hybrid search          # Fusion & reranking")
+    print("  ccom validate agents              # ReAct, CoT, tool safety")
     print("\n💡 CCOM only activates with 'ccom' prefix - regular Claude Code otherwise!")
 
 def create_enhanced_claude_md(claude_md_path):
@@ -207,11 +238,11 @@ def show_help():
   All other commands use regular Claude Code behavior
 
 NATURAL LANGUAGE COMMANDS (Recommended):
-  ccom "deploy my app"              → Enterprise deployment pipeline
-  ccom "check security"             → Comprehensive security audit
-  ccom "quality audit"              → Code quality analysis
-  ccom "make it secure"             → Security hardening
-  ccom "ship it to production"      → Full deployment sequence
+  ccom deploy my app                → Enterprise deployment pipeline
+  ccom check security               → Comprehensive security audit
+  ccom quality audit                → Code quality analysis
+  ccom make it secure               → Security hardening
+  ccom ship it to production        → Full deployment sequence
 
 TRADITIONAL COMMANDS:
   ccom --status                     → Show project status
