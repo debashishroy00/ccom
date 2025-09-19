@@ -29,7 +29,14 @@ class CCOMWorkflows:
             "quality": self.workflow_quality,
             "security": self.workflow_security,
             "deploy": self.workflow_deploy,
-            "full": self.workflow_full_pipeline
+            "full": self.workflow_full_pipeline,
+            # RAG-specific workflows
+            "rag_quality": self.workflow_rag_quality,
+            "vector_validation": self.workflow_vector_validation,
+            "graph_security": self.workflow_graph_security,
+            "hybrid_rag": self.workflow_hybrid_rag,
+            "agentic_rag": self.workflow_agentic_rag,
+            "enterprise_rag": self.workflow_enterprise_rag
         }
 
         if workflow_name not in workflows:
@@ -411,12 +418,215 @@ jobs:
         print(f"✅ Created GitHub workflow: {workflow_file}")
         return True
 
+    # ============= RAG-SPECIFIC WORKFLOWS =============
+
+    def workflow_rag_quality(self):
+        """Comprehensive RAG system quality check"""
+        print("🧠 **RAG QUALITY AUDIT** – Validating RAG architecture...")
+
+        steps = [
+            ("Vector Store Validation", self.run_vector_store_validation),
+            ("Graph DB Security", self.run_graph_db_validation),
+            ("Hybrid RAG Patterns", self.run_hybrid_rag_validation),
+            ("Agentic RAG Safety", self.run_agentic_rag_validation)
+        ]
+
+        results = []
+        for step_name, step_func in steps:
+            print(f"   🔍 {step_name}...")
+            result = step_func()
+            results.append((step_name, result))
+
+            if result["passed"]:
+                print(f"   ✅ {step_name} - {result['summary']}")
+            else:
+                print(f"   ⚠️  {step_name} - {result['summary']}")
+
+        passed = sum(1 for _, result in results if result["passed"])
+        total = len(results)
+
+        if passed == total:
+            print(f"✅ **RAG QUALITY AUDIT** – All {total} validations passed")
+            return True
+        else:
+            print(f"⚠️  **RAG QUALITY AUDIT** – {passed}/{total} validations passed")
+            return False
+
+    def workflow_vector_validation(self):
+        """Vector store and embedding validation"""
+        print("📊 **VECTOR VALIDATION** – Analyzing embedding patterns...")
+        result = self.run_vector_store_validation()
+
+        if result["passed"]:
+            print("✅ **VECTOR VALIDATION** – Vector patterns are enterprise-ready")
+        else:
+            print("⚠️  **VECTOR VALIDATION** – Issues found in vector implementation")
+
+        return result["passed"]
+
+    def workflow_graph_security(self):
+        """Graph database security validation"""
+        print("🔒 **GRAPH SECURITY** – Analyzing graph database patterns...")
+        result = self.run_graph_db_validation()
+
+        if result["passed"]:
+            print("✅ **GRAPH SECURITY** – Graph patterns are secure")
+        else:
+            print("⚠️  **GRAPH SECURITY** – Security issues found in graph implementation")
+
+        return result["passed"]
+
+    def workflow_hybrid_rag(self):
+        """Hybrid RAG implementation validation"""
+        print("🔄 **HYBRID RAG** – Validating fusion and reranking...")
+        result = self.run_hybrid_rag_validation()
+
+        if result["passed"]:
+            print("✅ **HYBRID RAG** – Hybrid patterns are well-implemented")
+        else:
+            print("⚠️  **HYBRID RAG** – Issues found in hybrid implementation")
+
+        return result["passed"]
+
+    def workflow_agentic_rag(self):
+        """Agentic RAG safety and pattern validation"""
+        print("🤖 **AGENTIC RAG** – Validating agent reasoning patterns...")
+        result = self.run_agentic_rag_validation()
+
+        if result["passed"]:
+            print("✅ **AGENTIC RAG** – Agent patterns are safe and well-implemented")
+        else:
+            print("⚠️  **AGENTIC RAG** – Safety or implementation issues found")
+
+        return result["passed"]
+
+    def workflow_enterprise_rag(self):
+        """Complete enterprise RAG validation"""
+        print("🏢 **ENTERPRISE RAG** – Complete RAG system audit...")
+
+        # Run all RAG validations
+        vector_result = self.workflow_vector_validation()
+        graph_result = self.workflow_graph_security()
+        hybrid_result = self.workflow_hybrid_rag()
+        agentic_result = self.workflow_agentic_rag()
+
+        # Also run standard quality and security
+        quality_result = self.workflow_quality()
+        security_result = self.workflow_security()
+
+        all_results = [vector_result, graph_result, hybrid_result, agentic_result, quality_result, security_result]
+        passed = sum(all_results)
+        total = len(all_results)
+
+        if passed == total:
+            print("🎉 **ENTERPRISE RAG** – All validations passed! System is production-ready")
+            return True
+        else:
+            print(f"⚠️  **ENTERPRISE RAG** – {passed}/{total} validations passed")
+            return False
+
+    def run_vector_store_validation(self):
+        """Execute vector store validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/vector-store-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            # Parse validation result
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            # Extract summary from output
+            summary = "Vector validation completed"
+            for line in output_lines:
+                if "validation:" in line.lower():
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Vector validation failed: {e}", "details": str(e)}
+
+    def run_graph_db_validation(self):
+        """Execute graph database validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/graph-db-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Graph DB validation completed"
+            for line in output_lines:
+                if "validation:" in line.lower():
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Graph DB validation failed: {e}", "details": str(e)}
+
+    def run_hybrid_rag_validation(self):
+        """Execute hybrid RAG validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/hybrid-rag-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Hybrid RAG validation completed"
+            for line in output_lines:
+                if "validation:" in line.lower():
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Hybrid RAG validation failed: {e}", "details": str(e)}
+
+    def run_agentic_rag_validation(self):
+        """Execute agentic RAG validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/agentic-rag-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Agentic RAG validation completed"
+            for line in output_lines:
+                if "validation:" in line.lower():
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Agentic RAG validation failed: {e}", "details": str(e)}
+
 def main():
     """CLI entry point for workflows"""
     import argparse
 
     parser = argparse.ArgumentParser(description="CCOM Workflows - Solo Developer CI/CD")
-    parser.add_argument("workflow", choices=["quality", "security", "deploy", "full", "setup"],
+    parser.add_argument("workflow", choices=["quality", "security", "deploy", "full", "setup",
+                                               "rag_quality", "vector_validation", "graph_security",
+                                               "hybrid_rag", "agentic_rag", "enterprise_rag"],
                        help="Workflow to run")
 
     args = parser.parse_args()
