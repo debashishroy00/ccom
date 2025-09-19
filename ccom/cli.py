@@ -165,6 +165,17 @@ def create_enhanced_claude_md(claude_md_path):
 
 ## CCOM Actions Available
 
+### 🏗️ Build
+**Triggers**: "build", "compile", "package", "production build", "prepare release"
+**Actions**:
+- Detect project type (Node/Python/Static)
+- Check code quality standards (file size, complexity)
+- Run appropriate build command
+- Analyze artifacts and bundle sizes
+- Report optimization opportunities
+
+**Response Style**: "🚧 **CCOM BUILDER** – Preparing production build..." → "✅ Build complete"
+
 ### 🔧 Quality & Testing
 **Triggers**: "test", "quality", "check code", "lint", "format"
 **Actions**:
@@ -212,7 +223,16 @@ def create_enhanced_claude_md(claude_md_path):
 
 ### When Processing CCOM Commands:
 
-1. **Quality Check Workflow**:
+1. **Build Workflow**:
+```bash
+# Detect project type (package.json, pyproject.toml, index.html)
+# Check code quality standards
+# Run appropriate build command (npm/python/static)
+# Analyze output artifacts
+# Report bundle sizes and optimizations
+```
+
+2. **Quality Check Workflow**:
 ```bash
 # Check if package.json exists
 # Run: npm run lint (or npx eslint .)
@@ -220,7 +240,7 @@ def create_enhanced_claude_md(claude_md_path):
 # Report results in vibe-coder language
 ```
 
-2. **Security Scan Workflow**:
+3. **Security Scan Workflow**:
 ```bash
 # Run: npm audit
 # Use Grep to scan for: password, api_key, secret patterns
@@ -228,16 +248,16 @@ def create_enhanced_claude_md(claude_md_path):
 # Suggest security improvements
 ```
 
-3. **Deployment Workflow**:
+4. **Deployment Workflow**:
 ```bash
 # Step 1: Quality check (lint + format)
 # Step 2: Security scan (npm audit)
-# Step 3: Build (npm run build if exists)
+# Step 3: Build artifacts (builder-agent)
 # Step 4: Deploy (npm run deploy if exists)
 # Step 5: Verify deployment success
 ```
 
-4. **Memory Operations**:
+5. **Memory Operations**:
 ```bash
 # Load: node .claude/ccom.js start
 # Remember: node .claude/ccom.js remember "feature_name" "description"
