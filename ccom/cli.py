@@ -35,6 +35,16 @@ def create_enhanced_cli():
     parser.add_argument('--force', action='store_true',
                        help='Force refresh CCOM configuration even if v0.3 exists')
 
+    # File monitoring commands
+    parser.add_argument('--watch', action='store_true',
+                       help='Start file monitoring for real-time quality enforcement')
+    parser.add_argument('--monitor-config', action='store_true',
+                       help='Show file monitoring configuration')
+
+    # Workflow commands
+    parser.add_argument('--workflow', type=str, choices=['quality', 'security', 'deploy', 'full', 'setup'],
+                       help='Run CCOM workflow automation')
+
     # Advanced options
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output for debugging')
@@ -56,6 +66,15 @@ def handle_traditional_commands(args, orchestrator):
         return True
     elif args.init:
         init_ccom_project(force=args.force)
+        return True
+    elif args.watch:
+        orchestrator.start_file_monitoring()
+        return True
+    elif args.monitor_config:
+        orchestrator.show_file_monitoring_config()
+        return True
+    elif args.workflow:
+        orchestrator.run_workflow(args.workflow)
         return True
 
     return False

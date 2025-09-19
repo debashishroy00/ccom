@@ -91,8 +91,12 @@ class CCOMOrchestrator:
 
         print(f"🎯 Processing command: '{command}'")
 
-        # Build commands (NEW)
-        if any(word in command_lower for word in ["build", "compile", "package", "prepare release", "production build"]):
+        # Workflow commands (NEW)
+        if any(word in command_lower for word in ["workflow", "pipeline", "ci", "automation"]):
+            return self.handle_workflow_command(command)
+
+        # Build commands
+        elif any(word in command_lower for word in ["build", "compile", "package", "prepare release", "production build"]):
             # Extract feature name
             feature_name = command.replace("ccom", "").replace("build", "").strip()
 
@@ -116,6 +120,10 @@ class CCOMOrchestrator:
         elif any(word in command_lower for word in ["secure", "safety", "protect", "scan"]):
             return self.security_sequence()
 
+        # File monitoring commands
+        elif any(word in command_lower for word in ["watch", "monitor", "file monitoring", "auto quality", "real-time"]):
+            return self.handle_file_monitoring_command(command)
+
         # Memory commands
         elif any(word in command_lower for word in ["remember", "memory", "status", "forget"]):
             return self.handle_memory_command(command)
@@ -125,7 +133,7 @@ class CCOMOrchestrator:
             return self.handle_init_command()
 
         else:
-            print(f"❓ Unknown command. Try: build, deploy, quality, security, memory, or init commands")
+            print(f"❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands")
             return False
 
     def deploy_sequence(self):
@@ -695,6 +703,108 @@ class CCOMOrchestrator:
         else:
             print("Memory commands: status, memory")
             return True
+
+    def handle_file_monitoring_command(self, command):
+        """Handle file monitoring commands"""
+        command_lower = command.lower()
+
+        if "start" in command_lower or "watch" in command_lower:
+            return self.start_file_monitoring()
+        elif "stop" in command_lower:
+            return self.stop_file_monitoring()
+        elif "config" in command_lower:
+            return self.show_file_monitoring_config()
+        else:
+            print("🔍 **CCOM FILE MONITOR** – Real-time quality enforcement")
+            print("Commands:")
+            print("  ccom 'watch files'     → Start file monitoring")
+            print("  ccom 'stop watching'   → Stop file monitoring")
+            print("  ccom 'monitor config'  → Show configuration")
+            return True
+
+    def start_file_monitoring(self):
+        """Start the CCOM file monitoring system"""
+        try:
+            print("🔍 **CCOM FILE MONITOR** – Starting real-time quality enforcement...")
+
+            # Import and initialize the file monitor
+            from ccom.file_monitor import CCOMFileMonitor
+
+            monitor = CCOMFileMonitor(self.project_root)
+            monitor.start_watching()
+
+            return True
+
+        except Exception as e:
+            print(f"❌ File monitoring error: {e}")
+            print("💡 Make sure Node.js is installed for file watching")
+            return False
+
+    def stop_file_monitoring(self):
+        """Stop file monitoring"""
+        print("🛑 **CCOM FILE MONITOR** – Stopping file monitoring...")
+        print("💡 Use Ctrl+C to stop an active monitoring session")
+        return True
+
+    def show_file_monitoring_config(self):
+        """Show file monitoring configuration"""
+        try:
+            from ccom.file_monitor import CCOMFileMonitor
+
+            monitor = CCOMFileMonitor(self.project_root)
+            print("📋 **CCOM FILE MONITOR** – Configuration:")
+            print(f"  📂 Project: {self.project_root}")
+            print(f"  ⚡ Enabled: {monitor.config['enabled']}")
+            print(f"  📋 Watch patterns: {len(monitor.config['watch_patterns'])} patterns")
+            print(f"  🚫 Ignore patterns: {len(monitor.config['ignore_patterns'])} patterns")
+            print(f"  ⏱️  Debounce: {monitor.config['quality_triggers']['debounce_ms']}ms")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Config error: {e}")
+            return False
+
+    def handle_workflow_command(self, command):
+        """Handle workflow automation commands"""
+        command_lower = command.lower()
+
+        # Extract workflow type
+        if "quality" in command_lower:
+            return self.run_workflow("quality")
+        elif "security" in command_lower:
+            return self.run_workflow("security")
+        elif "deploy" in command_lower:
+            return self.run_workflow("deploy")
+        elif "full" in command_lower or "pipeline" in command_lower:
+            return self.run_workflow("full")
+        elif "setup" in command_lower:
+            return self.run_workflow("setup")
+        else:
+            print("🔄 **CCOM WORKFLOWS** – Solo developer automation")
+            print("Available workflows:")
+            print("  ccom 'workflow quality'   → Quality gates (lint, format, tests)")
+            print("  ccom 'workflow security'  → Security scan (audit, secrets)")
+            print("  ccom 'workflow deploy'    → Full deployment pipeline")
+            print("  ccom 'workflow setup'     → Create GitHub Actions")
+            return True
+
+    def run_workflow(self, workflow_name):
+        """Execute a CCOM workflow using the workflows module"""
+        try:
+            # Import and initialize workflows
+            from ccom.workflows import CCOMWorkflows
+
+            workflows = CCOMWorkflows(self.project_root)
+
+            if workflow_name == "setup":
+                return workflows.create_github_workflow()
+            else:
+                return workflows.run_workflow(workflow_name)
+
+        except Exception as e:
+            print(f"❌ Workflow error: {e}")
+            return False
 
     def handle_init_command(self):
         """Handle init-related commands"""
