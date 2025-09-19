@@ -184,126 +184,44 @@ class CCOMOrchestrator:
 
     def invoke_subagent(self, agent_name):
         """
-        Invoke Claude Code subagent - Testing multiple integration methods
+        CCOM Native Agent Execution
+
+        CCOM provides the orchestration layer that Claude Code lacks.
+        Agent definitions in .claude/agents/*.md serve as behavior specifications.
         """
         agent_file = self.claude_dir / "agents" / f"{agent_name}.md"
 
         if not agent_file.exists():
-            print(f"❌ Subagent not found: {agent_file}")
+            print(f"❌ Agent specification not found: {agent_file}")
             return False
 
-        print(f"🤖 Invoking Claude Code subagent: {agent_name}")
+        print(f"🤖 CCOM executing {agent_name}...")
+        return self.execute_agent_implementation(agent_name)
 
-        # Method 1: Test if we can use Task tool to invoke agent
-        print("🔍 Testing Method 1: Task tool integration...")
-        try:
-            # This would be the ideal integration - using Claude Code's Task tool
-            # to invoke subagents programmatically
-            task_result = self.test_task_tool_integration(agent_name)
-            if task_result:
-                return task_result
-        except Exception as e:
-            print(f"⚠️  Task tool method failed: {e}")
 
-        # Method 2: Test direct Claude Code CLI variations
-        print("🔍 Testing Method 2: Claude Code CLI variations...")
-        cli_methods = [
-            ["claude-code", "--agent", str(agent_file)],
-            ["claude", "code", "--agent", str(agent_file)],
-            ["claude-code", "invoke", str(agent_file)],
-            ["claude-code", "--subagent", agent_name],
-        ]
-
-        for method in cli_methods:
-            try:
-                result = subprocess.run(method, capture_output=True, text=True, timeout=10)
-                if result.returncode == 0:
-                    print("✅ Claude Code CLI method successful!")
-                    print(f"Command: {' '.join(method)}")
-                    print(f"Output: {result.stdout}")
-                    return True
-                else:
-                    print(f"❌ CLI method failed: {' '.join(method)}")
-                    if result.stderr:
-                        print(f"   Error: {result.stderr}")
-            except (FileNotFoundError, subprocess.TimeoutExpired):
-                continue
-            except Exception as e:
-                print(f"   Exception: {e}")
-
-        # Method 3: Test if we can trigger agent via file system interaction
-        print("🔍 Testing Method 3: File system trigger...")
-        try:
-            trigger_result = self.test_file_trigger_method(agent_name)
-            if trigger_result:
-                return trigger_result
-        except Exception as e:
-            print(f"⚠️  File trigger method failed: {e}")
-
-        # Fallback: Use manual implementation
-        print("🔄 All Claude Code integration methods failed - using CCOM fallback")
-        return self.invoke_subagent_fallback(agent_name)
-
-    def test_task_tool_integration(self, agent_name):
-        """Test if we can use Claude Code's Task tool to invoke subagents"""
-        # This would be the cleanest integration if available
-        # Return None for now - would need actual Task tool access
-        return None
-
-    def test_file_trigger_method(self, agent_name):
-        """Test if creating/modifying files can trigger agent execution"""
-        # Create a trigger file that might cause Claude Code to invoke the agent
-        trigger_file = self.claude_dir / f"trigger_{agent_name}.txt"
-        try:
-            with open(trigger_file, 'w') as f:
-                f.write(f"CCOM requesting {agent_name} execution at {datetime.now()}")
-
-            # Wait briefly to see if anything happens
-            import time
-            time.sleep(2)
-
-            # Check if any response files were created
-            response_file = self.claude_dir / f"response_{agent_name}.txt"
-            if response_file.exists():
-                with open(response_file) as f:
-                    response = f.read()
-                print(f"✅ File trigger successful: {response}")
-                # Clean up
-                trigger_file.unlink()
-                response_file.unlink()
-                return True
-
-        except Exception as e:
-            print(f"File trigger error: {e}")
-
-        # Clean up trigger file
-        if trigger_file.exists():
-            trigger_file.unlink()
-
-        return None
-
-    def invoke_subagent_fallback(self, agent_name):
+    def execute_agent_implementation(self, agent_name):
         """
-        Fallback method: Manual implementation of what the subagent would do
-        This ensures CCOM works even if Claude Code integration is not available
-        """
-        print(f"🔄 Using fallback implementation for {agent_name}")
+        CCOM Native Agent Implementation
 
-        if agent_name == "quality-enforcer":
-            return self.quality_enforcer_fallback()
-        elif agent_name == "security-guardian":
-            return self.security_guardian_fallback()
-        elif agent_name == "builder-agent":
-            return self.builder_agent_fallback()
-        elif agent_name == "deployment-specialist":
-            return self.deployment_specialist_fallback()
+        Execute the native CCOM implementation for the specified agent.
+        Agent behavior is defined by .claude/agents/*.md specifications.
+        """
+        implementations = {
+            "quality-enforcer": self.run_quality_enforcement,
+            "security-guardian": self.run_security_scan,
+            "builder-agent": self.run_build_process,
+            "deployment-specialist": self.run_deployment_process
+        }
+
+        if agent_name in implementations:
+            return implementations[agent_name]()
         else:
-            print(f"❌ No fallback available for {agent_name}")
+            print(f"❌ No implementation available for {agent_name}")
             return False
 
-    def quality_enforcer_fallback(self):
-        """Manual implementation of quality enforcement"""
-        print("🔧 Running quality checks manually...")
+    def run_quality_enforcement(self):
+        """CCOM Native Quality Enforcement Implementation"""
+        print("🔧 **CCOM QUALITY** – Running enterprise standards...")
 
         # Check if we have package.json with lint script
         package_json = self.project_root / "package.json"
@@ -344,9 +262,9 @@ class CCOMOrchestrator:
             print("ℹ️  No package.json found - skipping lint checks")
             return True
 
-    def security_guardian_fallback(self):
-        """Enhanced security scanning implementation"""
-        print("🔒 Running comprehensive security audit...")
+    def run_security_scan(self):
+        """CCOM Native Security Guardian Implementation"""
+        print("🔒 **CCOM SECURITY** – Bank-level protection scan...")
 
         security_issues = []
 
@@ -443,9 +361,9 @@ class CCOMOrchestrator:
             except Exception as e:
                 print(f"ℹ️  Configuration check skipped: {e}")
 
-    def deployment_specialist_fallback(self):
-        """Enhanced deployment coordination"""
-        print("🚀 Coordinating enterprise deployment...")
+    def run_deployment_process(self):
+        """CCOM Native Deployment Specialist Implementation"""
+        print("🚀 **CCOM DEPLOYMENT** – Enterprise orchestration...")
 
         # 1. Pre-deployment validation
         print("Step 1: Pre-deployment validation...")
@@ -601,8 +519,8 @@ class CCOMOrchestrator:
         except Exception as e:
             print(f"ℹ️  Could not record deployment: {e}")
 
-    def builder_agent_fallback(self):
-        """Enhanced build process with quality standards enforcement"""
+    def run_build_process(self):
+        """CCOM Native Builder Agent Implementation"""
         print("🚧 **CCOM BUILDER** – Preparing production build...")
 
         try:

@@ -1,5 +1,11 @@
 # CCOM Integration for Claude Code v0.3
 
+## **ARCHITECTURE**: CCOM as the Orchestration Layer
+
+**REALITY-BASED DESIGN**: CCOM provides the orchestration layer that Claude Code lacks.
+- **Claude Code**: Context, templates, interactive assistance, agent specifications
+- **CCOM**: Native execution, orchestration, automation, enterprise workflows
+
 ## CCOM Command Processing
 
 **IMPORTANT**: Only activate CCOM functionality when user message starts with "ccom" (case-insensitive).
@@ -152,6 +158,31 @@ node .claude/ccom.js check "<feature_name>"
 - If tools fail, provide helpful guidance
 - Suggest fixes for common issues
 - Maintain confidence even when fixing problems
+
+---
+
+## Agent Architecture (IMPORTANT)
+
+### **Reality-Based Agent Design:**
+
+**Agent Files (.claude/agents/*.md) = BEHAVIOR SPECIFICATIONS**
+- **NOT executable code** - they define what CCOM should implement
+- **Claude Code Role**: Provide interactive guidance when users need help
+- **CCOM Role**: Execute the actual automation via native implementations
+
+### **Agent Execution Flow:**
+1. **User**: "ccom deploy"
+2. **Claude Code**: Recognizes command, invokes CCOM orchestration
+3. **CCOM**: Executes native implementation (`run_deployment_process()`)
+4. **Output**: "🚀 **CCOM DEPLOYMENT** – Enterprise orchestration..."
+
+### **Available Agents:**
+- **quality-enforcer**: `run_quality_enforcement()` - ESLint, Prettier, standards
+- **security-guardian**: `run_security_scan()` - npm audit, vulnerability scanning
+- **deployment-specialist**: `run_deployment_process()` - Build, deploy, verify
+- **builder-agent**: `run_build_process()` - Production build with optimization
+
+**KEY**: CCOM provides the execution layer Claude Code lacks. Agents are specifications, not programs.
 
 ---
 
