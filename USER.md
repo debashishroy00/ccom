@@ -32,19 +32,22 @@ ccom --init
 ### **Step 3: Try Your First Commands**
 ```bash
 # Check code quality
-ccom "workflow quality"
+ccom workflow quality
 
 # Security scan
-ccom "workflow security"
+ccom workflow security
 
 # Create GitHub Actions
-ccom "workflow setup"
+ccom workflow setup
+
+# AWS + Angular stack validation
+ccom complete stack
 ```
 
 ### **Step 4: Start Real-Time Monitoring**
 ```bash
 # Watch files for automatic quality checks
-ccom "watch files"
+ccom watch files
 ```
 
 **That's it!** You now have enterprise-grade automation running on your project.
@@ -57,7 +60,7 @@ ccom "watch files"
 
 #### **Run Quality Audit**
 ```bash
-ccom "workflow quality"
+ccom workflow quality
 ```
 **What it does:**
 - ✅ **ESLint** - Checks code standards and style
@@ -81,9 +84,9 @@ ccom "workflow quality"
 
 **Alternative Commands:**
 ```bash
-ccom "quality audit"          # Same as workflow quality
-ccom "check code quality"     # Alternative syntax
-ccom --workflow quality       # Traditional CLI
+ccom quality audit           # Same as workflow quality
+ccom check code quality      # Alternative syntax
+ccom --workflow quality      # Traditional CLI
 ```
 
 #### **Fix Quality Issues**
@@ -96,14 +99,14 @@ npm run format
 npm run lint -- --fix
 
 # Then re-run quality check
-ccom "workflow quality"
+ccom workflow quality
 ```
 
 ### 🔒 **Security & Vulnerability Scanning**
 
 #### **Run Security Scan**
 ```bash
-ccom "workflow security"
+ccom workflow security
 ```
 **What it does:**
 - 🛡️ **Dependency Audit** - Checks for vulnerable npm packages
@@ -124,16 +127,57 @@ ccom "workflow security"
 
 **Alternative Commands:**
 ```bash
-ccom "security scan"           # Same as workflow security
-ccom "check vulnerabilities"   # Alternative syntax
-ccom --workflow security       # Traditional CLI
+ccom security scan            # Same as workflow security
+ccom check vulnerabilities   # Alternative syntax
+ccom --workflow security      # Traditional CLI
 ```
 
 ### 🚀 **Deployment & Production**
 
 #### **Full Deployment Pipeline**
 ```bash
-ccom "workflow deploy"
+ccom workflow deploy
+```
+
+### 🔧 **AWS + Angular Stack Validation**
+
+#### **Complete Stack Validation**
+```bash
+ccom complete stack
+```
+**What it does:**
+- ✅ **Angular Validation** - RxJS memory leak detection, change detection optimization
+- ✅ **AWS Cost Optimization** - Bedrock model recommendations, S3 storage analysis
+- ✅ **S3 Security** - Presigned URL security, multipart upload validation
+- ✅ **Performance Monitoring** - Caching strategies, latency optimization
+
+**Example Output:**
+```
+🔧 CCOM ORCHESTRATING – Complete AWS + Angular validation...
+   🔍 Angular Validation...
+   ✅ Angular: No RxJS memory leaks detected
+   🔍 Cost Optimization...
+   ✅ AWS Cost: Optimized for production workload
+   🔍 S3 Security...
+   ✅ S3 Security: Bank-level security configuration
+   🔍 Performance...
+   ✅ Performance: Sub-200ms response times achieved
+🎉 Enterprise-grade RAG stack validated!
+```
+
+#### **Individual AWS Validators**
+```bash
+# Angular-specific validation
+ccom angular validation
+
+# AWS cost analysis
+ccom cost optimization
+
+# S3 bucket security
+ccom s3 security
+
+# Performance optimization
+ccom performance optimization
 ```
 **What it does:**
 1. ✅ **Quality Gates** - Must pass quality checks
@@ -153,16 +197,16 @@ Step 4: Deploying to netlify... ✅
 
 **Alternative Commands:**
 ```bash
-ccom "deploy to production"    # Same as workflow deploy
-ccom "ship it"                 # Quick deploy
-ccom --workflow deploy         # Traditional CLI
+ccom deploy to production     # Same as workflow deploy
+ccom ship it                  # Quick deploy
+ccom --workflow deploy        # Traditional CLI
 ```
 
 ### 📁 **Real-Time File Monitoring**
 
 #### **Start File Watching**
 ```bash
-ccom "watch files"
+ccom watch files
 ```
 **What it does:**
 - 👀 **Monitors file changes** in real-time
@@ -184,19 +228,19 @@ ccom "watch files"
 ```bash
 # Press Ctrl+C to stop
 # Or use:
-ccom "stop watching"
+ccom stop watching
 ```
 
 **Configuration:**
 ```bash
-ccom "monitor config"      # Show current settings
+ccom monitor config         # Show current settings
 ```
 
 ### ⚙️ **Automation Setup**
 
 #### **Create GitHub Actions**
 ```bash
-ccom "workflow setup"
+ccom workflow setup
 ```
 **What it does:**
 - 📝 Creates `.github/workflows/ccom-quality.yml`
@@ -245,7 +289,7 @@ ccom --memory             # Show remembered features
 
 #### **Remember Features**
 ```bash
-ccom "remember user authentication system"
+ccom remember user authentication system
 ```
 **What it does:**
 - 💾 **Saves feature to memory** for future reference
@@ -254,9 +298,9 @@ ccom "remember user authentication system"
 
 **View Memory:**
 ```bash
-ccom "show project status"    # Full project overview
-ccom "what have we built"     # List all remembered features
-ccom --memory                 # Traditional syntax
+ccom show project status     # Full project overview
+ccom what have we built      # List all remembered features
+ccom --memory                # Traditional syntax
 ```
 
 ---
@@ -276,7 +320,7 @@ ccom --init
 
 ### **2. Setting Up GitHub Safety Net**
 ```bash
-ccom "workflow setup"
+ccom workflow setup
 
 # Result: GitHub will automatically check every commit
 ```
@@ -284,7 +328,7 @@ ccom "workflow setup"
 ### **3. Development with Real-Time Monitoring**
 ```bash
 # Start file monitoring
-ccom "watch files"
+ccom watch files
 
 # Code your features...
 # Every time you save, CCOM automatically checks quality
@@ -293,7 +337,7 @@ ccom "watch files"
 ### **4. Pre-Commit Quality Check**
 ```bash
 # Before committing, run full check
-ccom "workflow quality"
+ccom workflow quality
 
 # If issues found, fix them and re-run
 # If all good, commit with confidence
@@ -301,21 +345,21 @@ ccom "workflow quality"
 
 ### **5. Security Scan Before Deployment**
 ```bash
-ccom "workflow security"
+ccom workflow security
 
 # Result: Catch vulnerabilities before they reach production
 ```
 
 ### **6. Deploy with Confidence**
 ```bash
-ccom "workflow deploy"
+ccom workflow deploy
 
 # Result: Full pipeline - quality gates, security scan, build, deploy
 ```
 
 ### **7. Remember What You Built**
 ```bash
-ccom "remember user login system"
+ccom remember user login system
 
 # Result: Feature tracked for future reference and duplicate prevention
 ```
@@ -352,19 +396,19 @@ ccom "remember user login system"
 ## 🎯 **Best Practices**
 
 ### **For Quality**
-- ✅ **Run `ccom "workflow quality"` before every commit**
+- ✅ **Run `ccom workflow quality` before every commit**
 - ✅ **Fix issues immediately** - don't let them accumulate
 - ✅ **Use file monitoring** during development for instant feedback
 - ✅ **Let GitHub Actions be your safety net** for forgotten checks
 
 ### **For Security**
-- ✅ **Run `ccom "workflow security"` before deployment**
+- ✅ **Run `ccom workflow security` before deployment**
 - ✅ **Fix vulnerabilities immediately** - don't postpone security
 - ✅ **Never commit secrets** - use environment variables
 - ✅ **Update dependencies regularly** to get security patches
 
 ### **For Deployment**
-- ✅ **Always use `ccom "workflow deploy"`** for full validation
+- ✅ **Always use `ccom workflow deploy`** for full validation
 - ✅ **Test locally first** before pushing to production
 - ✅ **Use GitHub Actions** to catch issues before merge
 - ✅ **Keep deployment simple** - let CCOM handle complexity
@@ -548,7 +592,7 @@ rm .github/workflows/ccom-quality.yml  # if you don't want GitHub Actions
 #### **Q: What if GitHub Actions fail?**
 **A:** GitHub will show you exactly what failed. You can:
 1. Fix the issues locally
-2. Test with `ccom "workflow quality"` and `ccom "workflow security"`
+2. Test with `ccom workflow quality` and `ccom workflow security`
 3. Commit the fixes
 4. GitHub will re-run the checks automatically
 
@@ -680,7 +724,7 @@ ccom "watch files"
 **A:**
 1. Fork the repository
 2. Create a feature branch
-3. Run `ccom "workflow quality"` before committing
+3. Run `ccom workflow quality` before committing
 4. Submit a pull request
 5. Make sure GitHub Actions pass
 
@@ -699,11 +743,11 @@ A developer used CCOM on a todo application project:
 
 **After CCOM:**
 ```bash
-ccom --init                    # ✅ Setup in 30 seconds
-ccom "workflow quality"        # ✅ Found 2/4 quality issues
-ccom "workflow security"       # ✅ Found 2 security patterns
-ccom "workflow setup"          # ✅ GitHub Actions created
-ccom "watch files"             # ✅ Real-time monitoring active
+ccom --init                   # ✅ Setup in 30 seconds
+ccom workflow quality         # ✅ Found 2/4 quality issues
+ccom workflow security        # ✅ Found 2 security patterns
+ccom workflow setup           # ✅ GitHub Actions created
+ccom watch files              # ✅ Real-time monitoring active
 ```
 
 **Result:**
@@ -718,7 +762,7 @@ ccom "watch files"             # ✅ Real-time monitoring active
 
 > *"The security scanning found hardcoded API keys I didn't even realize were there. Could have been a major security issue in production."*
 
-> *"One command (`ccom 'workflow deploy'`) runs all checks and deploys safely. No more 'did I forget to run tests?' anxiety."*
+> *"One command (`ccom workflow deploy`) runs all checks and deploys safely. No more 'did I forget to run tests?' anxiety."*
 
 ---
 
