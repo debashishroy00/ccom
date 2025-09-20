@@ -149,6 +149,46 @@ class CCOMOrchestrator:
         ]):
             return self.run_workflow("aws_rag")
 
+        # Angular validation - Frontend patterns
+        elif any(phrase in command_lower for phrase in [
+            "angular", "rxjs", "observable", "subscription", "memory leak",
+            "change detection", "component", "service", "angular performance",
+            "check angular", "validate angular", "frontend", "typescript patterns"
+        ]):
+            return self.run_workflow("angular_validation")
+
+        # Cost optimization - AWS cost patterns
+        elif any(phrase in command_lower for phrase in [
+            "cost", "expensive", "budget", "billing", "optimize cost", "save money",
+            "cost optimization", "aws cost", "bedrock cost", "check cost",
+            "reduce cost", "cost tracking", "spending", "price optimization"
+        ]):
+            return self.run_workflow("cost_optimization")
+
+        # S3 security - Storage security patterns
+        elif any(phrase in command_lower for phrase in [
+            "s3 security", "presigned url", "multipart upload", "s3 cors",
+            "bucket security", "s3 encryption", "storage security", "file upload",
+            "check s3", "validate s3", "s3 policy", "s3 access"
+        ]):
+            return self.run_workflow("s3_security")
+
+        # Performance optimization - Performance patterns
+        elif any(phrase in command_lower for phrase in [
+            "performance", "latency", "speed", "slow", "fast", "optimize performance",
+            "caching", "monitoring", "throughput", "response time", "performance check",
+            "check performance", "performance audit", "optimize speed"
+        ]):
+            return self.run_workflow("performance_optimization")
+
+        # Complete stack validation - Full stack patterns
+        elif any(phrase in command_lower for phrase in [
+            "complete stack", "full stack", "entire stack", "everything", "all checks",
+            "complete validation", "full validation", "production ready", "deploy ready",
+            "check everything", "validate all", "complete audit", "comprehensive check"
+        ]):
+            return self.run_workflow("complete_stack")
+
         # === STANDARD WORKFLOW PATTERNS ===
 
         # Workflow commands (traditional)
@@ -912,6 +952,12 @@ class CCOMOrchestrator:
             print("  ccom validate mongodb          → MongoDB Atlas Vector Search")
             print("  ccom audit ecs deployment      → ECS/Lambda/S3 validation")
             print("  ccom check titan embeddings    → AWS Titan embedding validation")
+            print("\n🎯 Critical Gap workflows:")
+            print("  ccom check angular             → RxJS memory leaks & change detection")
+            print("  ccom optimize cost              → AWS cost tracking & optimization")
+            print("  ccom validate s3 security       → Presigned URLs & multipart uploads")
+            print("  ccom check performance          → Monitoring, caching & latency")
+            print("  ccom validate complete stack    → All validators for production")
             print("\n💡 Use natural language - CCOM understands your intent!")
             return True
 

@@ -37,8 +37,14 @@ class CCOMWorkflows:
             "hybrid_rag": self.workflow_hybrid_rag,
             "agentic_rag": self.workflow_agentic_rag,
             "enterprise_rag": self.workflow_enterprise_rag,
-            # AWS-specific workflow
-            "aws_rag": self.workflow_aws_rag
+            # AWS-specific workflows
+            "aws_rag": self.workflow_aws_rag,
+            # Critical Gap workflows
+            "angular_validation": self.workflow_angular_validation,
+            "cost_optimization": self.workflow_cost_optimization,
+            "s3_security": self.workflow_s3_security,
+            "performance_optimization": self.workflow_performance_optimization,
+            "complete_stack": self.workflow_complete_stack
         }
 
         if workflow_name not in workflows:
@@ -634,6 +640,228 @@ jobs:
 
         except Exception as e:
             return {"passed": False, "summary": f"AWS deployment validation failed: {e}", "details": str(e)}
+
+    def workflow_angular_validation(self):
+        """Angular-specific validation (RxJS, change detection, performance)"""
+        print("🅰️ **ANGULAR VALIDATION** – Checking Angular patterns...")
+
+        results = []
+
+        # Run Angular validator
+        print("🔍 Checking Angular RxJS and performance patterns...")
+        angular_result = self.run_angular_validation()
+        results.append(angular_result["passed"])
+        print(f"   {angular_result['summary']}")
+
+        # Also run general quality checks
+        print("🔍 Checking general code quality...")
+        quality_result = self.workflow_quality()
+        results.append(quality_result)
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("✅ **ANGULAR VALIDATION** – All checks passed!")
+            return True
+        else:
+            print(f"⚠️  **ANGULAR VALIDATION** – {passed}/{total} checks passed")
+            return False
+
+    def workflow_cost_optimization(self):
+        """AWS cost optimization validation"""
+        print("💰 **COST OPTIMIZATION** – Analyzing AWS costs...")
+
+        results = []
+
+        # Run cost validator
+        print("🔍 Checking AWS cost patterns...")
+        cost_result = self.run_cost_validation()
+        results.append(cost_result["passed"])
+        print(f"   {cost_result['summary']}")
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("✅ **COST OPTIMIZATION** – All checks passed!")
+            return True
+        else:
+            print(f"⚠️  **COST OPTIMIZATION** – {passed}/{total} checks passed")
+            return False
+
+    def workflow_s3_security(self):
+        """S3 security validation"""
+        print("🔒 **S3 SECURITY** – Validating S3 security patterns...")
+
+        results = []
+
+        # Run S3 security validator
+        print("🔍 Checking S3 security configurations...")
+        s3_result = self.run_s3_security_validation()
+        results.append(s3_result["passed"])
+        print(f"   {s3_result['summary']}")
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("✅ **S3 SECURITY** – All checks passed!")
+            return True
+        else:
+            print(f"⚠️  **S3 SECURITY** – {passed}/{total} checks passed")
+            return False
+
+    def workflow_performance_optimization(self):
+        """Performance optimization validation"""
+        print("⚡ **PERFORMANCE** – Checking performance patterns...")
+
+        results = []
+
+        # Run performance validator
+        print("🔍 Checking monitoring and caching patterns...")
+        perf_result = self.run_performance_validation()
+        results.append(perf_result["passed"])
+        print(f"   {perf_result['summary']}")
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("✅ **PERFORMANCE** – All checks passed!")
+            return True
+        else:
+            print(f"⚠️  **PERFORMANCE** – {passed}/{total} checks passed")
+            return False
+
+    def workflow_complete_stack(self):
+        """Complete AWS + Angular RAG stack validation"""
+        print("🎯 **COMPLETE STACK** – Full stack validation...")
+
+        results = []
+
+        # Run all new validators
+        print("🔍 Running Angular validation...")
+        angular_result = self.workflow_angular_validation()
+        results.append(angular_result)
+
+        print("🔍 Running AWS cost optimization...")
+        cost_result = self.workflow_cost_optimization()
+        results.append(cost_result)
+
+        print("🔍 Running S3 security validation...")
+        s3_result = self.workflow_s3_security()
+        results.append(s3_result)
+
+        print("🔍 Running performance validation...")
+        perf_result = self.workflow_performance_optimization()
+        results.append(perf_result)
+
+        print("🔍 Running AWS RAG validation...")
+        aws_result = self.workflow_aws_rag()
+        results.append(aws_result)
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("🎉 **COMPLETE STACK** – All validations passed! Production ready!")
+            return True
+        else:
+            print(f"⚠️  **COMPLETE STACK** – {passed}/{total} validations passed")
+            return False
+
+    def run_angular_validation(self):
+        """Execute Angular validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/angular-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Angular validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Angular validation failed: {e}", "details": str(e)}
+
+    def run_cost_validation(self):
+        """Execute AWS cost validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/aws-cost-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Cost validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Cost validation failed: {e}", "details": str(e)}
+
+    def run_s3_security_validation(self):
+        """Execute S3 security validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/s3-security-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "S3 security validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"S3 security validation failed: {e}", "details": str(e)}
+
+    def run_performance_validation(self):
+        """Execute performance validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/performance-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "Performance validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"Performance validation failed: {e}", "details": str(e)}
 
     def run_vector_store_validation(self):
         """Execute vector store validator"""
