@@ -36,7 +36,9 @@ class CCOMWorkflows:
             "graph_security": self.workflow_graph_security,
             "hybrid_rag": self.workflow_hybrid_rag,
             "agentic_rag": self.workflow_agentic_rag,
-            "enterprise_rag": self.workflow_enterprise_rag
+            "enterprise_rag": self.workflow_enterprise_rag,
+            # AWS-specific workflow
+            "aws_rag": self.workflow_aws_rag
         }
 
         if workflow_name not in workflows:
@@ -524,6 +526,114 @@ jobs:
         else:
             print(f"⚠️  **ENTERPRISE RAG** – {passed}/{total} validations passed")
             return False
+
+    def workflow_aws_rag(self):
+        """AWS-specific RAG validation (Bedrock, LangChain, MongoDB, ECS/Lambda)"""
+        print("☁️ **AWS RAG** – Validating AWS Bedrock + LangChain stack...")
+
+        results = []
+
+        # Run AWS Bedrock validation
+        print("🔍 Checking AWS Bedrock & LangChain patterns...")
+        bedrock_result = self.run_aws_bedrock_validation()
+        results.append(bedrock_result["passed"])
+        print(f"   {bedrock_result['summary']}")
+
+        # Run MongoDB validation
+        print("🔍 Checking MongoDB Atlas Vector Search...")
+        mongodb_result = self.run_mongodb_validation()
+        results.append(mongodb_result["passed"])
+        print(f"   {mongodb_result['summary']}")
+
+        # Run AWS deployment validation
+        print("🔍 Checking ECS/Lambda/S3 deployment...")
+        deployment_result = self.run_aws_deployment_validation()
+        results.append(deployment_result["passed"])
+        print(f"   {deployment_result['summary']}")
+
+        # Also run standard vector validation for general patterns
+        print("🔍 Checking general vector patterns...")
+        vector_result = self.run_vector_store_validation()
+        results.append(vector_result["passed"])
+
+        passed = sum(results)
+        total = len(results)
+
+        if passed == total:
+            print("✅ **AWS RAG** – All AWS validations passed!")
+            return True
+        else:
+            print(f"⚠️  **AWS RAG** – {passed}/{total} validations passed")
+            return False
+
+    def run_aws_bedrock_validation(self):
+        """Execute AWS Bedrock validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/aws-bedrock-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "AWS Bedrock validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"AWS Bedrock validation failed: {e}", "details": str(e)}
+
+    def run_mongodb_validation(self):
+        """Execute MongoDB Atlas validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/mongodb-vector-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "MongoDB validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"MongoDB validation failed: {e}", "details": str(e)}
+
+    def run_aws_deployment_validation(self):
+        """Execute AWS deployment validator"""
+        try:
+            result = subprocess.run(
+                f"node {self.project_root}/.claude/validators/aws-deployment-validator.js",
+                shell=True, capture_output=True, text=True,
+                cwd=self.project_root, timeout=60
+            )
+
+            passed = result.returncode == 0
+            output_lines = result.stdout.split('\n')
+
+            summary = "AWS deployment validation completed"
+            for line in output_lines:
+                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                    summary = line.strip()
+                    break
+
+            return {"passed": passed, "summary": summary, "details": result.stdout}
+
+        except Exception as e:
+            return {"passed": False, "summary": f"AWS deployment validation failed: {e}", "details": str(e)}
 
     def run_vector_store_validation(self):
         """Execute vector store validator"""

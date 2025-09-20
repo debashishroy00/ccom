@@ -140,6 +140,15 @@ class CCOMOrchestrator:
         ]):
             return self.run_workflow("rag_quality")
 
+        # AWS RAG - AWS-specific patterns
+        elif any(phrase in command_lower for phrase in [
+            "aws", "bedrock", "titan", "langchain", "mongodb atlas", "mongodb vector",
+            "ecs", "fargate", "lambda", "api gateway", "aws rag", "aws stack",
+            "check aws", "validate bedrock", "audit aws", "aws deployment",
+            "titan embed", "claude bedrock", "aws ai", "aws llm"
+        ]):
+            return self.run_workflow("aws_rag")
+
         # === STANDARD WORKFLOW PATTERNS ===
 
         # Workflow commands (traditional)
@@ -863,6 +872,15 @@ class CCOMOrchestrator:
         ]):
             return self.run_workflow("rag_quality")
 
+        # AWS RAG - AWS-specific patterns
+        elif any(phrase in command_lower for phrase in [
+            "aws", "bedrock", "titan", "langchain", "mongodb atlas", "mongodb vector",
+            "ecs", "fargate", "lambda", "api gateway", "aws rag", "aws stack",
+            "check aws", "validate bedrock", "audit aws", "aws deployment",
+            "titan embed", "claude bedrock", "aws ai", "aws llm"
+        ]):
+            return self.run_workflow("aws_rag")
+
         # === STANDARD WORKFLOWS ===
 
         # Quality workflows
@@ -889,6 +907,11 @@ class CCOMOrchestrator:
             print("  ccom validate graph database   → Neo4j, ArangoDB security")
             print("  ccom check hybrid search       → Fusion & reranking")
             print("  ccom validate agents            → ReAct, CoT, tool safety")
+            print("\n☁️ AWS-specific workflows:")
+            print("  ccom check aws bedrock         → Bedrock & LangChain patterns")
+            print("  ccom validate mongodb          → MongoDB Atlas Vector Search")
+            print("  ccom audit ecs deployment      → ECS/Lambda/S3 validation")
+            print("  ccom check titan embeddings    → AWS Titan embedding validation")
             print("\n💡 Use natural language - CCOM understands your intent!")
             return True
 

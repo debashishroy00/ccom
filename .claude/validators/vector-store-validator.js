@@ -1,5 +1,5 @@
 // Vector Store Validation for Enterprise RAG Systems
-// Supports: ChromaDB, Weaviate, FAISS, Pinecone, Qdrant, Milvus
+// Supports: ChromaDB, Weaviate, FAISS, Pinecone, Qdrant, Milvus, MongoDB Atlas
 
 const fs = require('fs');
 const path = require('path');
@@ -25,6 +25,17 @@ const VECTOR_CONFIGS = {
   'huggingface': {
     'sentence-transformers/all-MiniLM-L6-v2': 384,
     'sentence-transformers/all-mpnet-base-v2': 768
+  },
+  'aws-bedrock': {
+    'amazon.titan-embed-text-v1': 1536,
+    'amazon.titan-embed-text-v2': 1024,
+    'amazon.titan-embed-image-v1': 1024,
+    'amazon.titan-embed-g1-text-02': 384
+  },
+  'anthropic-bedrock': {
+    'claude-3-sonnet': 1024,
+    'claude-3-haiku': 1024,
+    'claude-3-opus': 1024
   }
 };
 
@@ -66,7 +77,9 @@ class VectorStoreValidator {
       'weaviate.config.js', 'weaviate.yml',
       'pinecone.config.js',
       'qdrant.config.js',
-      'vector.config.js', 'embeddings.config.js'
+      'vector.config.js', 'embeddings.config.js',
+      'mongodb-atlas.config.js', 'atlas-search.js',
+      'mongodb-vector.js', 'atlas-vector-search.js'
     ];
 
     const configs = this.findFiles(configPatterns);
