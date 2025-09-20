@@ -82,15 +82,16 @@
 
 **Response Style**: "🚀 Deploying with enterprise standards..." → "🎉 Your app is live!"
 
-### 🧠 Memory Management
-**Triggers**: "remember", "memory", "status", "features", "what have we built"
+### 🧠 Project Context & Memory Management
+**Triggers**: "context", "project context", "catch me up", "project summary", "what is this project", "bring me up to speed"
 **Actions**:
+- **Project Context**: `ccom context` (CRITICAL for vibe coders - eliminates re-explaining projects)
 - **Remember**: `node .claude/ccom.js remember <name> [description]`
 - **Show Memory**: `node .claude/ccom.js memory`
 - **Status**: `node .claude/ccom.js start` (loads context)
 - **Stats**: `node .claude/ccom.js stats`
 
-**Response Style**: "📊 Project Status" with feature counts and memory usage
+**Response Style**: "🎯 **PROJECT CONTEXT LOADED**" with comprehensive project intelligence
 
 ---
 

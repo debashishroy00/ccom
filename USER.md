@@ -5,9 +5,9 @@
 
 ## 🚀 **What is CCOM?**
 
-CCOM (Claude Code Orchestrator and Memory) is your **personal development assistant** that automatically handles quality checks, security scanning, and deployment workflows through simple natural language commands.
+CCOM (Claude Code Orchestrator and Memory) is **the ultimate arsenal for vibe coders** - it gives Claude Code instant project intelligence with one command, eliminating the need to re-explain your project every session.
 
-**Think of it as your coding safety net** - it catches issues before they become problems and automates all the boring stuff so you can focus on building features.
+**Think of it as your coding safety net with a perfect memory** - it instantly understands your project, catches issues before they become problems, and automates all the boring stuff so you can focus on building features.
 
 ---
 
@@ -29,7 +29,14 @@ ccom --init
 ```
 **Result**: CCOM sets up quality gates, creates agent configs, and initializes memory tracking.
 
-### **Step 3: Try Your First Commands**
+### **Step 3: CRITICAL - Load Project Context**
+```bash
+# This is THE most important command for vibe coders
+ccom context
+```
+**Result**: Claude Code now instantly understands your entire project - no need to explain anything!
+
+### **Step 4: Try Other Commands**
 ```bash
 # Check code quality
 ccom workflow quality
@@ -44,17 +51,46 @@ ccom workflow setup
 ccom complete stack
 ```
 
-### **Step 4: Start Real-Time Monitoring**
+### **Step 5: Start Real-Time Monitoring**
 ```bash
 # Watch files for automatic quality checks
 ccom watch files
 ```
 
-**That's it!** You now have enterprise-grade automation running on your project.
+**That's it!** You now have enterprise-grade automation with instant project intelligence.
 
 ---
 
 ## 📋 **Complete Command Guide**
+
+### 🧠 **Project Context** (THE GAME CHANGER!)
+```bash
+ccom context                 # Instant project intelligence
+ccom project summary         # Alternative syntax
+ccom catch me up             # Natural language
+```
+
+**What you get in seconds:**
+- 📊 **Project Overview**: Type, architecture, lines of code, file count
+- 🏗️ **Tech Stack Detection**: Auto-detects React, Angular, Node.js, Python, PWA
+- 📈 **Health Status**: Quality scores, security status from memory
+- 📝 **Recent Work**: Last 3 features with intelligent summaries
+- 🎯 **Current Focus**: Smart detection of what you're working on
+- 💡 **Smart Suggestions**: Context-aware next actions
+- 📂 **File Status**: Key files and recently modified files
+
+**Example Output:**
+```
+🎯 **PROJECT CONTEXT LOADED**
+📊 **todo** (Node.js App) | 2073 lines | 12 files
+🏗️ **Architecture**: PWA
+📈 **Quality**: A+ (99/100) | **Security**: Bank-level
+🎯 **Current Focus**: Authentication system enhancement
+💡 **Suggested Next Actions**: Add password reset, Run deployment
+✅ **Context loaded! Claude Code now understands your project.**
+```
+
+**🚀 This eliminates re-explaining your project every Claude Code session!**
 
 ### 🔧 **Quality & Code Standards**
 

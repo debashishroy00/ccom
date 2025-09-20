@@ -1,13 +1,22 @@
 # CCOM v0.3 - Claude Code Orchestrator and Memory
 
-🚀 **Complete development automation platform for solo developers**
+🚀 **The Ultimate Arsenal for Vibe Coders**
 
-CCOM transforms Claude Code into a powerful development assistant with real-time file monitoring, automated CI/CD workflows, and enterprise-grade quality gates - all through natural language commands.
+CCOM transforms Claude Code into a powerful development assistant that **instantly understands your project** with one command. No more re-explaining context every session - just load, code, and deploy with confidence.
 
 ## ✨ Key Features
 
+### 🧠 **Instant Project Context** (NEW!)
+```bash
+ccom context     # Claude Code instantly understands your entire project
+```
+- **No more re-explaining** your project every session
+- **Instant intelligence** - tech stack, architecture, health, recent work
+- **Smart suggestions** - context-aware next actions
+- **Perfect for vibe coders** - one command, full understanding
+
 ### 🎯 **Smart Activation**
-- Only commands starting with `"ccom"` activate automation
+- Only commands starting with `ccom` activate automation
 - Regular Claude Code behavior for all other interactions
 - Clear visual distinction between CCOM and standard responses
 
@@ -61,13 +70,30 @@ pip install -e .
 # Setup CCOM in any project
 ccom --init
 
-# Natural language commands
+# FIRST: Load project context (critical for vibe coders!)
+ccom context                 # Claude Code instantly understands everything
+
+# Then use natural language commands
 ccom workflow quality        # Check code quality
 ccom workflow setup          # Create GitHub Actions
 ccom watch files             # Start real-time monitoring
 ```
 
 ## 📋 Complete Command Reference
+
+### 🧠 **Project Context** (MUST-HAVE for Vibe Coders!)
+```bash
+ccom context                 # Load complete project intelligence
+ccom project summary         # Alternative syntax
+ccom catch me up             # Natural language version
+```
+**What you get:**
+- 📊 Project overview (type, architecture, lines of code)
+- 🏗️ Tech stack detection (React, Angular, Node.js, Python, etc.)
+- 📈 Health status (quality scores, security status)
+- 📝 Recent work summary
+- 🎯 Current focus detection
+- 💡 Smart next action suggestions
 
 ### 🔧 **Quality & Testing**
 ```bash
@@ -148,11 +174,17 @@ ccom --status                # Show CCOM status
 ccom --init
 ✅ CCOM v0.3 initialized successfully!
 
-# 2. Create GitHub Actions for automated checks
+# 2. CRITICAL: Load project context (eliminates re-explaining!)
+ccom context
+🎯 **PROJECT CONTEXT LOADED**
+📊 **Todo PWA App** | 2073 lines | Enterprise Auth | A+ Quality
+✅ **Context loaded! Claude Code now understands your project.**
+
+# 3. Create GitHub Actions for automated checks
 ccom workflow setup
 ✅ Created GitHub workflow: .github/workflows/ccom-quality.yml
 
-# 3. Start real-time monitoring
+# 4. Start real-time monitoring
 ccom watch files
 🔍 CCOM FILE MONITOR – Starting real-time quality enforcement...
 
@@ -278,12 +310,14 @@ CCOM maintains `.claude/memory.json`:
 
 ## 🎯 Use Cases
 
-### **Solo Developers**
-- **Automated Quality**: Never forget to run lint/format/tests
-- **Security Safety Net**: Catch vulnerabilities before deployment
-- **One-Command Deploy**: `ccom "workflow deploy"` handles everything
-- **Real-Time Feedback**: File monitoring catches issues as you code
-- **AWS Stack Validation**: Complete RAG stack validation in one command
+### **Solo Developers** (Vibe Coders)
+- **🧠 Instant Context Loading**: `ccom context` eliminates re-explaining projects
+- **🚀 Zero Mental Overhead**: Claude Code understands your project immediately
+- **✅ Automated Quality**: Never forget to run lint/format/tests
+- **🛡️ Security Safety Net**: Catch vulnerabilities before deployment
+- **📦 One-Command Deploy**: `ccom workflow deploy` handles everything
+- **⚡ Real-Time Feedback**: File monitoring catches issues as you code
+- **☁️ AWS Stack Validation**: Complete RAG stack validation in one command
 
 ### **Small Teams**
 - **Consistent Standards**: GitHub Actions enforce quality on every PR
