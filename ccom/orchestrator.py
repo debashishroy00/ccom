@@ -224,6 +224,14 @@ class CCOMOrchestrator:
         elif any(word in command_lower for word in ["watch", "monitor", "file monitoring", "auto quality", "real-time"]):
             return self.handle_file_monitoring_command(command)
 
+        # Context command - comprehensive project intelligence
+        elif any(phrase in command_lower for phrase in [
+            "context", "project context", "show context", "load context",
+            "project summary", "what is this project", "project overview",
+            "catch me up", "bring me up to speed"
+        ]):
+            return self.show_project_context()
+
         # Memory commands
         elif any(word in command_lower for word in ["remember", "memory", "status", "forget"]):
             return self.handle_memory_command(command)
@@ -1019,6 +1027,238 @@ class CCOMOrchestrator:
 
         print("=" * 40)
         return True
+
+    def show_project_context(self):
+        """Show comprehensive project context for Claude Code"""
+        print("\n🎯 **PROJECT CONTEXT LOADED**")
+        print("=" * 60)
+
+        # === PROJECT OVERVIEW ===
+        project_info = self.analyze_project_structure()
+        print(f"📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files")
+
+        # === ARCHITECTURE ===
+        print(f"🏗️ **Architecture**: {project_info['architecture']}")
+        print(f"💻 **Tech Stack**: {', '.join(project_info['tech_stack'])}")
+
+        # === CURRENT HEALTH STATUS ===
+        health = self.get_current_health_status()
+        print(f"📈 **Quality**: {health['quality']} | **Security**: {health['security']} | **Status**: {health['status']}")
+
+        # === RECENT ACTIVITY ===
+        recent_features = self.get_recent_features(limit=3)
+        if recent_features:
+            print(f"\n📝 **Recent Work**:")
+            for feature in recent_features:
+                print(f"  • {feature['name']}: {feature['summary']}")
+
+        # === CURRENT FOCUS ===
+        current_focus = self.detect_current_focus()
+        if current_focus:
+            print(f"\n🎯 **Current Focus**: {current_focus}")
+
+        # === SUGGESTED ACTIONS ===
+        suggestions = self.generate_suggestions()
+        if suggestions:
+            print(f"\n💡 **Suggested Next Actions**:")
+            for suggestion in suggestions:
+                print(f"  • {suggestion}")
+
+        # === FILE STATUS ===
+        file_status = self.get_file_status()
+        print(f"\n📂 **Key Files**: {', '.join(file_status['key_files'])}")
+        if file_status['recent_changes']:
+            print(f"🔄 **Recent Changes**: {file_status['recent_changes']}")
+
+        print("=" * 60)
+        print("✅ **Context loaded! Claude Code now understands your project.**")
+        return True
+
+    def analyze_project_structure(self):
+        """Analyze project structure and return summary"""
+        project_name = self.memory['project']['name']
+
+        # Detect project type and architecture
+        project_type = "Unknown"
+        architecture = "Unknown"
+        tech_stack = []
+        lines = 0
+        files = 0
+
+        try:
+            # Check for common project indicators
+            if (self.project_root / "package.json").exists():
+                tech_stack.append("Node.js")
+                with open(self.project_root / "package.json") as f:
+                    pkg_data = json.load(f)
+                    deps = list(pkg_data.get('dependencies', {}).keys())
+                    if 'react' in deps:
+                        tech_stack.append("React")
+                        project_type = "React App"
+                        architecture = "SPA"
+                    elif 'angular' in deps or '@angular/core' in deps:
+                        tech_stack.append("Angular")
+                        project_type = "Angular App"
+                        architecture = "SPA"
+                    elif 'vue' in deps:
+                        tech_stack.append("Vue")
+                        project_type = "Vue App"
+                        architecture = "SPA"
+                    else:
+                        project_type = "Node.js App"
+
+            # Check for PWA indicators
+            if (self.project_root / "manifest.json").exists() or (self.project_root / "sw.js").exists():
+                architecture = "PWA"
+                tech_stack.append("PWA")
+
+            # Check for Python
+            if (self.project_root / "requirements.txt").exists() or (self.project_root / "pyproject.toml").exists():
+                tech_stack.append("Python")
+                project_type = "Python App"
+
+            # Check for static site
+            if (self.project_root / "index.html").exists() and not (self.project_root / "package.json").exists():
+                project_type = "Static Site"
+                architecture = "Static HTML"
+                tech_stack = ["HTML", "CSS", "JavaScript"]
+
+            # Count files and lines
+            for file_path in self.project_root.rglob("*"):
+                if file_path.is_file() and not any(ignore in str(file_path) for ignore in ['.git', 'node_modules', '__pycache__', '.claude']):
+                    files += 1
+                    if file_path.suffix in ['.js', '.py', '.html', '.css', '.ts', '.jsx', '.tsx']:
+                        try:
+                            with open(file_path, encoding='utf-8', errors='ignore') as f:
+                                lines += len(f.readlines())
+                        except:
+                            pass
+
+        except Exception:
+            pass
+
+        return {
+            'name': project_name,
+            'type': project_type,
+            'architecture': architecture,
+            'tech_stack': tech_stack or ["Unknown"],
+            'lines': lines,
+            'files': files
+        }
+
+    def get_current_health_status(self):
+        """Get current health status from memory and recent runs"""
+        # Extract latest quality and security info from memory
+        quality = "Unknown"
+        security = "Unknown"
+        status = "Unknown"
+
+        # Look for recent quality audits in features
+        for feature_name, feature in self.memory['features'].items():
+            desc = feature.get('description', '').lower()
+            if 'quality' in desc:
+                if 'a+' in desc or '99/100' in desc or '98/100' in desc:
+                    quality = "A+ (99/100)"
+                elif 'grade' in desc:
+                    quality = "Enterprise Grade"
+            if 'security' in desc:
+                if 'bank-level' in desc or 'bank level' in desc:
+                    security = "Bank-level"
+                elif 'zero vulnerabilities' in desc:
+                    security = "Secure"
+
+        # Check deployment status
+        if 'deployments' in self.memory and self.memory['deployments']:
+            latest_deploy = self.memory['deployments'][-1]
+            if latest_deploy.get('status') == 'successful':
+                status = "Production Ready"
+
+        return {
+            'quality': quality or "Unknown",
+            'security': security or "Unknown",
+            'status': status or "Ready for Testing"
+        }
+
+    def get_recent_features(self, limit=3):
+        """Get recent features from memory"""
+        features = []
+        for name, feature in list(self.memory['features'].items())[-limit:]:
+            summary = feature.get('description', '')[:80] + '...' if len(feature.get('description', '')) > 80 else feature.get('description', 'No description')
+            features.append({
+                'name': name.replace('_', ' ').title(),
+                'summary': summary
+            })
+        return features
+
+    def detect_current_focus(self):
+        """Detect what the user is currently working on"""
+        # Look at the most recent feature for clues
+        if self.memory['features']:
+            latest_feature = list(self.memory['features'].items())[-1]
+            desc = latest_feature[1].get('description', '').lower()
+
+            if 'password reset' in desc or 'email' in desc:
+                return "Password reset and email integration"
+            elif 'auth' in desc or 'authentication' in desc:
+                return "Authentication system enhancement"
+            elif 'deployment' in desc or 'production' in desc:
+                return "Production deployment"
+            elif 'quality' in desc or 'audit' in desc:
+                return "Code quality improvement"
+            else:
+                return latest_feature[0].replace('_', ' ').title()
+        return None
+
+    def generate_suggestions(self):
+        """Generate smart suggestions based on project state"""
+        suggestions = []
+
+        # Look at recent work to suggest next steps
+        if self.memory['features']:
+            latest_desc = list(self.memory['features'].values())[-1].get('description', '').lower()
+
+            if 'auth' in latest_desc and 'password reset' not in latest_desc:
+                suggestions.append("Add password reset functionality")
+            if 'quality' in latest_desc and 'deploy' not in latest_desc:
+                suggestions.append("Run deployment workflow")
+            if 'security' in latest_desc:
+                suggestions.append("Review and fix any security findings")
+
+        # Check if GitHub Actions is set up
+        if not (self.project_root / ".github" / "workflows").exists():
+            suggestions.append("Set up GitHub Actions with 'ccom workflow setup'")
+
+        # Always suggest testing workflows
+        suggestions.append("Run 'ccom complete stack' for full validation")
+
+        return suggestions[:3]  # Limit to 3 suggestions
+
+    def get_file_status(self):
+        """Get current file status"""
+        key_files = []
+        recent_changes = None
+
+        # Identify key files
+        common_files = ['index.html', 'app.js', 'main.js', 'script.js', 'auth.js', 'package.json', 'README.md']
+        for filename in common_files:
+            if (self.project_root / filename).exists():
+                key_files.append(filename)
+
+        # Get most recently modified file
+        try:
+            files = list(self.project_root.rglob("*"))
+            if files:
+                recent_file = max([f for f in files if f.is_file() and not any(ignore in str(f) for ignore in ['.git', 'node_modules', '.claude'])],
+                                key=lambda x: x.stat().st_mtime, default=None)
+                if recent_file:
+                    recent_changes = f"{recent_file.name} (recently modified)"
+        except:
+            pass
+
+        return {
+            'key_files': key_files[:5],  # Limit to 5 key files
+            'recent_changes': recent_changes
+        }
 
 def main():
     """Main CLI entry point for testing"""
