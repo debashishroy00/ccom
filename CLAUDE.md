@@ -107,7 +107,21 @@ When generating or modifying code through CCOM, enforce these principles:
 - **YAGNI Analysis**: Detect unused code and over-engineering patterns
 - **DRY Detection**: Find duplicate code blocks using jscpd tool
 - **SOLID Review**: Analyze class responsibilities and dependencies
+- **Smart Filtering**: Auto-excludes node_modules, dist, build, .git directories
+- **Performance Limits**: Max 100 files analyzed (samples intelligently for large repos)
+- **Targeted Analysis**: Can analyze specific files or directories
 - Generate actionable refactoring recommendations
+
+**Targeting Examples**:
+- "ccom validate principles" - Analyze entire project (up to 100 files)
+- "ccom check complexity in src/" - Analyze only src directory
+- "ccom validate principles auth.js" - Analyze specific file
+- "ccom check dry in components/" - Analyze specific directory for duplicates
+
+**Performance Safeguards**:
+- Automatically samples files if >100 found (prioritizes main code over tests)
+- Excludes build artifacts, dependencies, and generated files
+- Early exit strategies for massive codebases
 
 **Response Style**: "📐 **PRINCIPLES VALIDATION** – Analyzing KISS, YAGNI, DRY, SOLID..." → "📊 Principles Score: 86/100 (B+)"
 

@@ -337,7 +337,56 @@ class PythonValidator(ToolBasedValidator):
 class PrinciplesValidator(ToolBasedValidator):
     """Software Engineering Principles validation (KISS, YAGNI, DRY, SOLID)"""
 
-    def validate_all_principles(self) -> Dict[str, ValidationResult]:
+    def __init__(self, project_root: Path, tools_manager=None, target_files=None, max_files=100):
+        super().__init__(project_root, tools_manager)
+        self.target_files = target_files  # Specific files to analyze
+        self.max_files = max_files  # Performance limit
+        self.exclusion_patterns = [
+            'node_modules/**',
+            'dist/**',
+            'build/**',
+            '.git/**',
+            'coverage/**',
+            'vendor/**',
+            '*.min.js',
+            '*.bundle.js',
+            'lib/**',
+            'libs/**'
+        ]
+
+    def get_target_files(self, extensions=['*.js', '*.ts', '*.jsx', '*.tsx', '*.py']):
+        """Get files to analyze with smart filtering and performance limits"""
+        if self.target_files:
+            # Analyze specific files only
+            return [Path(f) for f in self.target_files if Path(f).exists()]
+
+        files = []
+        for ext in extensions:
+            found_files = list(self.project_root.glob(f"**/{ext}"))
+            files.extend(found_files)
+
+        # Filter out excluded patterns
+        filtered_files = []
+        for file_path in files:
+            if not any(file_path.match(pattern) for pattern in self.exclusion_patterns):
+                filtered_files.append(file_path)
+
+        # Performance limit - sample files if too many
+        if len(filtered_files) > self.max_files:
+            # Prioritize main source files over test files
+            main_files = [f for f in filtered_files if not any(test in str(f).lower() for test in ['test', 'spec', '__test__'])]
+            test_files = [f for f in filtered_files if any(test in str(f).lower() for test in ['test', 'spec', '__test__'])]
+
+            # Take most main files, some test files
+            main_count = min(int(self.max_files * 0.8), len(main_files))
+            test_count = min(self.max_files - main_count, len(test_files))
+
+            filtered_files = main_files[:main_count] + test_files[:test_count]
+            print(f"⚡ Performance limit: Analyzing {len(filtered_files)} files (sampled from {len(files)} total)")
+
+        return filtered_files
+
+    def validate_all_principles(self, target_files=None) -> Dict[str, ValidationResult]:
         """Run all software engineering principles validation"""
         results = {
             'kiss': self.validate_kiss(),
@@ -585,10 +634,11 @@ class PrinciplesValidator(ToolBasedValidator):
         """Analyze code structure for KISS violations"""
         issues = []
 
-        # Analyze JavaScript/TypeScript files
-        for file_path in self.project_root.glob("**/*.js"):
-            if "node_modules" in str(file_path):
-                continue
+        # Get target files with smart filtering
+        target_files = self.get_target_files(['*.js', '*.ts', '*.jsx', '*.tsx'])
+        print(f"🔍 Analyzing {len(target_files)} JavaScript/TypeScript files for KISS violations...")
+
+        for file_path in target_files[:50]:  # Additional safety limit
 
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -632,10 +682,10 @@ class PrinciplesValidator(ToolBasedValidator):
         """Detect over-engineering patterns"""
         issues = []
 
-        # Look for files with excessive abstraction layers
-        for file_path in self.project_root.glob("**/*.js"):
-            if "node_modules" in str(file_path):
-                continue
+        # Get target files with smart filtering
+        target_files = self.get_target_files(['*.js', '*.ts', '*.jsx', '*.tsx'])
+
+        for file_path in target_files[:30]:  # Limit for performance
 
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -671,9 +721,10 @@ class PrinciplesValidator(ToolBasedValidator):
         issues = []
         string_counts = {}
 
-        for file_path in self.project_root.glob("**/*.js"):
-            if "node_modules" in str(file_path):
-                continue
+        # Get target files with smart filtering
+        target_files = self.get_target_files(['*.js', '*.ts', '*.jsx', '*.tsx'])
+
+        for file_path in target_files[:40]:  # Limit for performance
 
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -705,9 +756,10 @@ class PrinciplesValidator(ToolBasedValidator):
         """Analyze code for SOLID principle violations"""
         issues = []
 
-        for file_path in self.project_root.glob("**/*.js"):
-            if "node_modules" in str(file_path):
-                continue
+        # Get target files with smart filtering
+        target_files = self.get_target_files(['*.js', '*.ts', '*.jsx', '*.tsx'])
+
+        for file_path in target_files[:25]:  # Limit for performance
 
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:

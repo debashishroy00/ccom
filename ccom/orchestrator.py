@@ -424,7 +424,9 @@ class CCOMOrchestrator:
                 "best practices",
             ]
         ):
-            return self.validate_principles()
+            # Extract target files if specified
+            target_files = self._extract_target_files(command)
+            return self.validate_principles(target_files=target_files)
 
         # === STANDARD WORKFLOW PATTERNS ===
 
@@ -609,9 +611,36 @@ class CCOMOrchestrator:
             print(f"❌ No implementation available for {agent_name}")
             return False
 
-    def validate_principles(self):
+    def _extract_target_files(self, command):
+        """Extract target files from command if specified"""
+        import re
+
+        # Look for file patterns in command
+        file_patterns = re.findall(r'([a-zA-Z0-9/_.-]+\.(js|ts|jsx|tsx|py))', command)
+        if file_patterns:
+            return [pattern[0] for pattern in file_patterns]
+
+        # Look for directory patterns
+        dir_patterns = re.findall(r'(src/|components/|utils/|lib/|[a-zA-Z0-9_-]+/)', command)
+        if dir_patterns:
+            target_files = []
+            for dir_pattern in dir_patterns:
+                dir_path = self.project_root / dir_pattern.rstrip('/')
+                if dir_path.exists() and dir_path.is_dir():
+                    target_files.extend(dir_path.glob('**/*.js'))
+                    target_files.extend(dir_path.glob('**/*.ts'))
+                    target_files.extend(dir_path.glob('**/*.jsx'))
+                    target_files.extend(dir_path.glob('**/*.tsx'))
+            return [str(f) for f in target_files]
+
+        return None
+
+    def validate_principles(self, target_files=None):
         """CCOM Native Software Engineering Principles Validation"""
-        print("📐 **CCOM PRINCIPLES VALIDATION** – Analyzing code against KISS, YAGNI, DRY, SOLID...")
+        if target_files:
+            print(f"📐 **CCOM PRINCIPLES VALIDATION** – Analyzing {len(target_files)} specific files against KISS, YAGNI, DRY, SOLID...")
+        else:
+            print("📐 **CCOM PRINCIPLES VALIDATION** – Analyzing code against KISS, YAGNI, DRY, SOLID...")
 
         try:
             from ccom.validators import PrinciplesValidator
@@ -619,9 +648,13 @@ class CCOMOrchestrator:
             # Ensure complexity analysis tools are available
             self.ensure_tools_installed(["complexity-report", "jscpd", "radon"])
 
-            # Create principles validator
+            # Create principles validator with optional target files
+            max_files = 50 if target_files else 100  # Smaller limit for targeted analysis
             principles_validator = PrinciplesValidator(
-                self.project_root, self.get_tools_manager()
+                self.project_root,
+                self.get_tools_manager(),
+                target_files=target_files,
+                max_files=max_files
             )
 
             # Run all principles validation
