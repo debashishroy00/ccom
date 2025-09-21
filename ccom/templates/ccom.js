@@ -4,7 +4,7 @@ const path = require("path");
 
 class CCOM {
   constructor() {
-    this.memoryPath = path.join(__dirname, "memory.json");
+    this.memoryPath = path.join(process.cwd(), ".claude", "memory.json");
     this.memory = this.loadMemory();
     this.setupHooks();
     this.autoDisplayMemory(); // Auto-display on load
@@ -246,6 +246,21 @@ if (require.main === module) {
         ccom.rememberFeature(name);
       } else {
         console.log("Usage: node ccom.js remember <feature-name>");
+      }
+      break;
+    case "check":
+      const checkName = args.slice(1).join(" ");
+      if (checkName) {
+        const duplicate = ccom.checkDuplicate(checkName);
+        if (duplicate) {
+          console.log(`EXISTS: "${duplicate}" already exists`);
+          process.exit(1);
+        } else {
+          console.log(`CLEAR: No duplicate found for "${checkName}"`);
+          process.exit(0);
+        }
+      } else {
+        console.log("Usage: node ccom.js check <feature-name>");
       }
       break;
     default:

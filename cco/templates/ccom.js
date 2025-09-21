@@ -4,7 +4,7 @@ const path = require("path");
 
 class CCOM {
   constructor() {
-    this.memoryPath = path.join(__dirname, "memory.json");
+    this.memoryPath = path.join(process.cwd(), ".claude", "memory.json");
     this.archivePath = path.join(__dirname, "archive");
     this.memory = this.loadMemory();
     this.setupHooks();
@@ -473,10 +473,9 @@ if (require.main === module) {
       ccom.clearMemory();
       break;
     case "remember":
-      const name = args[1];
-      const description = args.slice(2).join(" ");
+      const name = args.slice(1).join(" ");
       if (name) {
-        ccom.rememberFeature(name, { description });
+        ccom.rememberFeature(name);
       } else {
         console.log("Usage: node ccom.js remember <name> [description]");
       }
