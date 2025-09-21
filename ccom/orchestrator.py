@@ -137,389 +137,151 @@ class CCOMOrchestrator:
                     return True
             return False
 
-    def handle_natural_language(self, command):
-        """Parse natural language commands and execute appropriate actions"""
-        command_lower = command.lower().strip()
+    def _matches_patterns(self, command_lower, patterns):
+        """Check if command matches any of the given patterns"""
+        return any(phrase in command_lower for phrase in patterns)
 
-        print(f"🎯 Processing command: '{command}'")
-
-        # === RAG-SPECIFIC NATURAL LANGUAGE PATTERNS ===
-
-        # Enterprise RAG validation
-        if any(
-            phrase in command_lower
-            for phrase in [
-                "enterprise rag",
-                "complete rag",
-                "full rag",
-                "rag system",
-                "rag validation",
-                "validate my rag",
-                "check my rag",
-                "audit my rag",
-                "enterprise ai",
-                "validate rag system",
-                "check rag system",
-                "audit rag system",
+    def _match_rag_patterns(self, command_lower):
+        """Match RAG-specific command patterns"""
+        rag_patterns = {
+            "enterprise_rag": [
+                "enterprise rag", "complete rag", "full rag", "rag system",
+                "rag validation", "validate my rag", "check my rag", "audit my rag",
+                "enterprise ai", "validate rag system", "check rag system", "audit rag system"
+            ],
+            "vector_validation": [
+                "vector", "embedding", "chromadb", "weaviate", "faiss", "pinecone",
+                "qdrant", "check vectors", "validate embeddings", "vector store",
+                "semantic search", "validate vectors", "check embedding", "vector validation"
+            ],
+            "graph_security": [
+                "graph", "neo4j", "cypher", "arangodb", "knowledge graph",
+                "graph database", "check graph", "graph security", "validate graph",
+                "graph patterns", "validate neo4j", "check cypher", "knowledge graph security"
+            ],
+            "hybrid_rag": [
+                "hybrid", "fusion", "rerank", "multi", "combine", "blend",
+                "vector and keyword", "dense and sparse", "hybrid search",
+                "fusion search", "check hybrid", "validate fusion", "reranking validation"
+            ],
+            "agentic_rag": [
+                "agent", "agentic", "react", "chain of thought", "cot", "reasoning",
+                "tool", "agent safety", "agent validation", "reasoning patterns",
+                "validate agents", "check reasoning", "agent security", "tool safety"
+            ],
+            "rag_quality": [
+                "rag quality", "rag patterns", "ai quality", "llm quality",
+                "retrieval quality", "validate ai", "check llm", "ai validation", "llm validation"
+            ],
+            "aws_rag": [
+                "aws", "bedrock", "titan", "langchain", "mongodb atlas", "mongodb vector",
+                "ecs", "fargate", "lambda", "api gateway", "aws rag", "aws stack",
+                "check aws", "validate bedrock", "audit aws", "aws deployment",
+                "titan embed", "claude bedrock", "aws ai", "aws llm"
+            ],
+            "angular_validation": [
+                "angular", "rxjs", "observable", "subscription", "memory leak",
+                "change detection", "component", "service", "angular performance",
+                "check angular", "validate angular", "frontend", "typescript patterns"
+            ],
+            "cost_optimization": [
+                "cost", "expensive", "budget", "billing", "optimize cost", "save money",
+                "cost optimization", "aws cost", "bedrock cost", "check cost",
+                "reduce cost", "cost tracking", "spending", "price optimization"
+            ],
+            "s3_security": [
+                "s3 security", "presigned url", "multipart upload", "s3 cors",
+                "bucket security", "s3 encryption", "storage security", "file upload",
+                "check s3", "validate s3", "s3 policy", "s3 access"
+            ],
+            "performance_optimization": [
+                "performance", "latency", "speed", "slow", "fast", "optimize performance",
+                "caching", "monitoring", "throughput", "response time",
+                "performance check", "check performance", "performance audit", "optimize speed"
+            ],
+            "complete_stack": [
+                "complete stack", "full stack", "entire stack", "everything",
+                "all checks", "complete validation", "full validation",
+                "production ready", "deploy ready", "check everything",
+                "validate all", "complete audit", "comprehensive check"
             ]
-        ):
-            return self.run_workflow("enterprise_rag")
+        }
 
-        # Vector store validation
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "vector",
-                "embedding",
-                "chromadb",
-                "weaviate",
-                "faiss",
-                "pinecone",
-                "qdrant",
-                "check vectors",
-                "validate embeddings",
-                "vector store",
-                "semantic search",
-                "validate vectors",
-                "check embedding",
-                "vector validation",
-            ]
-        ):
-            return self.run_workflow("vector_validation")
+        for workflow, patterns in rag_patterns.items():
+            if self._matches_patterns(command_lower, patterns):
+                return self.run_workflow(workflow)
+        return None
 
-        # Graph database validation
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "graph",
-                "neo4j",
-                "cypher",
-                "arangodb",
-                "knowledge graph",
-                "graph database",
-                "check graph",
-                "graph security",
-                "validate graph",
-                "graph patterns",
-                "validate neo4j",
-                "check cypher",
-                "knowledge graph security",
-            ]
-        ):
-            return self.run_workflow("graph_security")
+    def _match_standard_patterns(self, command_lower, original_command):
+        """Match standard workflow command patterns"""
+        if self._matches_patterns(command_lower, ["workflow", "pipeline", "ci", "automation"]):
+            return self.handle_workflow_command(original_command)
 
-        # Hybrid RAG validation
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "hybrid",
-                "fusion",
-                "rerank",
-                "multi",
-                "combine",
-                "blend",
-                "vector and keyword",
-                "dense and sparse",
-                "hybrid search",
-                "fusion search",
-                "check hybrid",
-                "validate fusion",
-                "reranking validation",
-            ]
-        ):
-            return self.run_workflow("hybrid_rag")
-
-        # Agentic RAG validation
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "agent",
-                "agentic",
-                "react",
-                "chain of thought",
-                "cot",
-                "reasoning",
-                "tool",
-                "agent safety",
-                "agent validation",
-                "reasoning patterns",
-                "validate agents",
-                "check reasoning",
-                "agent security",
-                "tool safety",
-            ]
-        ):
-            return self.run_workflow("agentic_rag")
-
-        # RAG Quality validation
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "rag quality",
-                "rag patterns",
-                "ai quality",
-                "llm quality",
-                "retrieval quality",
-                "validate ai",
-                "check llm",
-                "ai validation",
-                "llm validation",
-            ]
-        ):
-            return self.run_workflow("rag_quality")
-
-        # AWS RAG - AWS-specific patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "aws",
-                "bedrock",
-                "titan",
-                "langchain",
-                "mongodb atlas",
-                "mongodb vector",
-                "ecs",
-                "fargate",
-                "lambda",
-                "api gateway",
-                "aws rag",
-                "aws stack",
-                "check aws",
-                "validate bedrock",
-                "audit aws",
-                "aws deployment",
-                "titan embed",
-                "claude bedrock",
-                "aws ai",
-                "aws llm",
-            ]
-        ):
-            return self.run_workflow("aws_rag")
-
-        # Angular validation - Frontend patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "angular",
-                "rxjs",
-                "observable",
-                "subscription",
-                "memory leak",
-                "change detection",
-                "component",
-                "service",
-                "angular performance",
-                "check angular",
-                "validate angular",
-                "frontend",
-                "typescript patterns",
-            ]
-        ):
-            return self.run_workflow("angular_validation")
-
-        # Cost optimization - AWS cost patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "cost",
-                "expensive",
-                "budget",
-                "billing",
-                "optimize cost",
-                "save money",
-                "cost optimization",
-                "aws cost",
-                "bedrock cost",
-                "check cost",
-                "reduce cost",
-                "cost tracking",
-                "spending",
-                "price optimization",
-            ]
-        ):
-            return self.run_workflow("cost_optimization")
-
-        # S3 security - Storage security patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "s3 security",
-                "presigned url",
-                "multipart upload",
-                "s3 cors",
-                "bucket security",
-                "s3 encryption",
-                "storage security",
-                "file upload",
-                "check s3",
-                "validate s3",
-                "s3 policy",
-                "s3 access",
-            ]
-        ):
-            return self.run_workflow("s3_security")
-
-        # Performance optimization - Performance patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "performance",
-                "latency",
-                "speed",
-                "slow",
-                "fast",
-                "optimize performance",
-                "caching",
-                "monitoring",
-                "throughput",
-                "response time",
-                "performance check",
-                "check performance",
-                "performance audit",
-                "optimize speed",
-            ]
-        ):
-            return self.run_workflow("performance_optimization")
-
-        # Complete stack validation - Full stack patterns
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "complete stack",
-                "full stack",
-                "entire stack",
-                "everything",
-                "all checks",
-                "complete validation",
-                "full validation",
-                "production ready",
-                "deploy ready",
-                "check everything",
-                "validate all",
-                "complete audit",
-                "comprehensive check",
-            ]
-        ):
-            return self.run_workflow("complete_stack")
-
-        # === SOFTWARE ENGINEERING PRINCIPLES PATTERNS ===
-
-        # Principles validation - KISS, YAGNI, DRY, SOLID
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "principles",
-                "software engineering",
-                "kiss",
-                "yagni",
-                "dry",
-                "solid",
-                "check principles",
-                "validate principles",
-                "simplify",
-                "duplicate",
-                "complexity",
-                "refactor",
-                "clean code",
-                "best practices",
-            ]
-        ):
-            # Extract target files if specified
-            target_files = self._extract_target_files(command)
-            return self.validate_principles(target_files=target_files)
-
-        # === STANDARD WORKFLOW PATTERNS ===
-
-        # Workflow commands (traditional)
-        elif any(
-            word in command_lower
-            for word in ["workflow", "pipeline", "ci", "automation"]
-        ):
-            return self.handle_workflow_command(command)
-
-        # Build commands
-        elif any(
-            word in command_lower
-            for word in [
-                "build",
-                "compile",
-                "package",
-                "prepare release",
-                "production build",
-            ]
-        ):
-            # Extract feature name
-            feature_name = command.replace("ccom", "").replace("build", "").strip()
-
-            # Check memory FIRST
+        if self._matches_patterns(command_lower, ["build", "compile", "package", "prepare release", "production build"]):
+            feature_name = original_command.replace("ccom", "").replace("build", "").strip()
             if self.check_memory_for_duplicate(feature_name):
                 print(f"⚠️ DUPLICATE DETECTED: Feature '{feature_name}' already exists!")
                 print("Use 'ccom enhance' to improve existing feature instead.")
                 return False
-
             return self.build_sequence()
 
-        # Deploy commands
-        elif any(
-            word in command_lower for word in ["deploy", "ship", "go live", "launch"]
-        ):
+        if self._matches_patterns(command_lower, ["deploy", "ship", "go live", "launch"]):
             return self.deploy_sequence()
 
-        # Quality commands
-        elif any(word in command_lower for word in ["quality", "clean", "fix", "lint"]):
+        if self._matches_patterns(command_lower, ["quality", "clean", "fix", "lint"]):
             return self.quality_sequence()
 
-        # Security commands
-        elif any(
-            word in command_lower for word in ["secure", "safety", "protect", "scan"]
-        ):
+        if self._matches_patterns(command_lower, ["secure", "safety", "protect", "scan"]):
             return self.security_sequence()
 
-        # File monitoring commands
-        elif any(
-            word in command_lower
-            for word in [
-                "watch",
-                "monitor",
-                "file monitoring",
-                "auto quality",
-                "real-time",
-            ]
-        ):
-            return self.handle_file_monitoring_command(command)
+        if self._matches_patterns(command_lower, ["watch", "monitor", "file monitoring", "auto quality", "real-time"]):
+            return self.handle_file_monitoring_command(original_command)
 
-        # Context command - comprehensive project intelligence
-        elif any(
-            phrase in command_lower
-            for phrase in [
-                "context",
-                "project context",
-                "show context",
-                "load context",
-                "project summary",
-                "what is this project",
-                "project overview",
-                "catch me up",
-                "bring me up to speed",
-            ]
-        ):
+        if self._matches_patterns(command_lower, [
+            "context", "project context", "show context", "load context", "project summary",
+            "what is this project", "project overview", "catch me up", "bring me up to speed"
+        ]):
             return self.show_project_context()
 
-        # Memory commands
-        elif any(
-            word in command_lower for word in ["remember", "memory", "status", "forget"]
-        ):
-            return self.handle_memory_command(command)
+        if self._matches_patterns(command_lower, ["remember", "memory", "status", "forget"]):
+            return self.handle_memory_command(original_command)
 
-        # Init commands
-        elif any(word in command_lower for word in ["init", "initialize", "setup"]):
+        if self._matches_patterns(command_lower, ["init", "initialize", "setup"]):
             return self.handle_init_command()
 
-        else:
-            print(
-                f"❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"
-            )
-            return False
+        return None
+
+    def _match_command_pattern(self, command_lower, original_command):
+        """Match command patterns to workflows"""
+        # RAG-specific patterns
+        rag_workflow = self._match_rag_patterns(command_lower)
+        if rag_workflow:
+            return rag_workflow
+
+        # Software engineering principles
+        if self._matches_patterns(command_lower, [
+            "principles", "software engineering", "kiss", "yagni", "dry", "solid",
+            "check principles", "validate principles", "simplify", "duplicate",
+            "complexity", "refactor", "clean code", "best practices"
+        ]):
+            target_files = self._extract_target_files(original_command)
+            return self.validate_principles(target_files=target_files)
+
+        # Standard workflow patterns
+        return self._match_standard_patterns(command_lower, original_command)
+
+    def handle_natural_language(self, command):
+        """Parse natural language commands and execute appropriate actions"""
+        command_lower = command.lower().strip()
+        print(f"🎯 Processing command: '{command}'")
+
+        # Use pattern matcher to find the appropriate workflow
+        workflow = self._match_command_pattern(command_lower, command)
+        if workflow is not None:
+            return workflow
+
+        print("❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands")
+        return False
 
     def deploy_sequence(self):
         """Full enterprise deployment sequence"""

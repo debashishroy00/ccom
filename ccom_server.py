@@ -322,39 +322,38 @@ def health_check():
     }
 
 
-@app.post("/ccom", response_model=CCOMResponse)
-def execute_ccom(cmd: CCOMCommand):
-    """Execute CCOM command remotely"""
+def _validate_command_security(cmd: CCOMCommand):
+    """Validate command security requirements"""
+    if not is_allowed_command(cmd.command):
+        raise HTTPException(
+            status_code=400, detail=f"Command not allowed: {cmd.command}"
+        )
+
+    project_path = cmd.project_path or "."
+
+    if cmd.project_path and not is_trusted_path(project_path):
+        raise HTTPException(
+            status_code=400, detail="Unknown or untrusted project path"
+        )
+
+    if not os.path.exists(project_path):
+        raise HTTPException(
+            status_code=400, detail=f"Project path does not exist: {project_path}"
+        )
+
+    return project_path
+
+
+def _execute_ccom_subprocess(project_path: str, command: str):
+    """Execute CCOM command in subprocess"""
+    import sys
+
+    original_cwd = os.getcwd()
+    os.chdir(project_path)
+
     try:
-        # Security: Validate command against allowlist
-        if not is_allowed_command(cmd.command):
-            raise HTTPException(
-                status_code=400, detail=f"Command not allowed: {cmd.command}"
-            )
-
-        # Default to current directory if no project path specified
-        project_path = cmd.project_path or "."
-
-        # Security: Validate project path is trusted
-        if cmd.project_path and not is_trusted_path(project_path):
-            raise HTTPException(
-                status_code=400, detail="Unknown or untrusted project path"
-            )
-
-        # Validate project path exists
-        if not os.path.exists(project_path):
-            raise HTTPException(
-                status_code=400, detail=f"Project path does not exist: {project_path}"
-            )
-
-        # Execute CCOM command using Popen for better output capture
-        import sys
-
-        original_cwd = os.getcwd()
-        os.chdir(project_path)
-
         proc = subprocess.Popen(
-            [sys.executable, "-m", "ccom.cli", cmd.command],
+            [sys.executable, "-m", "ccom.cli", command],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -364,59 +363,79 @@ def execute_ccom(cmd: CCOMCommand):
         )
 
         stdout, stderr = proc.communicate(timeout=60)
-        os.chdir(original_cwd)
 
-        result = subprocess.CompletedProcess(
+        return subprocess.CompletedProcess(
             args=None, returncode=proc.returncode, stdout=stdout, stderr=stderr
         )
+    finally:
+        os.chdir(original_cwd)
 
-        # Get project info if available
-        project_info = None
-        try:
-            memory_file = Path(project_path) / ".claude" / "memory.json"
-            if memory_file.exists():
-                with open(memory_file) as f:
-                    memory_data = json.load(f)
-                    project_info = {
-                        "name": memory_data.get("project", {}).get("name", "Unknown"),
-                        "features": len(memory_data.get("features", {})),
-                        "version": memory_data.get("metadata", {}).get(
-                            "version", "Unknown"
-                        ),
-                    }
-        except:
-            pass
 
-        # CCOM outputs to both stdout and stderr - combine and clean
-        output_lines = []
+def _load_project_info(project_path: str):
+    """Load project information from memory file"""
+    try:
+        memory_file = Path(project_path) / ".claude" / "memory.json"
+        if memory_file.exists():
+            with open(memory_file) as f:
+                memory_data = json.load(f)
+                return {
+                    "name": memory_data.get("project", {}).get("name", "Unknown"),
+                    "features": len(memory_data.get("features", {})),
+                    "version": memory_data.get("metadata", {}).get("version", "Unknown"),
+                }
+    except:
+        pass
+    return None
 
-        # Add stdout if present
-        if result.stdout and result.stdout.strip():
-            output_lines.append(result.stdout.strip())
 
-        # Add stderr but filter out warnings
-        if result.stderr and result.stderr.strip():
-            stderr_lines = result.stderr.split("\n")
-            clean_stderr = []
-            for line in stderr_lines:
-                if (
-                    "RuntimeWarning" not in line
-                    and "frozen runpy" not in line
-                    and "INFO:" not in line
-                    and line.strip()
-                ):
-                    clean_stderr.append(line)
-            if clean_stderr:
-                output_lines.extend(clean_stderr)
+def _clean_output(result):
+    """Clean and combine stdout/stderr output"""
+    output_lines = []
 
-        full_output = "\n".join(output_lines).strip()
+    if result.stdout and result.stdout.strip():
+        output_lines.append(result.stdout.strip())
 
-        # If we don't get output but have project info, create a summary
+    if result.stderr and result.stderr.strip():
+        stderr_lines = result.stderr.split("\n")
+        clean_stderr = [
+            line for line in stderr_lines
+            if ("RuntimeWarning" not in line and "frozen runpy" not in line
+                and "INFO:" not in line and line.strip())
+        ]
+        if clean_stderr:
+            output_lines.extend(clean_stderr)
+
+    return "\n".join(output_lines).strip()
+
+
+def _create_fallback_output(project_info):
+    """Create fallback output when no command output available"""
+    output = f"✅ Project: {project_info['name']}\n"
+    output += f"📊 Features: {project_info['features']}\n"
+    output += f"🔧 Version: {project_info['version']}\n"
+    output += "\nCommand executed successfully. Check .claude/memory.json for details."
+    return output
+
+
+@app.post("/ccom", response_model=CCOMResponse)
+def execute_ccom(cmd: CCOMCommand):
+    """Execute CCOM command remotely"""
+    try:
+        # Validate security requirements
+        project_path = _validate_command_security(cmd)
+
+        # Execute command in subprocess
+        result = _execute_ccom_subprocess(project_path, cmd.command)
+
+        # Load project information
+        project_info = _load_project_info(project_path)
+
+        # Clean and combine output
+        full_output = _clean_output(result)
+
+        # Create fallback output if needed
         if not full_output and project_info and result.returncode == 0:
-            full_output = f"✅ Project: {project_info['name']}\n"
-            full_output += f"📊 Features: {project_info['features']}\n"
-            full_output += f"🔧 Version: {project_info['version']}\n"
-            full_output += "\nCommand executed successfully. Check .claude/memory.json for details."
+            full_output = _create_fallback_output(project_info)
 
         return CCOMResponse(
             success=result.returncode == 0,
