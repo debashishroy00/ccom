@@ -1,0 +1,31 @@
+{
+  "name": "ccom",
+  "version": "1.0.0",
+  "description": "Project managed by CCOM",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "complexity-report": "^2.0.0-alpha"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{py}": [
+      "black",
+      "pylint"
+    ]
+  }
+}

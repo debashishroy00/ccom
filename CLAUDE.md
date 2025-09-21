@@ -6,6 +6,43 @@
 - **Claude Code**: Context, templates, interactive assistance, agent specifications
 - **CCOM**: Native execution, orchestration, automation, enterprise workflows
 
+## Software Engineering Principles Enforcement
+
+When generating or modifying code through CCOM, enforce these principles:
+
+### KISS (Keep It Simple)
+- **Complexity Limit**: Cyclomatic complexity < 10
+- **Function Length**: Max 50 lines (prefer 20-30)
+- **Nesting Depth**: Max 4 levels
+- **Early Returns**: Use guard clauses
+- **Clear Names**: No clever abbreviations
+
+### YAGNI (You Aren't Gonna Need It)
+- **No Speculative Features**: Only implement what's requested
+- **Remove Dead Code**: Delete commented-out code
+- **Avoid Over-Engineering**: No unnecessary abstractions
+- **Incremental Development**: Build features as needed
+
+### DRY (Don't Repeat Yourself)
+- **Rule of Three**: Extract after 3rd duplication
+- **Shared Constants**: Centralize magic numbers/strings
+- **Utility Functions**: Create helpers for common operations
+- **Configuration**: Externalize repeated settings
+
+### SOLID Principles
+- **Single Responsibility**: One reason to change per class
+- **Open/Closed**: Extend via composition, not modification
+- **Liskov Substitution**: Subclasses must be substitutable
+- **Interface Segregation**: Small, focused interfaces
+- **Dependency Inversion**: Inject dependencies, don't create
+
+### Code Generation Rules
+1. Start with simplest working solution
+2. Only add complexity when proven necessary
+3. Refactor duplication after pattern emerges
+4. Prefer composition over inheritance
+5. Make dependencies explicit
+
 ## CCOM Command Processing
 
 **IMPORTANT**: Only activate CCOM functionality when user message starts with "ccom" (case-insensitive).
@@ -18,6 +55,8 @@
   - "ccom check security vulnerabilities"
   - "ccom remember this auth system"
   - "ccom show me the project status"
+  - "ccom validate principles"
+  - "ccom check my code complexity"
 
 ### CCOM Response Protocol:
 1. **CCOM Engagement Acknowledgment** - Always start with clear CCOM activation message
@@ -60,6 +99,17 @@
 - Analyze code for enterprise standards
 
 **Response Style**: "✅ Code quality: Enterprise grade" or "🔧 Fixing quality issues..."
+
+### 📐 Software Engineering Principles
+**Triggers**: "principles", "kiss", "dry", "solid", "yagni", "simplify", "complexity", "refactor", "clean code"
+**Actions**:
+- **KISS Validation**: Check cyclomatic complexity < 10, function length < 50 lines
+- **YAGNI Analysis**: Detect unused code and over-engineering patterns
+- **DRY Detection**: Find duplicate code blocks using jscpd tool
+- **SOLID Review**: Analyze class responsibilities and dependencies
+- Generate actionable refactoring recommendations
+
+**Response Style**: "📐 **PRINCIPLES VALIDATION** – Analyzing KISS, YAGNI, DRY, SOLID..." → "📊 Principles Score: 86/100 (B+)"
 
 ### 🔒 Security
 **Triggers**: "security", "vulnerabilities", "secure", "safety", "protect"

@@ -36,6 +36,12 @@ class ToolsManager:
         "testing": ["jest", "pytest", "playwright"],
         "git": ["husky", "lint-staged"],
         "security": ["bandit", "safety"],
+        "complexity": [
+            "complexity-report",  # JavaScript complexity
+            "radon",             # Python complexity
+            "jscpd",             # Duplicate detection
+            "madge",             # Dependency analysis
+        ],
     }
 
     def __init__(self, project_root: Path = None):
@@ -148,6 +154,9 @@ class ToolsManager:
         elif project_type == "python":
             tools.extend(self.REQUIRED_TOOLS["security"])
 
+        # Add complexity analysis tools
+        tools.extend(self.REQUIRED_TOOLS["complexity"])
+
         return list(set(tools))  # Remove duplicates
 
     def has_test_files(self) -> bool:
@@ -208,6 +217,7 @@ class ToolsManager:
                 "bandit",
                 "safety",
                 "pytest",
+                "radon",
             ]:
                 return self.pip_installer.check_tool(tool_name)
             else:
@@ -265,6 +275,7 @@ class ToolsManager:
                 "bandit",
                 "safety",
                 "pytest",
+                "radon",
             ]:
                 pip_tools.append(tool)
             else:

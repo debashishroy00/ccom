@@ -1,42 +1,60 @@
 {
   "installed_tools": {
-    "safety": {
-      "installed": false,
-      "version": null
-    },
-    "black": {
+    "jscpd": {
       "installed": true,
-      "version": "python -m black, 25.1.0 (compiled: yes)"
+      "version": "4.0.5",
+      "scope": "local"
     },
     "lint-staged": {
-      "installed": false,
-      "version": null,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "installed": true,
+      "version": "16.1.6",
+      "scope": "local"
     },
     "bandit": {
       "installed": false,
       "version": null
     },
     "husky": {
+      "installed": true,
+      "version": "",
+      "scope": "local"
+    },
+    "black": {
+      "installed": true,
+      "version": "python -m black, 25.1.0 (compiled: yes)"
+    },
+    "flake8": {
       "installed": false,
-      "version": null,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "version": null
+    },
+    "safety": {
+      "installed": false,
+      "version": null
+    },
+    "complexity-report": {
+      "installed": false,
+      "version": null
+    },
+    "madge": {
+      "installed": true,
+      "version": "8.0.0",
+      "scope": "local"
     },
     "mypy": {
+      "installed": false,
+      "version": null
+    },
+    "radon": {
       "installed": false,
       "version": null
     },
     "pylint": {
       "installed": false,
       "version": null
-    },
-    "flake8": {
-      "installed": false,
-      "version": null
     }
   },
   "tool_versions": {},
-  "last_check": "2025-09-20T22:58:54.682723",
+  "last_check": "2025-09-21T14:50:51.959866",
   "project_type": "python",
   "custom_tools": [],
   "configurations": {}

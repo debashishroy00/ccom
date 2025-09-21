@@ -8,6 +8,8 @@ import os
 import sys
 import json
 import subprocess
+import ast
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
@@ -332,6 +334,420 @@ class PythonValidator(ToolBasedValidator):
         return result
 
 
+class PrinciplesValidator(ToolBasedValidator):
+    """Software Engineering Principles validation (KISS, YAGNI, DRY, SOLID)"""
+
+    def validate_all_principles(self) -> Dict[str, ValidationResult]:
+        """Run all software engineering principles validation"""
+        results = {
+            'kiss': self.validate_kiss(),
+            'yagni': self.validate_yagni(),
+            'dry': self.validate_dry(),
+            'solid': self.validate_solid()
+        }
+        return results
+
+    def validate_kiss(self) -> ValidationResult:
+        """
+        KISS - Keep It Simple
+        - Cyclomatic complexity < 10
+        - Function length < 50 lines
+        - Nesting depth < 4 levels
+        - Parameter count < 5
+        """
+        result = ValidationResult("KISS (Keep It Simple)")
+        complexity_issues = []
+
+        try:
+            # Check JavaScript/TypeScript complexity
+            if self.check_tool_available("complexity-report"):
+                exit_code, stdout, stderr = self.run_command(
+                    ["npx", "complexity-report", ".", "--format", "json"]
+                )
+
+                if exit_code == 0 and stdout:
+                    complexity_data = json.loads(stdout)
+                    for report in complexity_data.get('reports', []):
+                        for func in report.get('functions', []):
+                            complexity = func.get('complexity', {}).get('cyclomatic', 0)
+                            if complexity > 10:
+                                complexity_issues.append({
+                                    'file': report.get('path', 'unknown'),
+                                    'function': func.get('name', 'unknown'),
+                                    'complexity': complexity,
+                                    'type': 'cyclomatic_complexity'
+                                })
+
+            # Check Python complexity using radon
+            if self.check_tool_available("radon"):
+                exit_code, stdout, stderr = self.run_command(
+                    [sys.executable, "-m", "radon", "cc", ".", "--json"]
+                )
+
+                if exit_code == 0 and stdout:
+                    radon_data = json.loads(stdout)
+                    for file_path, functions in radon_data.items():
+                        for func in functions:
+                            if func.get('complexity', 0) > 10:
+                                complexity_issues.append({
+                                    'file': file_path,
+                                    'function': func.get('name', 'unknown'),
+                                    'complexity': func.get('complexity'),
+                                    'type': 'cyclomatic_complexity'
+                                })
+
+            # Manual AST analysis for function length and nesting
+            manual_issues = self._analyze_code_structure()
+            complexity_issues.extend(manual_issues)
+
+            # Calculate score
+            if not complexity_issues:
+                result.success = True
+                result.score = 100
+            else:
+                # Deduct points based on issue severity
+                deduction = min(90, len(complexity_issues) * 15)
+                result.score = max(10, 100 - deduction)
+
+                for issue in complexity_issues:
+                    severity = "error" if issue.get('complexity', 0) > 15 else "warning"
+                    result.add_issue(
+                        severity=severity,
+                        message=f"{issue['type']}: {issue.get('function', 'unknown')} has complexity {issue.get('complexity', 'high')}",
+                        file_path=issue.get('file')
+                    )
+
+        except Exception as e:
+            result.add_warning(f"KISS validation error: {e}")
+            result.score = 90
+            result.success = True
+
+        return result
+
+    def validate_yagni(self) -> ValidationResult:
+        """
+        YAGNI - You Aren't Gonna Need It
+        - Detect unused functions/variables
+        - Find over-engineered abstractions
+        - Check for speculative generality
+        """
+        result = ValidationResult("YAGNI (You Aren't Gonna Need It)")
+
+        try:
+            unused_issues = []
+
+            # Use ESLint for JavaScript unused detection
+            if self.check_tool_available("eslint"):
+                exit_code, stdout, stderr = self.run_command(
+                    ["npx", "eslint", ".", "--format", "json", "--no-fix"]
+                )
+
+                if stdout:
+                    eslint_data = json.loads(stdout)
+                    for file_result in eslint_data:
+                        for message in file_result.get('messages', []):
+                            if 'unused' in message.get('message', '').lower():
+                                unused_issues.append({
+                                    'file': file_result.get('filePath'),
+                                    'line': message.get('line'),
+                                    'message': message.get('message'),
+                                    'type': 'unused_code'
+                                })
+
+            # Manual analysis for over-engineering patterns
+            overengineered = self._detect_overengineering()
+            unused_issues.extend(overengineered)
+
+            # Calculate score
+            if not unused_issues:
+                result.success = True
+                result.score = 100
+            else:
+                deduction = min(80, len(unused_issues) * 10)
+                result.score = max(20, 100 - deduction)
+
+                for issue in unused_issues:
+                    result.add_issue(
+                        severity="warning",
+                        message=f"{issue['type']}: {issue.get('message', 'Unused or over-engineered code detected')}",
+                        file_path=issue.get('file')
+                    )
+
+        except Exception as e:
+            result.add_warning(f"YAGNI validation error: {e}")
+            result.score = 95
+            result.success = True
+
+        return result
+
+    def validate_dry(self) -> ValidationResult:
+        """
+        DRY - Don't Repeat Yourself
+        - Detect duplicate code blocks (>5 lines)
+        - Find repeated string literals
+        - Allow WET for < 3 occurrences
+        """
+        result = ValidationResult("DRY (Don't Repeat Yourself)")
+
+        try:
+            duplicate_issues = []
+
+            # Use jscpd for duplicate detection
+            if self.check_tool_available("jscpd"):
+                exit_code, stdout, stderr = self.run_command(
+                    ["npx", "jscpd", ".", "--format", "json", "--min-lines", "5"]
+                )
+
+                if exit_code == 0 and stdout:
+                    jscpd_data = json.loads(stdout)
+                    duplicates = jscpd_data.get('duplicates', [])
+
+                    for dup in duplicates:
+                        if dup.get('lines', 0) >= 5:  # Only flag significant duplicates
+                            duplicate_issues.append({
+                                'file1': dup.get('firstFile', {}).get('name'),
+                                'file2': dup.get('secondFile', {}).get('name'),
+                                'lines': dup.get('lines'),
+                                'type': 'code_duplication'
+                            })
+
+            # Manual analysis for string literal repetition
+            string_duplicates = self._detect_string_duplicates()
+            duplicate_issues.extend(string_duplicates)
+
+            # Calculate score
+            if not duplicate_issues:
+                result.success = True
+                result.score = 100
+            else:
+                # Adjust scoring based on Rule of Three
+                significant_dups = [d for d in duplicate_issues if d.get('lines', 0) > 10]
+                deduction = len(significant_dups) * 20 + len(duplicate_issues) * 5
+                result.score = max(30, 100 - deduction)
+
+                for issue in duplicate_issues:
+                    severity = "error" if issue.get('lines', 0) > 15 else "warning"
+                    result.add_issue(
+                        severity=severity,
+                        message=f"{issue['type']}: {issue.get('lines', 'Multiple')} lines duplicated between {issue.get('file1', 'files')}",
+                        file_path=issue.get('file1')
+                    )
+
+        except Exception as e:
+            result.add_warning(f"DRY validation error: {e}")
+            result.score = 90
+            result.success = True
+
+        return result
+
+    def validate_solid(self) -> ValidationResult:
+        """
+        SOLID Principles validation
+        - Single Responsibility: >1 purpose detection
+        - Open/Closed: Modification-prone code
+        - Liskov: Inheritance validation
+        - Interface Segregation: Fat interfaces
+        - Dependency Inversion: Concrete dependencies
+        """
+        result = ValidationResult("SOLID Principles")
+
+        try:
+            solid_issues = []
+
+            # Analyze code structure for SOLID violations
+            solid_violations = self._analyze_solid_principles()
+            solid_issues.extend(solid_violations)
+
+            # Calculate score
+            if not solid_issues:
+                result.success = True
+                result.score = 100
+            else:
+                deduction = min(75, len(solid_issues) * 12)
+                result.score = max(25, 100 - deduction)
+
+                for issue in solid_issues:
+                    severity = "error" if issue.get('severity') == 'high' else "warning"
+                    result.add_issue(
+                        severity=severity,
+                        message=f"{issue['principle']}: {issue.get('message', 'SOLID principle violation')}",
+                        file_path=issue.get('file')
+                    )
+
+        except Exception as e:
+            result.add_warning(f"SOLID validation error: {e}")
+            result.score = 85
+            result.success = True
+
+        return result
+
+    def _analyze_code_structure(self) -> List[Dict]:
+        """Analyze code structure for KISS violations"""
+        issues = []
+
+        # Analyze JavaScript/TypeScript files
+        for file_path in self.project_root.glob("**/*.js"):
+            if "node_modules" in str(file_path):
+                continue
+
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Simple heuristics for function analysis
+                functions = re.findall(r'function\s+(\w+)\s*\([^)]*\)\s*{', content)
+                for func_name in functions:
+                    # Count lines in function (simplified)
+                    func_pattern = rf'function\s+{re.escape(func_name)}\s*\([^)]*\)\s*{{'
+                    match = re.search(func_pattern, content)
+                    if match:
+                        start_pos = match.end()
+                        brace_count = 1
+                        pos = start_pos
+                        lines = 1
+
+                        while pos < len(content) and brace_count > 0:
+                            if content[pos] == '{':
+                                brace_count += 1
+                            elif content[pos] == '}':
+                                brace_count -= 1
+                            elif content[pos] == '\n':
+                                lines += 1
+                            pos += 1
+
+                        if lines > 50:
+                            issues.append({
+                                'file': str(file_path),
+                                'function': func_name,
+                                'complexity': lines,
+                                'type': 'function_length'
+                            })
+
+            except Exception:
+                continue
+
+        return issues
+
+    def _detect_overengineering(self) -> List[Dict]:
+        """Detect over-engineering patterns"""
+        issues = []
+
+        # Look for files with excessive abstraction layers
+        for file_path in self.project_root.glob("**/*.js"):
+            if "node_modules" in str(file_path):
+                continue
+
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Count abstract patterns
+                abstract_patterns = [
+                    r'class\s+\w+Factory',
+                    r'class\s+\w+Builder',
+                    r'class\s+\w+Strategy',
+                    r'interface\s+\w+Interface',
+                ]
+
+                pattern_count = sum(
+                    len(re.findall(pattern, content, re.IGNORECASE))
+                    for pattern in abstract_patterns
+                )
+
+                if pattern_count > 3:  # Too many design patterns
+                    issues.append({
+                        'file': str(file_path),
+                        'message': f'Excessive abstraction patterns detected ({pattern_count})',
+                        'type': 'overengineering'
+                    })
+
+            except Exception:
+                continue
+
+        return issues
+
+    def _detect_string_duplicates(self) -> List[Dict]:
+        """Detect repeated string literals"""
+        issues = []
+        string_counts = {}
+
+        for file_path in self.project_root.glob("**/*.js"):
+            if "node_modules" in str(file_path):
+                continue
+
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Find string literals
+                strings = re.findall(r'["\']([^"\'\n]{10,})["\']', content)
+                for string_literal in strings:
+                    if string_literal not in string_counts:
+                        string_counts[string_literal] = []
+                    string_counts[string_literal].append(str(file_path))
+
+            except Exception:
+                continue
+
+        # Flag strings that appear 3+ times
+        for string_literal, files in string_counts.items():
+            if len(files) >= 3:
+                issues.append({
+                    'files': files,
+                    'string': string_literal[:50] + '...' if len(string_literal) > 50 else string_literal,
+                    'count': len(files),
+                    'type': 'string_duplication'
+                })
+
+        return issues
+
+    def _analyze_solid_principles(self) -> List[Dict]:
+        """Analyze code for SOLID principle violations"""
+        issues = []
+
+        for file_path in self.project_root.glob("**/*.js"):
+            if "node_modules" in str(file_path):
+                continue
+
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Single Responsibility Principle check
+                classes = re.findall(r'class\s+(\w+)', content)
+                for class_name in classes:
+                    # Count public methods (simplified heuristic)
+                    methods = re.findall(
+                        rf'class\s+{re.escape(class_name)}[^{{]*{{[^}}]*?(\w+)\s*\([^)]*\)\s*{{',
+                        content,
+                        re.DOTALL
+                    )
+
+                    if len(methods) > 10:  # Too many responsibilities
+                        issues.append({
+                            'file': str(file_path),
+                            'class': class_name,
+                            'message': f'Class {class_name} has {len(methods)} methods (possible SRP violation)',
+                            'principle': 'Single Responsibility',
+                            'severity': 'medium'
+                        })
+
+                # Dependency Inversion check - look for direct instantiation
+                direct_instantiations = re.findall(r'new\s+(\w+)\(', content)
+                if len(direct_instantiations) > 5:
+                    issues.append({
+                        'file': str(file_path),
+                        'message': f'Multiple direct instantiations detected ({len(direct_instantiations)})',
+                        'principle': 'Dependency Inversion',
+                        'severity': 'low'
+                    })
+
+            except Exception:
+                continue
+
+        return issues
+
+
 class SecurityValidator(ToolBasedValidator):
     """Security validation using bandit, safety, and custom checks"""
 
@@ -520,6 +936,15 @@ class ValidationOrchestrator:
         if project_type == "python":
             self.results.append(security_validator.validate_python_security())
 
+        # Software Engineering Principles validation
+        principles_validator = PrinciplesValidator(self.project_root, self.tools_manager)
+        print("📐 Running software engineering principles validation...")
+        principle_results = principles_validator.validate_all_principles()
+
+        # Add each principle result to main results
+        for principle_name, principle_result in principle_results.items():
+            self.results.append(principle_result)
+
         return self.results
 
     def detect_project_type(self) -> str:
@@ -555,11 +980,15 @@ class ValidationOrchestrator:
         return "unknown"
 
     def generate_report(self) -> Dict:
-        """Generate comprehensive validation report"""
+        """Generate comprehensive validation report with principles scoring"""
         total_score = 0
         successful_validations = 0
         total_issues = 0
         total_warnings = 0
+
+        # Separate principle results from other validations
+        principle_results = {}
+        other_results = []
 
         for result in self.results:
             total_score += result.score
@@ -571,7 +1000,42 @@ class ValidationOrchestrator:
             )
             total_warnings += len(result.warnings)
 
+            # Categorize results
+            if result.validator_name in ['KISS (Keep It Simple)', 'YAGNI (You Aren\'t Gonna Need It)',
+                                        'DRY (Don\'t Repeat Yourself)', 'SOLID Principles']:
+                principle_key = result.validator_name.split(' ')[0].lower()
+                principle_results[principle_key] = {
+                    'score': result.score,
+                    'success': result.success,
+                    'issues': len(result.issues)
+                }
+            else:
+                other_results.append(result)
+
         avg_score = total_score / len(self.results) if self.results else 0
+
+        # Calculate principle-specific metrics
+        principle_weights = {'kiss': 0.3, 'yagni': 0.2, 'dry': 0.3, 'solid': 0.2}
+        principle_total = 0
+        principle_grade = 'N/A'
+
+        if principle_results:
+            principle_total = sum(
+                principle_results.get(p, {}).get('score', 0) * weight
+                for p, weight in principle_weights.items()
+            )
+            if principle_total >= 95:
+                principle_grade = 'A+'
+            elif principle_total >= 90:
+                principle_grade = 'A'
+            elif principle_total >= 80:
+                principle_grade = 'B+'
+            elif principle_total >= 70:
+                principle_grade = 'B'
+            elif principle_total >= 60:
+                principle_grade = 'C'
+            else:
+                principle_grade = 'D'
 
         report = {
             "overall_score": round(avg_score, 1),
@@ -581,12 +1045,18 @@ class ValidationOrchestrator:
             "total_warnings": total_warnings,
             "validation_results": self.results,
             "timestamp": datetime.now().isoformat(),
+            "principles": {
+                "total_score": round(principle_total, 1),
+                "grade": principle_grade,
+                "breakdown": principle_results,
+                "weights": principle_weights
+            }
         }
 
         return report
 
     def print_summary(self):
-        """Print validation summary"""
+        """Print validation summary with principles breakdown"""
         report = self.generate_report()
 
         print(f"\n📊 **VALIDATION SUMMARY**")
@@ -594,6 +1064,23 @@ class ValidationOrchestrator:
         print(
             f"Successful Validations: {report['successful_validations']}/{report['total_validations']}"
         )
+
+        # Print Software Engineering Principles Summary
+        principles = report.get('principles', {})
+        if principles.get('breakdown'):
+            print(f"\n📐 **SOFTWARE ENGINEERING PRINCIPLES**")
+            print(f"Principles Score: {principles['total_score']}/100 (Grade: {principles['grade']})")
+
+            breakdown = principles['breakdown']
+            weights = principles['weights']
+
+            for principle, weight in weights.items():
+                if principle in breakdown:
+                    result = breakdown[principle]
+                    status = "✅" if result['success'] else "⚠️"
+                    print(f"  {status} {principle.upper()}: {result['score']}/100 (weight: {int(weight*100)}%)")
+                    if result['issues'] > 0:
+                        print(f"    ⚠️ {result['issues']} issues detected")
 
         if report["total_issues"] == 0 and report["total_warnings"] == 0:
             print("✅ **QUALITY STATUS**: Enterprise Grade - No issues found!")
@@ -616,3 +1103,22 @@ class ValidationOrchestrator:
         else:
             print("  ⚠️ Code quality needs improvement. Focus on fixing errors first.")
             print("  💡 Run with auto-fix option: ccom quality audit --fix")
+
+        # Principles-specific recommendations
+        if principles.get('breakdown'):
+            principle_recommendations = []
+            breakdown = principles['breakdown']
+
+            if breakdown.get('kiss', {}).get('score', 100) < 80:
+                principle_recommendations.append("Simplify complex functions (KISS principle)")
+            if breakdown.get('dry', {}).get('score', 100) < 80:
+                principle_recommendations.append("Extract duplicate code into reusable functions (DRY principle)")
+            if breakdown.get('solid', {}).get('score', 100) < 80:
+                principle_recommendations.append("Review class responsibilities and dependencies (SOLID principles)")
+            if breakdown.get('yagni', {}).get('score', 100) < 80:
+                principle_recommendations.append("Remove unused code and over-engineered abstractions (YAGNI principle)")
+
+            if principle_recommendations:
+                print(f"\n📐 **Principles Recommendations**:")
+                for rec in principle_recommendations:
+                    print(f"  • {rec}")

@@ -402,6 +402,30 @@ class CCOMOrchestrator:
         ):
             return self.run_workflow("complete_stack")
 
+        # === SOFTWARE ENGINEERING PRINCIPLES PATTERNS ===
+
+        # Principles validation - KISS, YAGNI, DRY, SOLID
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "principles",
+                "software engineering",
+                "kiss",
+                "yagni",
+                "dry",
+                "solid",
+                "check principles",
+                "validate principles",
+                "simplify",
+                "duplicate",
+                "complexity",
+                "refactor",
+                "clean code",
+                "best practices",
+            ]
+        ):
+            return self.validate_principles()
+
         # === STANDARD WORKFLOW PATTERNS ===
 
         # Workflow commands (traditional)
@@ -584,6 +608,102 @@ class CCOMOrchestrator:
         else:
             print(f"❌ No implementation available for {agent_name}")
             return False
+
+    def validate_principles(self):
+        """CCOM Native Software Engineering Principles Validation"""
+        print("📐 **CCOM PRINCIPLES VALIDATION** – Analyzing code against KISS, YAGNI, DRY, SOLID...")
+
+        try:
+            from ccom.validators import PrinciplesValidator
+
+            # Ensure complexity analysis tools are available
+            self.ensure_tools_installed(["complexity-report", "jscpd", "radon"])
+
+            # Create principles validator
+            principles_validator = PrinciplesValidator(
+                self.project_root, self.get_tools_manager()
+            )
+
+            # Run all principles validation
+            results = principles_validator.validate_all_principles()
+
+            # Print detailed results
+            print(f"\n📊 **PRINCIPLES ANALYSIS RESULTS**:")
+
+            total_score = 0
+            principle_count = 0
+
+            for principle_name, result in results.items():
+                status = "✅" if result.success else "⚠️"
+                print(f"\n{status} **{result.validator_name}**: {result.score}/100")
+
+                if result.issues:
+                    for issue in result.issues[:3]:  # Show first 3 issues
+                        severity_icon = "🔴" if issue['severity'] == 'error' else "🟡"
+                        print(f"  {severity_icon} {issue['message']}")
+
+                    if len(result.issues) > 3:
+                        print(f"  … and {len(result.issues) - 3} more issues")
+
+                if result.warnings:
+                    for warning in result.warnings[:2]:  # Show first 2 warnings
+                        print(f"  🟨 {warning}")
+
+                total_score += result.score
+                principle_count += 1
+
+            # Calculate overall principles score
+            weights = {'kiss': 0.3, 'yagni': 0.2, 'dry': 0.3, 'solid': 0.2}
+            weighted_score = sum(
+                results[p].score * weight
+                for p, weight in weights.items()
+                if p in results
+            )
+
+            # Determine grade
+            if weighted_score >= 95:
+                grade = "A+"
+                status_msg = "🎆 **PRINCIPLES STATUS**: Exemplary - Following all best practices!"
+            elif weighted_score >= 90:
+                grade = "A"
+                status_msg = "✅ **PRINCIPLES STATUS**: Excellent - High-quality engineering practices"
+            elif weighted_score >= 80:
+                grade = "B+"
+                status_msg = "🔧 **PRINCIPLES STATUS**: Good - Minor improvements recommended"
+            elif weighted_score >= 70:
+                grade = "B"
+                status_msg = "⚠️ **PRINCIPLES STATUS**: Acceptable - Some refactoring needed"
+            else:
+                grade = "C"
+                status_msg = "🔴 **PRINCIPLES STATUS**: Needs Improvement - Significant refactoring required"
+
+            print(f"\n{status_msg}")
+            print(f"Overall Principles Score: {weighted_score:.1f}/100 (Grade: {grade})")
+
+            # Provide actionable feedback
+            print(f"\n💡 **ACTIONABLE RECOMMENDATIONS**:")
+
+            if results.get('kiss', ValidationResult('')).score < 80:
+                print("  • Simplify complex functions - break down large methods (KISS)")
+            if results.get('dry', ValidationResult('')).score < 80:
+                print("  • Extract duplicate code into reusable functions (DRY)")
+            if results.get('yagni', ValidationResult('')).score < 80:
+                print("  • Remove unused code and over-engineered abstractions (YAGNI)")
+            if results.get('solid', ValidationResult('')).score < 80:
+                print("  • Review class responsibilities and dependencies (SOLID)")
+
+            if weighted_score >= 90:
+                print("  • Consider mentoring others on software engineering best practices")
+                print("  • Document your architectural decisions for the team")
+
+            return weighted_score >= 80
+
+        except ImportError:
+            print("⚠️ Principles validation not available - validators module missing")
+            return True
+        except Exception as e:
+            print(f"⚠️ Principles validation error: {e}")
+            return True
 
     def run_quality_enforcement(self):
         """CCOM Native Quality Enforcement Implementation"""
