@@ -266,6 +266,11 @@ class ToolsManager:
             print("⚙️ Generating configuration files...")
             self.config_generator.generate_all_configs(required_tools)
 
+            # Add npm scripts to package.json if it's a Node.js project
+            if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+                print("📝 Adding npm scripts to package.json...")
+                self.config_generator.add_npm_scripts()
+
             # Update state
             self.check_tool_availability(force_refresh=True)
 
@@ -273,6 +278,25 @@ class ToolsManager:
             return True
         else:
             print("❌ Some tools failed to install")
+            print("🔧 Attempting to configure any available tools...")
+
+            # Still try to configure tools that might be available
+            available_tools = []
+            installed_tools = self.check_tool_availability(force_refresh=True)
+            for tool in required_tools:
+                if installed_tools.get(tool, {}).get('installed', False):
+                    available_tools.append(tool)
+
+            if available_tools:
+                print(f"⚙️ Generating configurations for available tools: {', '.join(available_tools)}")
+                self.config_generator.generate_all_configs(available_tools)
+
+                if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+                    print("📝 Adding npm scripts for available tools...")
+                    self.config_generator.add_npm_scripts()
+
+                print("✅ Partial configuration completed")
+
             return False
 
     def get_installation_status(self) -> Dict:
@@ -316,11 +340,12 @@ class NpmToolInstaller:
         try:
             # Check locally first
             result = subprocess.run(
-                ["npx", tool_name, "--version"],
+                f"npx {tool_name} --version",
                 capture_output=True,
                 text=True,
                 timeout=10,
                 cwd=self.project_root,
+                shell=True
             )
 
             if result.returncode == 0:
@@ -329,10 +354,11 @@ class NpmToolInstaller:
 
             # Check globally
             result = subprocess.run(
-                ["npm", "list", "-g", tool_name, "--depth=0"],
+                f"npm list -g {tool_name} --depth=0",
                 capture_output=True,
                 text=True,
                 timeout=10,
+                shell=True
             )
 
             if result.returncode == 0 and tool_name in result.stdout:
@@ -355,11 +381,12 @@ class NpmToolInstaller:
                 self.create_package_json()
 
             # Install tools
-            cmd = ["npm", "install", "--save-dev"] + tools
-            print(f"🔄 Running: {' '.join(cmd)}")
+            cmd_list = ["npm", "install", "--save-dev"] + tools
+            cmd_str = " ".join(cmd_list)
+            print(f"🔄 Running: {cmd_str}")
 
             result = subprocess.run(
-                cmd, cwd=self.project_root, capture_output=True, text=True, timeout=300
+                cmd_str, cwd=self.project_root, capture_output=True, text=True, timeout=300, shell=True
             )
 
             if result.returncode == 0:
@@ -634,6 +661,68 @@ class ToolConfigGenerator:
         }
 
         return configs
+
+    def add_npm_scripts(self):
+        """Add npm scripts to package.json for linting and formatting"""
+        package_json = self.project_root / "package.json"
+
+        if not package_json.exists():
+            print("⚠️ No package.json found - creating basic one...")
+            self.create_basic_package_json()
+
+        try:
+            with open(package_json, "r") as f:
+                data = json.load(f)
+
+            # Add scripts if they don't exist
+            if "scripts" not in data:
+                data["scripts"] = {}
+
+            scripts_to_add = {
+                "lint": "eslint .",
+                "lint:fix": "eslint . --fix",
+                "format": "prettier --write .",
+                "format:check": "prettier --check .",
+                "test": "jest" if "jest" in data.get("devDependencies", {}) else "echo \"Error: no test specified\" && exit 1"
+            }
+
+            scripts_added = []
+            for script_name, script_cmd in scripts_to_add.items():
+                if script_name not in data["scripts"]:
+                    data["scripts"][script_name] = script_cmd
+                    scripts_added.append(script_name)
+
+            if scripts_added:
+                with open(package_json, "w") as f:
+                    json.dump(data, f, indent=2)
+                print(f"✅ Added npm scripts: {', '.join(scripts_added)}")
+            else:
+                print("ℹ️ All npm scripts already exist")
+
+        except Exception as e:
+            print(f"⚠️ Error adding npm scripts: {e}")
+
+    def create_basic_package_json(self):
+        """Create a basic package.json if it doesn't exist"""
+        package_json = self.project_root / "package.json"
+
+        basic_package = {
+            "name": self.project_root.name.lower().replace(" ", "-"),
+            "version": "1.0.0",
+            "description": "Project managed by CCOM",
+            "main": "index.js",
+            "scripts": {
+                "test": "echo \"Error: no test specified\" && exit 1",
+                "lint": "eslint .",
+                "lint:fix": "eslint . --fix",
+                "format": "prettier --write .",
+                "format:check": "prettier --check ."
+            },
+            "devDependencies": {}
+        }
+
+        with open(package_json, "w") as f:
+            json.dump(basic_package, f, indent=2)
 
     def check_git_hooks_setup(self) -> bool:
         """Check if git hooks are properly configured"""
