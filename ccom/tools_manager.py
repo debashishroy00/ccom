@@ -223,6 +223,17 @@ class ToolsManager:
 
         if not missing_tools:
             print("✅ All required tools are already installed!")
+
+            # Still need to ensure configurations are properly set up
+            print("⚙️ Verifying tool configurations...")
+            self.config_generator.generate_all_configs(required_tools)
+
+            # Add npm scripts to package.json if it's a Node.js project
+            if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+                print("📝 Ensuring npm scripts are configured...")
+                self.config_generator.add_npm_scripts()
+
+            print("✅ Tool configurations verified!")
             return True
 
         print(f"📦 Installing {len(missing_tools)} missing tools...")
