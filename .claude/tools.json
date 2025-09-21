@@ -40,8 +40,8 @@
       "scope": "local"
     },
     "complexity-report": {
-      "installed": false,
-      "version": null
+      "installed": true,
+      "version": "Available via npx"
     },
     "husky": {
       "installed": true,
