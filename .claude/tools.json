@@ -1,8 +1,37 @@
 {
   "installed_tools": {
+    "bandit": {
+      "installed": true,
+      "version": "__main__.py 1.8.6"
+    },
+    "radon": {
+      "installed": true,
+      "version": "6.0.1"
+    },
+    "mypy": {
+      "installed": true,
+      "version": "mypy 1.18.2 (compiled: yes)"
+    },
+    "black": {
+      "installed": true,
+      "version": "python -m black, 25.1.0 (compiled: yes)"
+    },
+    "flake8": {
+      "installed": true,
+      "version": "7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0, radon: 6.0.1)"
+    },
+    "pytest": {
+      "installed": true,
+      "version": "pytest 8.3.5"
+    },
     "jscpd": {
       "installed": true,
       "version": "4.0.5",
+      "scope": "local"
+    },
+    "madge": {
+      "installed": true,
+      "version": "8.0.0",
       "scope": "local"
     },
     "lint-staged": {
@@ -10,7 +39,7 @@
       "version": "16.1.6",
       "scope": "local"
     },
-    "bandit": {
+    "complexity-report": {
       "installed": false,
       "version": null
     },
@@ -19,42 +48,17 @@
       "version": "",
       "scope": "local"
     },
-    "black": {
+    "pylint": {
       "installed": true,
-      "version": "python -m black, 25.1.0 (compiled: yes)"
-    },
-    "flake8": {
-      "installed": false,
-      "version": null
+      "version": "pylint 3.3.8"
     },
     "safety": {
-      "installed": false,
-      "version": null
-    },
-    "complexity-report": {
-      "installed": false,
-      "version": null
-    },
-    "madge": {
       "installed": true,
-      "version": "8.0.0",
-      "scope": "local"
-    },
-    "mypy": {
-      "installed": false,
-      "version": null
-    },
-    "radon": {
-      "installed": false,
-      "version": null
-    },
-    "pylint": {
-      "installed": false,
-      "version": null
+      "version": "safety, version 3.6.1"
     }
   },
   "tool_versions": {},
-  "last_check": "2025-09-21T14:50:51.959866",
+  "last_check": "2025-09-21T17:11:11.545529",
   "project_type": "python",
   "custom_tools": [],
   "configurations": {}

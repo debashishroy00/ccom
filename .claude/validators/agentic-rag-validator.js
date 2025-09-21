@@ -1,8 +1,8 @@
 // Agentic RAG Validator for Enterprise Systems
 // Validates: ReAct, Chain-of-Thought, Tool Usage, Agent Orchestration, Self-Reflection
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Agentic RAG patterns and their validation rules
 const AGENTIC_PATTERNS = {
@@ -12,18 +12,26 @@ const AGENTIC_PATTERNS = {
       /react|re-act/i,
       /reason.*act|think.*act/i,
       /observation.*thought.*action/i,
-      /thought.*action.*observation/i
+      /thought.*action.*observation/i,
     ],
     validations: [
       {
-        check: (content) => content.includes('thought') && content.includes('action') && content.includes('observation'),
-        message: 'ReAct pattern requires explicit thought, action, and observation steps'
+        check: (content) =>
+          content.includes("thought") &&
+          content.includes("action") &&
+          content.includes("observation"),
+        message:
+          "ReAct pattern requires explicit thought, action, and observation steps",
       },
       {
-        check: (content) => content.includes('stop') || content.includes('final') || content.includes('answer'),
-        message: 'ReAct loops need termination conditions to prevent infinite reasoning'
-      }
-    ]
+        check: (content) =>
+          content.includes("stop") ||
+          content.includes("final") ||
+          content.includes("answer"),
+        message:
+          "ReAct loops need termination conditions to prevent infinite reasoning",
+      },
+    ],
   },
 
   // Chain of Thought patterns
@@ -32,18 +40,21 @@ const AGENTIC_PATTERNS = {
       /chain.*of.*thought|cot/i,
       /step.*by.*step|reasoning.*chain/i,
       /let.*think.*step/i,
-      /think.*through.*this/i
+      /think.*through.*this/i,
     ],
     validations: [
       {
-        check: (content) => content.includes('step') || content.includes('reasoning'),
-        message: 'Chain-of-thought should explicitly break down reasoning into steps'
+        check: (content) =>
+          content.includes("step") || content.includes("reasoning"),
+        message:
+          "Chain-of-thought should explicitly break down reasoning into steps",
       },
       {
-        check: (content) => content.includes('validate') || content.includes('check'),
-        message: 'Include reasoning validation to prevent logical errors'
-      }
-    ]
+        check: (content) =>
+          content.includes("validate") || content.includes("check"),
+        message: "Include reasoning validation to prevent logical errors",
+      },
+    ],
   },
 
   // Tool usage patterns
@@ -52,18 +63,22 @@ const AGENTIC_PATTERNS = {
       /tool.*use|use.*tool/i,
       /function.*call|call.*function/i,
       /agent.*tool|tool.*agent/i,
-      /external.*api|api.*call/i
+      /external.*api|api.*call/i,
     ],
     validations: [
       {
-        check: (content) => content.includes('timeout') || content.includes('error') || content.includes('retry'),
-        message: 'Tool calls need timeout handling and error recovery'
+        check: (content) =>
+          content.includes("timeout") ||
+          content.includes("error") ||
+          content.includes("retry"),
+        message: "Tool calls need timeout handling and error recovery",
       },
       {
-        check: (content) => content.includes('validate') || content.includes('schema'),
-        message: 'Validate tool outputs before using in reasoning chain'
-      }
-    ]
+        check: (content) =>
+          content.includes("validate") || content.includes("schema"),
+        message: "Validate tool outputs before using in reasoning chain",
+      },
+    ],
   },
 
   // Multi-agent orchestration
@@ -72,18 +87,24 @@ const AGENTIC_PATTERNS = {
       /multi.*agent|agent.*orchestr/i,
       /agent.*coordination|coordinate.*agent/i,
       /agent.*workflow|workflow.*agent/i,
-      /swarm|crew|team.*agent/i
+      /swarm|crew|team.*agent/i,
     ],
     validations: [
       {
-        check: (content) => content.includes('state') || content.includes('memory') || content.includes('context'),
-        message: 'Multi-agent systems need shared state and context management'
+        check: (content) =>
+          content.includes("state") ||
+          content.includes("memory") ||
+          content.includes("context"),
+        message: "Multi-agent systems need shared state and context management",
       },
       {
-        check: (content) => content.includes('deadlock') || content.includes('conflict') || content.includes('priority'),
-        message: 'Handle agent conflicts and coordination deadlocks'
-      }
-    ]
+        check: (content) =>
+          content.includes("deadlock") ||
+          content.includes("conflict") ||
+          content.includes("priority"),
+        message: "Handle agent conflicts and coordination deadlocks",
+      },
+    ],
   },
 
   // Self-reflection and planning
@@ -92,55 +113,62 @@ const AGENTIC_PATTERNS = {
       /self.*reflect|reflect.*on/i,
       /self.*correct|self.*eval/i,
       /meta.*reason|reason.*about.*reason/i,
-      /plan.*execution|planning.*agent/i
+      /plan.*execution|planning.*agent/i,
     ],
     validations: [
       {
-        check: (content) => content.includes('evaluate') || content.includes('assess') || content.includes('quality'),
-        message: 'Self-reflection requires evaluation criteria and quality assessment'
+        check: (content) =>
+          content.includes("evaluate") ||
+          content.includes("assess") ||
+          content.includes("quality"),
+        message:
+          "Self-reflection requires evaluation criteria and quality assessment",
       },
       {
-        check: (content) => content.includes('improve') || content.includes('adjust') || content.includes('revise'),
-        message: 'Include mechanisms to improve based on reflection'
-      }
-    ]
-  }
+        check: (content) =>
+          content.includes("improve") ||
+          content.includes("adjust") ||
+          content.includes("revise"),
+        message: "Include mechanisms to improve based on reflection",
+      },
+    ],
+  },
 };
 
 // Performance and safety limits for agentic systems
 const AGENTIC_LIMITS = {
-  max_reasoning_steps: 20,        // Prevent infinite reasoning loops
-  max_tool_calls: 10,            // Limit tool usage per query
-  max_agent_interactions: 15,     // Multi-agent conversation limits
-  max_reflection_depth: 5,        // Self-reflection recursion limit
-  max_context_length: 32000,      // Context window management
-  max_execution_time_ms: 30000,   // Total agent execution time
-  min_confidence_threshold: 0.7,  // Minimum confidence for decisions
-  max_retry_attempts: 3          // Tool call retry limits
+  max_reasoning_steps: 20, // Prevent infinite reasoning loops
+  max_tool_calls: 10, // Limit tool usage per query
+  max_agent_interactions: 15, // Multi-agent conversation limits
+  max_reflection_depth: 5, // Self-reflection recursion limit
+  max_context_length: 32000, // Context window management
+  max_execution_time_ms: 30000, // Total agent execution time
+  min_confidence_threshold: 0.7, // Minimum confidence for decisions
+  max_retry_attempts: 3, // Tool call retry limits
 };
 
 // Common agentic RAG vulnerabilities
 const SAFETY_PATTERNS = [
   {
     pattern: /while.*true|for.*true|loop.*infinite/i,
-    severity: 'error',
-    message: 'Infinite loops can cause agent to run indefinitely'
+    severity: "error",
+    message: "Infinite loops can cause agent to run indefinitely",
   },
   {
     pattern: /exec|eval|system|shell/i,
-    severity: 'error',
-    message: 'Dynamic code execution in agents creates security risks'
+    severity: "error",
+    message: "Dynamic code execution in agents creates security risks",
   },
   {
     pattern: /delete.*file|rm.*-rf|DROP.*TABLE/i,
-    severity: 'error',
-    message: 'Destructive operations should not be accessible to agents'
+    severity: "error",
+    message: "Destructive operations should not be accessible to agents",
   },
   {
     pattern: /password|secret|token.*=.*['"]/i,
-    severity: 'error',
-    message: 'Hardcoded secrets accessible to agents'
-  }
+    severity: "error",
+    message: "Hardcoded secrets accessible to agents",
+  },
 ];
 
 class AgenticRAGValidator {
@@ -155,12 +183,14 @@ class AgenticRAGValidator {
       toolUsagePatterns: 0,
       multiAgentPatterns: 0,
       reflectionPatterns: 0,
-      safetyIssues: 0
+      safetyIssues: 0,
     };
   }
 
   validateProject() {
-    console.log('🔍 CCOM AGENTIC RAG VALIDATION – Analyzing agent reasoning patterns...');
+    console.log(
+      "🔍 CCOM AGENTIC RAG VALIDATION – Analyzing agent reasoning patterns...",
+    );
 
     this.scanAgentFiles();
     this.validateReasoningPatterns();
@@ -175,20 +205,28 @@ class AgenticRAGValidator {
   scanAgentFiles() {
     // Find agent-related files
     const agentFiles = this.findFiles([
-      '**/agents/**/*.js', '**/agents/**/*.ts', '**/agents/**/*.py',
-      '**/tools/**/*.js', '**/tools/**/*.ts', '**/tools/**/*.py',
-      '**/*agent*.js', '**/*agent*.ts', '**/*agent*.py',
-      '**/*react*.js', '**/*react*.ts', '**/*react*.py'
+      "**/agents/**/*.js",
+      "**/agents/**/*.ts",
+      "**/agents/**/*.py",
+      "**/tools/**/*.js",
+      "**/tools/**/*.ts",
+      "**/tools/**/*.py",
+      "**/*agent*.js",
+      "**/*agent*.ts",
+      "**/*agent*.py",
+      "**/*react*.js",
+      "**/*react*.ts",
+      "**/*react*.py",
     ]);
 
-    agentFiles.forEach(file => {
+    agentFiles.forEach((file) => {
       this.validateAgentFile(file);
     });
   }
 
   validateAgentFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
       this.stats.filesScanned++;
       this.stats.agentFiles++;
 
@@ -203,9 +241,12 @@ class AgenticRAGValidator {
 
       // Validate error handling
       this.validateAgentErrorHandling(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read agent file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read agent file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
@@ -214,23 +255,24 @@ class AgenticRAGValidator {
       const { patterns, validations } = config;
 
       // Check if any pattern matches
-      const hasPattern = patterns.some(pattern => pattern.test(content));
+      const hasPattern = patterns.some((pattern) => pattern.test(content));
 
       if (hasPattern) {
         // Increment specific counters
-        if (patternType === 'react') this.stats.reactPatterns++;
-        if (patternType === 'chainOfThought') this.stats.chainOfThoughtPatterns++;
-        if (patternType === 'toolUsage') this.stats.toolUsagePatterns++;
-        if (patternType === 'multiAgent') this.stats.multiAgentPatterns++;
-        if (patternType === 'selfReflection') this.stats.reflectionPatterns++;
+        if (patternType === "react") this.stats.reactPatterns++;
+        if (patternType === "chainOfThought")
+          this.stats.chainOfThoughtPatterns++;
+        if (patternType === "toolUsage") this.stats.toolUsagePatterns++;
+        if (patternType === "multiAgent") this.stats.multiAgentPatterns++;
+        if (patternType === "selfReflection") this.stats.reflectionPatterns++;
 
         // Run validations for this pattern
         validations.forEach(({ check, message }) => {
           if (!check(content)) {
             this.addIssue(
-              'warning',
+              "warning",
               `${patternType} validation in ${filePath}`,
-              message
+              message,
             );
           }
         });
@@ -240,24 +282,36 @@ class AgenticRAGValidator {
 
   validateAgentStructure(content, filePath) {
     // Check for proper agent class or function structure
-    if (content.includes('agent') || content.includes('Agent')) {
+    if (content.includes("agent") || content.includes("Agent")) {
       // Look for essential methods
       const essentialMethods = [
-        { method: 'run', message: 'Agent should have a run/execute method' },
-        { method: 'execute', message: 'Agent should have a run/execute method' },
-        { method: 'think', message: 'Consider adding explicit thinking/reasoning method' },
-        { method: 'act', message: 'Consider adding explicit action execution method' }
+        { method: "run", message: "Agent should have a run/execute method" },
+        {
+          method: "execute",
+          message: "Agent should have a run/execute method",
+        },
+        {
+          method: "think",
+          message: "Consider adding explicit thinking/reasoning method",
+        },
+        {
+          method: "act",
+          message: "Consider adding explicit action execution method",
+        },
       ];
 
-      const hasRunMethod = essentialMethods.slice(0, 2).some(({ method }) =>
-        content.includes(method + '(') || content.includes(method + ' (')
-      );
+      const hasRunMethod = essentialMethods
+        .slice(0, 2)
+        .some(
+          ({ method }) =>
+            content.includes(method + "(") || content.includes(method + " ("),
+        );
 
       if (!hasRunMethod) {
         this.addIssue(
-          'warning',
+          "warning",
           `Agent structure in ${filePath}`,
-          'Agent should have a clear execution entry point (run/execute method)'
+          "Agent should have a clear execution entry point (run/execute method)",
         );
       }
     }
@@ -273,12 +327,20 @@ class AgenticRAGValidator {
     });
 
     // Check for input validation
-    if (content.includes('input') || content.includes('query') || content.includes('request')) {
-      if (!content.includes('validate') && !content.includes('sanitize') && !content.includes('escape')) {
+    if (
+      content.includes("input") ||
+      content.includes("query") ||
+      content.includes("request")
+    ) {
+      if (
+        !content.includes("validate") &&
+        !content.includes("sanitize") &&
+        !content.includes("escape")
+      ) {
         this.addIssue(
-          'warning',
+          "warning",
           `Input validation missing in ${filePath}`,
-          'Validate and sanitize all agent inputs to prevent injection attacks'
+          "Validate and sanitize all agent inputs to prevent injection attacks",
         );
       }
     }
@@ -286,21 +348,22 @@ class AgenticRAGValidator {
 
   validateAgentErrorHandling(content, filePath) {
     // Check for proper error handling in agent loops
-    const agentOperations = ['think', 'act', 'observe', 'tool', 'reason'];
+    const agentOperations = ["think", "act", "observe", "tool", "reason"];
 
-    agentOperations.forEach(operation => {
+    agentOperations.forEach((operation) => {
       if (content.includes(operation)) {
         // Look for error handling
-        const hasErrorHandling = content.includes('try') ||
-                                content.includes('catch') ||
-                                content.includes('.catch') ||
-                                content.includes('error');
+        const hasErrorHandling =
+          content.includes("try") ||
+          content.includes("catch") ||
+          content.includes(".catch") ||
+          content.includes("error");
 
         if (!hasErrorHandling) {
           this.addIssue(
-            'warning',
+            "warning",
             `Missing error handling for ${operation} in ${filePath}`,
-            `Add error handling for ${operation} operations to prevent agent crashes`
+            `Add error handling for ${operation} operations to prevent agent crashes`,
           );
         }
       }
@@ -308,16 +371,16 @@ class AgenticRAGValidator {
   }
 
   validateReasoningPatterns() {
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateReasoningInFile(file);
     });
   }
 
   validateReasoningInFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check ReAct pattern implementation
       this.validateReActPattern(content, filePath);
@@ -327,54 +390,67 @@ class AgenticRAGValidator {
 
       // Check reasoning loop controls
       this.validateReasoningLoops(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read reasoning file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read reasoning file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
   validateReActPattern(content, filePath) {
-    if (content.includes('react') || content.includes('ReAct')) {
+    if (content.includes("react") || content.includes("ReAct")) {
       // Check for proper ReAct cycle implementation
-      const reactComponents = ['thought', 'action', 'observation'];
-      const missingComponents = reactComponents.filter(comp => !content.includes(comp));
+      const reactComponents = ["thought", "action", "observation"];
+      const missingComponents = reactComponents.filter(
+        (comp) => !content.includes(comp),
+      );
 
       if (missingComponents.length > 0) {
         this.addIssue(
-          'warning',
+          "warning",
           `Incomplete ReAct pattern in ${filePath}`,
-          `Missing ReAct components: ${missingComponents.join(', ')}`
+          `Missing ReAct components: ${missingComponents.join(", ")}`,
         );
       }
 
       // Check for loop termination
-      if (!content.includes('final') && !content.includes('stop') && !content.includes('answer')) {
+      if (
+        !content.includes("final") &&
+        !content.includes("stop") &&
+        !content.includes("answer")
+      ) {
         this.addIssue(
-          'warning',
+          "warning",
           `ReAct termination in ${filePath}`,
-          'ReAct pattern needs clear termination conditions'
+          "ReAct pattern needs clear termination conditions",
         );
       }
     }
   }
 
   validateChainOfThought(content, filePath) {
-    if (content.includes('chain') && content.includes('thought')) {
+    if (content.includes("chain") && content.includes("thought")) {
       // Check for step-by-step reasoning
-      if (!content.includes('step') && !content.includes('reasoning')) {
+      if (!content.includes("step") && !content.includes("reasoning")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Chain-of-thought structure in ${filePath}`,
-          'Chain-of-thought should explicitly enumerate reasoning steps'
+          "Chain-of-thought should explicitly enumerate reasoning steps",
         );
       }
 
       // Check for reasoning validation
-      if (!content.includes('validate') && !content.includes('verify') && !content.includes('check')) {
+      if (
+        !content.includes("validate") &&
+        !content.includes("verify") &&
+        !content.includes("check")
+      ) {
         this.addIssue(
-          'info',
+          "info",
           `Chain-of-thought validation in ${filePath}`,
-          'Consider adding reasoning validation to catch logical errors'
+          "Consider adding reasoning validation to catch logical errors",
         );
       }
     }
@@ -382,64 +458,68 @@ class AgenticRAGValidator {
 
   validateReasoningLoops(content, filePath) {
     // Check for potential infinite loops in reasoning
-    if (content.includes('while') || content.includes('for')) {
+    if (content.includes("while") || content.includes("for")) {
       // Look for loop counters or limits
-      const hasLoopControl = content.includes('max') ||
-                           content.includes('limit') ||
-                           content.includes('counter') ||
-                           content.includes('break');
+      const hasLoopControl =
+        content.includes("max") ||
+        content.includes("limit") ||
+        content.includes("counter") ||
+        content.includes("break");
 
       if (!hasLoopControl) {
         this.addIssue(
-          'warning',
+          "warning",
           `Loop control in ${filePath}`,
-          'Add loop counters or limits to prevent infinite reasoning loops'
+          "Add loop counters or limits to prevent infinite reasoning loops",
         );
       }
     }
   }
 
   validateToolIntegrations() {
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateToolsInFile(file);
     });
   }
 
   validateToolsInFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
-      if (content.includes('tool') || content.includes('function_call')) {
+      if (content.includes("tool") || content.includes("function_call")) {
         this.validateToolDefinitions(content, filePath);
         this.validateToolExecution(content, filePath);
         this.validateToolSafety(content, filePath);
       }
-
     } catch (error) {
-      this.addIssue('error', `Cannot read tool file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read tool file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
   validateToolDefinitions(content, filePath) {
     // Check for proper tool schema definitions
-    if (content.includes('function') && content.includes('description')) {
+    if (content.includes("function") && content.includes("description")) {
       // Look for parameter validation
-      if (!content.includes('parameters') && !content.includes('schema')) {
+      if (!content.includes("parameters") && !content.includes("schema")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Tool schema in ${filePath}`,
-          'Tools should have well-defined parameter schemas'
+          "Tools should have well-defined parameter schemas",
         );
       }
 
       // Check for return type specification
-      if (!content.includes('return') && !content.includes('output')) {
+      if (!content.includes("return") && !content.includes("output")) {
         this.addIssue(
-          'info',
+          "info",
           `Tool output specification in ${filePath}`,
-          'Specify expected tool output format for better agent understanding'
+          "Specify expected tool output format for better agent understanding",
         );
       }
     }
@@ -447,22 +527,22 @@ class AgenticRAGValidator {
 
   validateToolExecution(content, filePath) {
     // Check for tool execution safety
-    if (content.includes('execute') || content.includes('call')) {
+    if (content.includes("execute") || content.includes("call")) {
       // Look for timeout handling
-      if (!content.includes('timeout') && !content.includes('abort')) {
+      if (!content.includes("timeout") && !content.includes("abort")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Tool timeout handling in ${filePath}`,
-          'Add timeout handling for tool executions'
+          "Add timeout handling for tool executions",
         );
       }
 
       // Check for retry logic
-      if (!content.includes('retry') && !content.includes('attempt')) {
+      if (!content.includes("retry") && !content.includes("attempt")) {
         this.addIssue(
-          'info',
+          "info",
           `Tool retry logic in ${filePath}`,
-          'Consider adding retry logic for unreliable tool calls'
+          "Consider adding retry logic for unreliable tool calls",
         );
       }
     }
@@ -471,32 +551,37 @@ class AgenticRAGValidator {
   validateToolSafety(content, filePath) {
     // Check for dangerous tool capabilities
     const dangerousOperations = [
-      'file_delete', 'file_remove', 'system_command',
-      'exec', 'shell', 'run_command', 'execute_code'
+      "file_delete",
+      "file_remove",
+      "system_command",
+      "exec",
+      "shell",
+      "run_command",
+      "execute_code",
     ];
 
-    dangerousOperations.forEach(operation => {
+    dangerousOperations.forEach((operation) => {
       if (content.includes(operation)) {
         this.addIssue(
-          'error',
+          "error",
           `Dangerous tool operation in ${filePath}`,
-          `Tool '${operation}' poses security risks - implement strict access controls`
+          `Tool '${operation}' poses security risks - implement strict access controls`,
         );
       }
     });
   }
 
   validateAgentSafety() {
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateSafetyInFile(file);
     });
   }
 
   validateSafetyInFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check for privilege escalation risks
       this.checkPrivilegeEscalation(content, filePath);
@@ -506,9 +591,12 @@ class AgenticRAGValidator {
 
       // Check for injection vulnerabilities
       this.checkInjectionRisks(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read safety file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read safety file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
@@ -516,15 +604,15 @@ class AgenticRAGValidator {
     // Check for escalation patterns
     const escalationPatterns = [
       /sudo|admin|root|elevated/i,
-      /privilege|permission|access.*control/i
+      /privilege|permission|access.*control/i,
     ];
 
-    escalationPatterns.forEach(pattern => {
+    escalationPatterns.forEach((pattern) => {
       if (pattern.test(content)) {
         this.addIssue(
-          'warning',
+          "warning",
           `Privilege escalation risk in ${filePath}`,
-          'Ensure agents operate with minimal necessary privileges'
+          "Ensure agents operate with minimal necessary privileges",
         );
       }
     });
@@ -532,12 +620,20 @@ class AgenticRAGValidator {
 
   checkDataLeakage(content, filePath) {
     // Check for potential data exposure
-    if (content.includes('log') || content.includes('console') || content.includes('debug')) {
-      if (content.includes('password') || content.includes('secret') || content.includes('token')) {
+    if (
+      content.includes("log") ||
+      content.includes("console") ||
+      content.includes("debug")
+    ) {
+      if (
+        content.includes("password") ||
+        content.includes("secret") ||
+        content.includes("token")
+      ) {
         this.addIssue(
-          'error',
+          "error",
           `Data leakage risk in ${filePath}`,
-          'Avoid logging sensitive information in agent operations'
+          "Avoid logging sensitive information in agent operations",
         );
       }
     }
@@ -545,12 +641,12 @@ class AgenticRAGValidator {
 
   checkInjectionRisks(content, filePath) {
     // Check for prompt injection vulnerabilities
-    if (content.includes('prompt') || content.includes('instruction')) {
-      if (!content.includes('sanitize') && !content.includes('validate')) {
+    if (content.includes("prompt") || content.includes("instruction")) {
+      if (!content.includes("sanitize") && !content.includes("validate")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Prompt injection risk in ${filePath}`,
-          'Sanitize and validate prompt inputs to prevent injection attacks'
+          "Sanitize and validate prompt inputs to prevent injection attacks",
         );
       }
     }
@@ -558,99 +654,124 @@ class AgenticRAGValidator {
 
   validatePerformanceLimits() {
     // Check for performance-related configuration
-    const configFiles = this.findFiles(['*.config.js', '*.json']);
+    const configFiles = this.findFiles(["*.config.js", "*.json"]);
 
-    configFiles.forEach(file => {
+    configFiles.forEach((file) => {
       this.checkAgenticPerformanceLimits(file);
     });
   }
 
   checkAgenticPerformanceLimits(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check against agentic limits
       Object.entries(AGENTIC_LIMITS).forEach(([key, limit]) => {
-        const pattern = new RegExp(`${key.replace(/_/g, '[_-]')}.*?([0-9]+)`, 'i');
+        const pattern = new RegExp(
+          `${key.replace(/_/g, "[_-]")}.*?([0-9]+)`,
+          "i",
+        );
         const match = content.match(pattern);
 
         if (match) {
           const value = parseInt(match[1]);
           if (value > limit) {
             this.addIssue(
-              'warning',
+              "warning",
               `Agentic limit exceeded in ${filePath}`,
-              `${key} value ${value} exceeds recommended limit of ${limit}`
+              `${key} value ${value} exceeds recommended limit of ${limit}`,
             );
           }
         }
       });
-
     } catch (error) {
-      this.addIssue('error', `Cannot read agentic config: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read agentic config: ${filePath}`,
+        error.message,
+      );
     }
   }
 
   validateContextManagement() {
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateContextInFile(file);
     });
   }
 
   validateContextInFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check for context window management
-      if (content.includes('context') || content.includes('memory')) {
+      if (content.includes("context") || content.includes("memory")) {
         this.checkContextWindowManagement(content, filePath);
         this.checkMemoryManagement(content, filePath);
       }
-
     } catch (error) {
-      this.addIssue('error', `Cannot read context file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read context file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
   checkContextWindowManagement(content, filePath) {
     // Check for context length tracking
-    if (!content.includes('length') && !content.includes('size') && !content.includes('tokens')) {
+    if (
+      !content.includes("length") &&
+      !content.includes("size") &&
+      !content.includes("tokens")
+    ) {
       this.addIssue(
-        'warning',
+        "warning",
         `Context length tracking in ${filePath}`,
-        'Track context length to prevent exceeding model limits'
+        "Track context length to prevent exceeding model limits",
       );
     }
 
     // Check for context pruning
-    if (!content.includes('prune') && !content.includes('truncate') && !content.includes('summarize')) {
+    if (
+      !content.includes("prune") &&
+      !content.includes("truncate") &&
+      !content.includes("summarize")
+    ) {
       this.addIssue(
-        'info',
+        "info",
         `Context pruning in ${filePath}`,
-        'Implement context pruning strategies for long conversations'
+        "Implement context pruning strategies for long conversations",
       );
     }
   }
 
   checkMemoryManagement(content, filePath) {
     // Check for memory persistence
-    if (content.includes('memory')) {
-      if (!content.includes('save') && !content.includes('persist') && !content.includes('store')) {
+    if (content.includes("memory")) {
+      if (
+        !content.includes("save") &&
+        !content.includes("persist") &&
+        !content.includes("store")
+      ) {
         this.addIssue(
-          'info',
+          "info",
           `Memory persistence in ${filePath}`,
-          'Consider persisting agent memory across sessions'
+          "Consider persisting agent memory across sessions",
         );
       }
 
       // Check for memory retrieval strategies
-      if (!content.includes('retrieve') && !content.includes('recall') && !content.includes('search')) {
+      if (
+        !content.includes("retrieve") &&
+        !content.includes("recall") &&
+        !content.includes("search")
+      ) {
         this.addIssue(
-          'info',
+          "info",
           `Memory retrieval in ${filePath}`,
-          'Implement efficient memory retrieval for relevant context'
+          "Implement efficient memory retrieval for relevant context",
         );
       }
     }
@@ -663,20 +784,26 @@ class AgenticRAGValidator {
       try {
         const items = fs.readdirSync(dir);
 
-        items.forEach(item => {
+        items.forEach((item) => {
           const fullPath = path.join(dir, item);
           const stat = fs.statSync(fullPath);
 
-          if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+          if (
+            stat.isDirectory() &&
+            !item.startsWith(".") &&
+            item !== "node_modules"
+          ) {
             walkDir(fullPath);
           } else if (stat.isFile()) {
-            const matches = patterns.some(pattern => {
-              if (pattern.includes('**')) {
+            const matches = patterns.some((pattern) => {
+              if (pattern.includes("**")) {
                 // Handle glob patterns with **
-                const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*'));
-                return regex.test(fullPath.replace(/\\/g, '/'));
-              } else if (pattern.includes('*')) {
-                const regex = new RegExp(pattern.replace('*', '.*'));
+                const regex = new RegExp(
+                  pattern.replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*"),
+                );
+                return regex.test(fullPath.replace(/\\/g, "/"));
+              } else if (pattern.includes("*")) {
+                const regex = new RegExp(pattern.replace("*", ".*"));
                 return regex.test(item);
               }
               return item === pattern;
@@ -701,32 +828,40 @@ class AgenticRAGValidator {
   }
 
   generateReport() {
-    const errorCount = this.issues.filter(i => i.level === 'error').length;
-    const warningCount = this.issues.filter(i => i.level === 'warning').length;
-    const infoCount = this.issues.filter(i => i.level === 'info').length;
+    const errorCount = this.issues.filter((i) => i.level === "error").length;
+    const warningCount = this.issues.filter(
+      (i) => i.level === "warning",
+    ).length;
+    const infoCount = this.issues.filter((i) => i.level === "info").length;
 
-    console.log('\n📊 AGENTIC RAG VALIDATION REPORT');
-    console.log('=' .repeat(50));
+    console.log("\n📊 AGENTIC RAG VALIDATION REPORT");
+    console.log("=".repeat(50));
 
     console.log(`🤖 Agent Statistics:`);
     console.log(`   Files scanned: ${this.stats.filesScanned}`);
     console.log(`   Agent files: ${this.stats.agentFiles}`);
     console.log(`   ReAct patterns: ${this.stats.reactPatterns}`);
-    console.log(`   Chain-of-thought patterns: ${this.stats.chainOfThoughtPatterns}`);
+    console.log(
+      `   Chain-of-thought patterns: ${this.stats.chainOfThoughtPatterns}`,
+    );
     console.log(`   Tool usage patterns: ${this.stats.toolUsagePatterns}`);
     console.log(`   Multi-agent patterns: ${this.stats.multiAgentPatterns}`);
     console.log(`   Reflection patterns: ${this.stats.reflectionPatterns}`);
     console.log(`   Safety issues: ${this.stats.safetyIssues}`);
 
     if (errorCount === 0 && warningCount === 0) {
-      console.log('✅ EXCELLENT: Agentic RAG patterns are safe and well-implemented');
+      console.log(
+        "✅ EXCELLENT: Agentic RAG patterns are safe and well-implemented",
+      );
     } else {
-      console.log(`🔍 Found ${errorCount} errors, ${warningCount} warnings, ${infoCount} suggestions`);
+      console.log(
+        `🔍 Found ${errorCount} errors, ${warningCount} warnings, ${infoCount} suggestions`,
+      );
     }
 
     // Group issues by level
-    ['error', 'warning', 'info'].forEach(level => {
-      const levelIssues = this.issues.filter(i => i.level === level);
+    ["error", "warning", "info"].forEach((level) => {
+      const levelIssues = this.issues.filter((i) => i.level === level);
       if (levelIssues.length > 0) {
         console.log(`\n${level.toUpperCase()}S:`);
         levelIssues.forEach((issue, index) => {
@@ -740,7 +875,7 @@ class AgenticRAGValidator {
       passed: errorCount === 0,
       summary: `Agentic RAG validation: ${errorCount} errors, ${warningCount} warnings`,
       details: this.issues,
-      stats: this.stats
+      stats: this.stats,
     };
   }
 }

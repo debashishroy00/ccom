@@ -2,19 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(chmod:*)",
-<<<<<<< HEAD
       "Bash(git init:*)",
       "Bash(git remote add:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git remote set-url:*)"
-=======
+      "Bash(git remote set-url:*)",
       "Bash(git checkout:*)",
-      "Bash(git fetch:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)"
->>>>>>> 5a83064 (chore: update)
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

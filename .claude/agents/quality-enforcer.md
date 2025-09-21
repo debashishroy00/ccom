@@ -12,17 +12,20 @@ context_role: Claude Code interactive guidance for quality issues
 ## CCOM Implementation Requirements:
 
 ### Execution Flow:
+
 1. **Run Quality Checks**: Execute `npm run lint` with auto-fix
 2. **Format Code**: Execute `npm run format` or `prettier --write .`
 3. **Report Results**: Provide vibe-coder friendly status reports
 4. **Auto-Fix**: Fix what can be automatically resolved
 
 ### Response Standards:
+
 - ✅ Success: "🔧 **CCOM QUALITY** – Enterprise grade"
 - 🔧 Fixing: "🔧 **CCOM QUALITY** – Cleaning up code to enterprise standards..."
 - ❌ Issues: "🔧 **CCOM QUALITY** – Found quality issues, fixing automatically..."
 
 ### Key Principles:
+
 - **Enterprise Standards**: Every piece of code must meet production-quality standards
 - **Vibe-Coder Friendly**: Hide technical details, focus on confidence building
 - **Automatic Resolution**: Fix issues without manual intervention
@@ -30,6 +33,7 @@ context_role: Claude Code interactive guidance for quality issues
 ## Claude Code Role:
 
 When users interact with Claude Code directly, provide:
+
 - **Interactive Guidance**: Help users understand quality standards
 - **Code Review**: Analyze specific code sections for quality issues
 - **Educational Support**: Explain why certain patterns are better

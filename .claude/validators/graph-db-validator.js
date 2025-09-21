@@ -1,79 +1,81 @@
 // Graph Database Security Validator for Enterprise RAG Systems
 // Supports: Neo4j, ArangoDB, TigerGraph, Amazon Neptune, Azure Cosmos DB
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Dangerous Cypher patterns that can cause security issues
 const DANGEROUS_CYPHER_PATTERNS = [
   {
     pattern: /DETACH DELETE.*(?!WHERE)/i,
-    severity: 'error',
-    message: 'Unconditional DETACH DELETE can destroy entire database'
+    severity: "error",
+    message: "Unconditional DETACH DELETE can destroy entire database",
   },
   {
     pattern: /DELETE.*(?!WHERE)/i,
-    severity: 'error',
-    message: 'Unconditional DELETE can destroy data'
+    severity: "error",
+    message: "Unconditional DELETE can destroy data",
   },
   {
     pattern: /DROP\s+(CONSTRAINT|INDEX|NODE|RELATIONSHIP)/i,
-    severity: 'error',
-    message: 'DROP operations can break database schema'
+    severity: "error",
+    message: "DROP operations can break database schema",
   },
   {
     pattern: /MERGE.*(?!ON)/i,
-    severity: 'warning',
-    message: 'MERGE without ON CREATE/MATCH can cause unexpected behavior'
+    severity: "warning",
+    message: "MERGE without ON CREATE/MATCH can cause unexpected behavior",
   },
   {
     pattern: /\$\{[^}]*\}/,
-    severity: 'error',
-    message: 'Template literals in queries can enable injection attacks'
+    severity: "error",
+    message: "Template literals in queries can enable injection attacks",
   },
   {
     pattern: /\+\s*['"`][^'"`]*['"`]\s*\+/,
-    severity: 'error',
-    message: 'String concatenation in queries enables injection attacks'
-  }
+    severity: "error",
+    message: "String concatenation in queries enables injection attacks",
+  },
 ];
 
 // Performance anti-patterns in graph queries
 const PERFORMANCE_PATTERNS = [
   {
     pattern: /MATCH\s*\(\s*\w+\s*\)\s*(?!WHERE)/i,
-    severity: 'warning',
-    message: 'Unfiltered MATCH can scan entire database'
+    severity: "warning",
+    message: "Unfiltered MATCH can scan entire database",
   },
   {
     pattern: /MATCH.*-\[\*\]-/i,
-    severity: 'warning',
-    message: 'Variable-length relationships without limits can cause exponential traversal'
+    severity: "warning",
+    message:
+      "Variable-length relationships without limits can cause exponential traversal",
   },
   {
     pattern: /OPTIONAL MATCH.*OPTIONAL MATCH/i,
-    severity: 'warning',
-    message: 'Multiple OPTIONAL MATCH can create Cartesian products'
+    severity: "warning",
+    message: "Multiple OPTIONAL MATCH can create Cartesian products",
   },
   {
     pattern: /(?:MATCH.*){3,}/i,
-    severity: 'info',
-    message: 'Complex queries with many MATCH clauses may benefit from optimization'
-  }
+    severity: "info",
+    message:
+      "Complex queries with many MATCH clauses may benefit from optimization",
+  },
 ];
 
 // Multi-tenant security patterns
 const TENANT_PATTERNS = [
   {
     pattern: /MATCH\s*\([^)]*\)\s*(?!.*tenant|.*user_id|.*namespace)/i,
-    severity: 'warning',
-    message: 'Query lacks tenant isolation - potential data leakage'
+    severity: "warning",
+    message: "Query lacks tenant isolation - potential data leakage",
   },
   {
     pattern: /WHERE.*(?!.*tenant|.*user_id|.*organization)/i,
-    severity: 'info',
-    message: 'Consider adding tenant filtering for multi-tenant applications'
-  }
+    severity: "info",
+    message: "Consider adding tenant filtering for multi-tenant applications",
+  },
 ];
 
 class GraphDBValidator {
@@ -84,12 +86,14 @@ class GraphDBValidator {
       queriesAnalyzed: 0,
       filesScanned: 0,
       cypherQueries: 0,
-      gremlinQueries: 0
+      gremlinQueries: 0,
     };
   }
 
   validateProject() {
-    console.log('🔍 CCOM GRAPH DB VALIDATION – Analyzing graph database patterns...');
+    console.log(
+      "🔍 CCOM GRAPH DB VALIDATION – Analyzing graph database patterns...",
+    );
 
     this.scanCypherFiles();
     this.scanJavaScriptFiles();
@@ -102,28 +106,31 @@ class GraphDBValidator {
 
   scanCypherFiles() {
     // Find .cypher, .cql files
-    const cypherFiles = this.findFiles(['*.cypher', '*.cql']);
+    const cypherFiles = this.findFiles(["*.cypher", "*.cql"]);
 
-    cypherFiles.forEach(file => {
+    cypherFiles.forEach((file) => {
       this.validateCypherFile(file);
     });
   }
 
   validateCypherFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
       this.stats.filesScanned++;
 
       // Split into individual queries
-      const queries = content.split(';').filter(q => q.trim());
+      const queries = content.split(";").filter((q) => q.trim());
       this.stats.cypherQueries += queries.length;
 
       queries.forEach((query, index) => {
         this.validateCypherQuery(query.trim(), `${filePath}:${index + 1}`);
       });
-
     } catch (error) {
-      this.addIssue('error', `Cannot read Cypher file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read Cypher file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
@@ -135,7 +142,11 @@ class GraphDBValidator {
     // Check dangerous patterns
     DANGEROUS_CYPHER_PATTERNS.forEach(({ pattern, severity, message }) => {
       if (pattern.test(query)) {
-        this.addIssue(severity, `Dangerous Cypher pattern in ${location}`, message);
+        this.addIssue(
+          severity,
+          `Dangerous Cypher pattern in ${location}`,
+          message,
+        );
       }
     });
 
@@ -163,55 +174,55 @@ class GraphDBValidator {
   validateParameterization(query, location) {
     // Check for unparameterized values
     const literalPatterns = [
-      /'[^']*'/g,  // String literals
-      /"[^"]*"/g,  // Double quoted strings
-      /\b\d+\b/g   // Numeric literals
+      /'[^']*'/g, // String literals
+      /"[^"]*"/g, // Double quoted strings
+      /\b\d+\b/g, // Numeric literals
     ];
 
     let hasLiterals = false;
-    literalPatterns.forEach(pattern => {
+    literalPatterns.forEach((pattern) => {
       if (pattern.test(query)) {
         hasLiterals = true;
       }
     });
 
-    if (hasLiterals && !query.includes('$')) {
+    if (hasLiterals && !query.includes("$")) {
       this.addIssue(
-        'warning',
+        "warning",
         `Unparameterized query in ${location}`,
-        'Use parameters ($param) instead of literals for better security and performance'
+        "Use parameters ($param) instead of literals for better security and performance",
       );
     }
   }
 
   validateIndexing(query, location) {
     // Check for potential missing indexes
-    if (query.includes('MATCH') && query.includes('WHERE')) {
+    if (query.includes("MATCH") && query.includes("WHERE")) {
       // Simple heuristic: if filtering by property, suggest index
       const propertyPattern = /WHERE\s+\w+\.(\w+)/i;
       const match = query.match(propertyPattern);
 
-      if (match && !query.includes('USING INDEX')) {
+      if (match && !query.includes("USING INDEX")) {
         this.addIssue(
-          'info',
+          "info",
           `Consider index optimization in ${location}`,
-          `Property '${match[1]}' might benefit from an index`
+          `Property '${match[1]}' might benefit from an index`,
         );
       }
     }
   }
 
   scanJavaScriptFiles() {
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateJavaScriptFile(file);
     });
   }
 
   validateJavaScriptFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
       this.stats.filesScanned++;
 
       // Look for embedded Cypher queries
@@ -222,9 +233,12 @@ class GraphDBValidator {
 
       // Check session management
       this.validateSessionManagement(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read JavaScript file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read JavaScript file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
@@ -242,15 +256,16 @@ class GraphDBValidator {
     }
 
     // Find queries in string concatenation
-    const concatRegex = /['"][^'"]*(?:MATCH|CREATE|MERGE|DELETE|RETURN)[^'"]*['"]/gi;
+    const concatRegex =
+      /['"][^'"]*(?:MATCH|CREATE|MERGE|DELETE|RETURN)[^'"]*['"]/gi;
     const concatMatches = content.match(concatRegex);
 
     if (concatMatches) {
       concatMatches.forEach((match, index) => {
         this.addIssue(
-          'warning',
+          "warning",
           `String concatenated query in ${filePath}:concat-${index + 1}`,
-          'Use parameterized queries instead of string concatenation'
+          "Use parameterized queries instead of string concatenation",
         );
       });
     }
@@ -258,22 +273,22 @@ class GraphDBValidator {
 
   validateDriverUsage(content, filePath) {
     // Check for Neo4j driver patterns
-    if (content.includes('neo4j.driver') || content.includes('neo4j-driver')) {
+    if (content.includes("neo4j.driver") || content.includes("neo4j-driver")) {
       // Check for proper authentication
-      if (!content.includes('auth.basic') && !content.includes('auth.bearer')) {
+      if (!content.includes("auth.basic") && !content.includes("auth.bearer")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Missing authentication in ${filePath}`,
-          'Neo4j driver should use proper authentication'
+          "Neo4j driver should use proper authentication",
         );
       }
 
       // Check for TLS configuration
-      if (content.includes('bolt://') && !content.includes('encrypted')) {
+      if (content.includes("bolt://") && !content.includes("encrypted")) {
         this.addIssue(
-          'info',
+          "info",
           `Consider TLS encryption in ${filePath}`,
-          'Use bolt+s:// or configure encrypted: true for production'
+          "Use bolt+s:// or configure encrypted: true for production",
         );
       }
     }
@@ -281,21 +296,24 @@ class GraphDBValidator {
 
   validateSessionManagement(content, filePath) {
     // Check for proper session cleanup
-    if (content.includes('.session(') && !content.includes('.close()')) {
+    if (content.includes(".session(") && !content.includes(".close()")) {
       this.addIssue(
-        'warning',
+        "warning",
         `Missing session cleanup in ${filePath}`,
-        'Always close Neo4j sessions to prevent memory leaks'
+        "Always close Neo4j sessions to prevent memory leaks",
       );
     }
 
     // Check for transaction usage
-    if (content.includes('.writeTransaction') || content.includes('.readTransaction')) {
-      if (!content.includes('catch') && !content.includes('.catch')) {
+    if (
+      content.includes(".writeTransaction") ||
+      content.includes(".readTransaction")
+    ) {
+      if (!content.includes("catch") && !content.includes(".catch")) {
         this.addIssue(
-          'warning',
+          "warning",
           `Missing error handling in ${filePath}`,
-          'Add proper error handling for database transactions'
+          "Add proper error handling for database transactions",
         );
       }
     }
@@ -303,27 +321,32 @@ class GraphDBValidator {
 
   scanConfigFiles() {
     const configFiles = this.findFiles([
-      'neo4j.conf', 'neo4j.config.js',
-      'graph.config.js', 'database.config.js'
+      "neo4j.conf",
+      "neo4j.config.js",
+      "graph.config.js",
+      "database.config.js",
     ]);
 
-    configFiles.forEach(file => {
+    configFiles.forEach((file) => {
       this.validateConfigFile(file);
     });
   }
 
   validateConfigFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check for hardcoded credentials
       this.checkHardcodedCredentials(content, filePath);
 
       // Check for security settings
       this.checkSecuritySettings(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read config file: ${filePath}`, error.message);
+      this.addIssue(
+        "error",
+        `Cannot read config file: ${filePath}`,
+        error.message,
+      );
     }
   }
 
@@ -332,15 +355,15 @@ class GraphDBValidator {
       /password\s*[:=]\s*['"][^'"]+['"]/i,
       /username\s*[:=]\s*['"][^'"]+['"]/i,
       /auth\s*[:=]\s*['"][^'"]+['"]/i,
-      /secret\s*[:=]\s*['"][^'"]+['"]/i
+      /secret\s*[:=]\s*['"][^'"]+['"]/i,
     ];
 
-    credentialPatterns.forEach(pattern => {
+    credentialPatterns.forEach((pattern) => {
       if (pattern.test(content)) {
         this.addIssue(
-          'error',
+          "error",
           `Hardcoded credentials in ${filePath}`,
-          'Use environment variables for sensitive configuration'
+          "Use environment variables for sensitive configuration",
         );
       }
     });
@@ -348,12 +371,16 @@ class GraphDBValidator {
 
   checkSecuritySettings(content, filePath) {
     // Check for recommended security settings
-    if (content.includes('neo4j') || content.includes('graph')) {
-      if (!content.includes('tls') && !content.includes('ssl') && !content.includes('encrypted')) {
+    if (content.includes("neo4j") || content.includes("graph")) {
+      if (
+        !content.includes("tls") &&
+        !content.includes("ssl") &&
+        !content.includes("encrypted")
+      ) {
         this.addIssue(
-          'info',
+          "info",
           `Consider TLS configuration in ${filePath}`,
-          'Enable TLS/SSL for production graph database connections'
+          "Enable TLS/SSL for production graph database connections",
         );
       }
     }
@@ -361,22 +388,26 @@ class GraphDBValidator {
 
   validateConnectionSecurity() {
     // Check for environment variable usage
-    const envFile = path.join(this.projectPath, '.env');
+    const envFile = path.join(this.projectPath, ".env");
     if (fs.existsSync(envFile)) {
-      const envContent = fs.readFileSync(envFile, 'utf8');
+      const envContent = fs.readFileSync(envFile, "utf8");
 
       // Check for graph database environment variables
       const hasGraphEnv = [
-        'NEO4J_URI', 'NEO4J_URL', 'NEO4J_PASSWORD',
-        'GRAPH_DB_URI', 'GRAPH_DB_PASSWORD',
-        'ARANGO_URL', 'ARANGO_PASSWORD'
-      ].some(env => envContent.includes(env));
+        "NEO4J_URI",
+        "NEO4J_URL",
+        "NEO4J_PASSWORD",
+        "GRAPH_DB_URI",
+        "GRAPH_DB_PASSWORD",
+        "ARANGO_URL",
+        "ARANGO_PASSWORD",
+      ].some((env) => envContent.includes(env));
 
       if (hasGraphEnv) {
         this.addIssue(
-          'info',
-          'Found graph database environment variables',
-          'Good practice: Using environment variables for configuration'
+          "info",
+          "Found graph database environment variables",
+          "Good practice: Using environment variables for configuration",
         );
       }
     }
@@ -384,16 +415,16 @@ class GraphDBValidator {
 
   validateQueryPatterns() {
     // Additional validation for common query patterns
-    const jsFiles = this.findFiles(['*.js', '*.ts']);
+    const jsFiles = this.findFiles(["*.js", "*.ts"]);
 
-    jsFiles.forEach(file => {
+    jsFiles.forEach((file) => {
       this.validateQueryPatternsInFile(file);
     });
   }
 
   validateQueryPatternsInFile(filePath) {
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check for batch operations
       this.checkBatchOperations(content, filePath);
@@ -403,20 +434,22 @@ class GraphDBValidator {
 
       // Check for connection pooling
       this.checkConnectionPooling(content, filePath);
-
     } catch (error) {
-      this.addIssue('error', `Cannot read file: ${filePath}`, error.message);
+      this.addIssue("error", `Cannot read file: ${filePath}`, error.message);
     }
   }
 
   checkBatchOperations(content, filePath) {
     // Check for inefficient single-record operations in loops
-    if (content.includes('for') && (content.includes('CREATE') || content.includes('MERGE'))) {
-      if (!content.includes('UNWIND') && !content.includes('batch')) {
+    if (
+      content.includes("for") &&
+      (content.includes("CREATE") || content.includes("MERGE"))
+    ) {
+      if (!content.includes("UNWIND") && !content.includes("batch")) {
         this.addIssue(
-          'info',
+          "info",
           `Consider batch operations in ${filePath}`,
-          'Use UNWIND for batch inserts/updates instead of loops'
+          "Use UNWIND for batch inserts/updates instead of loops",
         );
       }
     }
@@ -424,19 +457,21 @@ class GraphDBValidator {
 
   checkErrorHandling(content, filePath) {
     // Check for database operations without error handling
-    const dbOperations = ['run(', 'writeTransaction(', 'readTransaction('];
+    const dbOperations = ["run(", "writeTransaction(", "readTransaction("];
 
-    dbOperations.forEach(operation => {
+    dbOperations.forEach((operation) => {
       if (content.includes(operation)) {
         // Check if there's error handling nearby
-        const lines = content.split('\n');
+        const lines = content.split("\n");
         let hasErrorHandling = false;
 
         lines.forEach((line, index) => {
           if (line.includes(operation)) {
             // Look for try-catch or .catch in surrounding lines
-            const context = lines.slice(Math.max(0, index - 3), index + 5).join('\n');
-            if (context.includes('try') || context.includes('.catch')) {
+            const context = lines
+              .slice(Math.max(0, index - 3), index + 5)
+              .join("\n");
+            if (context.includes("try") || context.includes(".catch")) {
               hasErrorHandling = true;
             }
           }
@@ -444,9 +479,9 @@ class GraphDBValidator {
 
         if (!hasErrorHandling) {
           this.addIssue(
-            'warning',
+            "warning",
             `Missing error handling for ${operation} in ${filePath}`,
-            'Add proper error handling for database operations'
+            "Add proper error handling for database operations",
           );
         }
       }
@@ -458,9 +493,9 @@ class GraphDBValidator {
     const driverMatches = content.match(/neo4j\.driver\(/g);
     if (driverMatches && driverMatches.length > 1) {
       this.addIssue(
-        'warning',
+        "warning",
         `Multiple driver instances in ${filePath}`,
-        'Use a single driver instance with connection pooling'
+        "Use a single driver instance with connection pooling",
       );
     }
   }
@@ -472,16 +507,20 @@ class GraphDBValidator {
       try {
         const items = fs.readdirSync(dir);
 
-        items.forEach(item => {
+        items.forEach((item) => {
           const fullPath = path.join(dir, item);
           const stat = fs.statSync(fullPath);
 
-          if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+          if (
+            stat.isDirectory() &&
+            !item.startsWith(".") &&
+            item !== "node_modules"
+          ) {
             walkDir(fullPath);
           } else if (stat.isFile()) {
-            const matches = patterns.some(pattern => {
-              if (pattern.includes('*')) {
-                const regex = new RegExp(pattern.replace('*', '.*'));
+            const matches = patterns.some((pattern) => {
+              if (pattern.includes("*")) {
+                const regex = new RegExp(pattern.replace("*", ".*"));
                 return regex.test(item);
               }
               return item === pattern;
@@ -506,12 +545,14 @@ class GraphDBValidator {
   }
 
   generateReport() {
-    const errorCount = this.issues.filter(i => i.level === 'error').length;
-    const warningCount = this.issues.filter(i => i.level === 'warning').length;
-    const infoCount = this.issues.filter(i => i.level === 'info').length;
+    const errorCount = this.issues.filter((i) => i.level === "error").length;
+    const warningCount = this.issues.filter(
+      (i) => i.level === "warning",
+    ).length;
+    const infoCount = this.issues.filter((i) => i.level === "info").length;
 
-    console.log('\n📊 GRAPH DATABASE VALIDATION REPORT');
-    console.log('=' .repeat(50));
+    console.log("\n📊 GRAPH DATABASE VALIDATION REPORT");
+    console.log("=".repeat(50));
 
     console.log(`📈 Analysis Statistics:`);
     console.log(`   Files scanned: ${this.stats.filesScanned}`);
@@ -519,14 +560,18 @@ class GraphDBValidator {
     console.log(`   Cypher queries: ${this.stats.cypherQueries}`);
 
     if (errorCount === 0 && warningCount === 0) {
-      console.log('✅ EXCELLENT: Graph database patterns are secure and optimized');
+      console.log(
+        "✅ EXCELLENT: Graph database patterns are secure and optimized",
+      );
     } else {
-      console.log(`🔍 Found ${errorCount} errors, ${warningCount} warnings, ${infoCount} suggestions`);
+      console.log(
+        `🔍 Found ${errorCount} errors, ${warningCount} warnings, ${infoCount} suggestions`,
+      );
     }
 
     // Group issues by level
-    ['error', 'warning', 'info'].forEach(level => {
-      const levelIssues = this.issues.filter(i => i.level === level);
+    ["error", "warning", "info"].forEach((level) => {
+      const levelIssues = this.issues.filter((i) => i.level === level);
       if (levelIssues.length > 0) {
         console.log(`\n${level.toUpperCase()}S:`);
         levelIssues.forEach((issue, index) => {
@@ -540,7 +585,7 @@ class GraphDBValidator {
       passed: errorCount === 0,
       summary: `Graph DB validation: ${errorCount} errors, ${warningCount} warnings`,
       details: this.issues,
-      stats: this.stats
+      stats: this.stats,
     };
   }
 }

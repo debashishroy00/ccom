@@ -7,29 +7,35 @@ CCOM transforms Claude Code into a powerful development assistant that **instant
 ## ✨ Key Features
 
 ### 🧠 **Instant Project Context** (NEW!)
+
 ```bash
 ccom context     # Claude Code instantly understands your entire project
 ```
+
 - **No more re-explaining** your project every session
 - **Instant intelligence** - tech stack, architecture, health, recent work
 - **Smart suggestions** - context-aware next actions
 - **Perfect for vibe coders** - one command, full understanding
 
 ### 🎯 **Smart Activation**
+
 - Only commands starting with `ccom` activate automation
 - Regular Claude Code behavior for all other interactions
 - Clear visual distinction between CCOM and standard responses
 
 ### 🔄 **Real-Time File Monitoring**
+
 ```bash
 ccom watch files             # Real-time quality enforcement
 ccom monitor config          # Show monitoring settings
 ```
+
 - **Smart change detection** - only triggers on meaningful changes
 - **Automatic quality checks** when you save files
 - **Cross-platform** file watching (Windows, macOS, Linux)
 
 ### 🤖 **Automated CI/CD Workflows**
+
 ```bash
 ccom workflow quality         # Lint, format, type check, tests
 ccom workflow security        # Security scan, secrets, vulnerabilities
@@ -43,6 +49,7 @@ ccom complete stack           # Full AWS + Angular validation
 ```
 
 ### 🛡️ **Enterprise Security & AWS Validation**
+
 - **Dependency auditing** with npm audit
 - **Secret detection** for API keys, passwords
 - **Code security scanning** for dangerous patterns
@@ -55,6 +62,7 @@ ccom complete stack           # Full AWS + Angular validation
 ## 🚀 Quick Start
 
 ### Installation
+
 ```bash
 # Install from PyPI (coming soon)
 pip install ccom
@@ -66,6 +74,7 @@ pip install -e .
 ```
 
 ### Initialize Your Project
+
 ```bash
 # Setup CCOM in any project
 ccom --init
@@ -82,12 +91,15 @@ ccom watch files             # Start real-time monitoring
 ## 📋 Complete Command Reference
 
 ### 🧠 **Project Context** (MUST-HAVE for Vibe Coders!)
+
 ```bash
 ccom context                 # Load complete project intelligence
 ccom project summary         # Alternative syntax
 ccom catch me up             # Natural language version
 ```
+
 **What you get:**
+
 - 📊 Project overview (type, architecture, lines of code)
 - 🏗️ Tech stack detection (React, Angular, Node.js, Python, etc.)
 - 📈 Health status (quality scores, security status)
@@ -96,6 +108,7 @@ ccom catch me up             # Natural language version
 - 💡 Smart next action suggestions
 
 ### 🔧 **Quality & Testing**
+
 ```bash
 ccom workflow quality        # Complete quality audit
 ccom quality audit           # Alternative syntax
@@ -103,6 +116,7 @@ ccom fix all issues          # Quality enforcement
 ```
 
 ### 🔒 **Security & AWS Validation**
+
 ```bash
 ccom workflow security       # Security scan
 ccom check vulnerabilities   # Dependency audit
@@ -112,6 +126,7 @@ ccom aws security            # Complete AWS security audit
 ```
 
 ### 🚀 **Deployment**
+
 ```bash
 ccom workflow deploy         # Full deployment pipeline
 ccom deploy to production    # Alternative syntax
@@ -119,6 +134,7 @@ ccom ship it                 # Quick deploy
 ```
 
 ### 📁 **File Monitoring & Stack Validation**
+
 ```bash
 ccom watch files             # Start real-time monitoring
 ccom monitor config          # Show configuration
@@ -130,6 +146,7 @@ ccom complete stack          # Full stack validation
 ```
 
 ### 🧠 **Memory & Status**
+
 ```bash
 ccom remember auth system    # Save feature to memory
 ccom show project status     # Display project info
@@ -137,6 +154,7 @@ ccom what have we built      # List remembered features
 ```
 
 ### ⚙️ **Automation Setup**
+
 ```bash
 ccom workflow setup          # Create GitHub Actions
 ccom --init                  # Initialize project
@@ -146,12 +164,14 @@ ccom --status                # Show CCOM status
 ## 🏗️ Architecture
 
 ### **Real-Time File Monitoring**
+
 - **Chokidar integration** for cross-platform file watching
 - **Smart change detection** using SHA256 hashing
 - **Debounced processing** to prevent spam during bulk edits
 - **Pattern-based filtering** for relevant files only
 
 ### **Multi-Agent Workflow System**
+
 - **Quality Enforcer**: ESLint, Prettier, TypeScript checks
 - **Security Guardian**: Vulnerability scanning, secret detection
 - **Builder Agent**: Production build optimization
@@ -162,6 +182,7 @@ ccom --status                # Show CCOM status
 - **Performance Validator**: Caching strategies, monitoring setup, latency optimization
 
 ### **Claude Code Integration**
+
 - **Prefix-based activation** - only "ccom" commands trigger automation
 - **Visual engagement indicators** for clear feedback
 - **TodoWrite integration** for systematic workflow tracking
@@ -228,25 +249,25 @@ name: CCOM Quality Gates
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   quality_check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-    - name: Install dependencies
-      run: npm ci
-    - name: Install CCOM
-      run: pip install ccom
-    - name: CCOM Quality Workflow
-      run: ccom workflow quality
-    - name: CCOM Security Workflow
-      run: ccom workflow security
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Install CCOM
+        run: pip install ccom
+      - name: CCOM Quality Workflow
+        run: ccom workflow quality
+      - name: CCOM Security Workflow
+        run: ccom workflow security
 ```
 
 **Result**: Every push/PR automatically runs quality and security checks!
@@ -254,6 +275,7 @@ jobs:
 ## 📊 What Each Workflow Does
 
 ### **Quality Workflow**
+
 - ✅ **Lint Check**: ESLint for code standards
 - ✅ **Format Check**: Prettier for consistent formatting
 - ✅ **Type Check**: TypeScript type validation
@@ -262,6 +284,7 @@ jobs:
 - ✅ **Performance Check**: Caching and monitoring validation
 
 ### **Security Workflow**
+
 - 🛡️ **Dependency Audit**: npm audit for vulnerable packages
 - 🛡️ **Secret Scanning**: Detect hardcoded API keys/passwords
 - 🛡️ **Code Security**: Scan for dangerous patterns (eval, innerHTML)
@@ -269,6 +292,7 @@ jobs:
 - 🛡️ **AWS Security**: Bedrock API security, cost monitoring
 
 ### **Deploy Workflow**
+
 - 🚀 **Quality Gates**: Must pass quality checks
 - 🚀 **Security Gates**: Must pass security scan
 - 🚀 **AWS Validation**: Complete stack validation
@@ -280,7 +304,9 @@ jobs:
 ## 🔧 Configuration
 
 ### **File Monitoring**
+
 CCOM creates `.ccom/file-monitor.json`:
+
 ```json
 {
   "enabled": true,
@@ -295,10 +321,12 @@ CCOM creates `.ccom/file-monitor.json`:
 ```
 
 ### **Project Memory**
+
 CCOM maintains `.claude/memory.json`:
+
 ```json
 {
-  "project": {"name": "my-app", "created": "2025-01-15"},
+  "project": { "name": "my-app", "created": "2025-01-15" },
   "features": {
     "auth_system": {
       "created": "2025-01-15T10:30:00Z",
@@ -311,6 +339,7 @@ CCOM maintains `.claude/memory.json`:
 ## 🎯 Use Cases
 
 ### **Solo Developers** (Vibe Coders)
+
 - **🧠 Instant Context Loading**: `ccom context` eliminates re-explaining projects
 - **🚀 Zero Mental Overhead**: Claude Code understands your project immediately
 - **✅ Automated Quality**: Never forget to run lint/format/tests
@@ -320,18 +349,21 @@ CCOM maintains `.claude/memory.json`:
 - **☁️ AWS Stack Validation**: Complete RAG stack validation in one command
 
 ### **Small Teams**
+
 - **Consistent Standards**: GitHub Actions enforce quality on every PR
 - **Shared Memory**: Track what features have been built
 - **Deployment Safety**: Multiple validation layers before production
 - **Cost Optimization**: AWS cost monitoring across the team
 
 ### **Learning Developers**
+
 - **Best Practices**: CCOM teaches enterprise-grade development habits
 - **Natural Language**: No need to memorize complex CLI commands
 - **Instant Feedback**: Learn from quality issues as they're detected
 - **AWS Expertise**: Learn proper AWS + Angular patterns
 
 ### **Enterprise RAG Applications**
+
 - **Complete Stack Validation**: Angular + AWS Bedrock + S3 + Vector DB
 - **Cost Monitoring**: Bedrock model optimization, S3 storage efficiency
 - **Security Hardening**: S3 presigned URLs, CORS, multipart uploads
@@ -340,11 +372,13 @@ CCOM maintains `.claude/memory.json`:
 ## 🛠️ Development
 
 ### **Requirements**
+
 - Python 3.8+
 - Node.js 16+ (for file monitoring and quality tools)
 - Git (for memory persistence and GitHub integration)
 
 ### **Project Structure**
+
 ```
 ccom/
 ├── ccom/
@@ -369,6 +403,7 @@ ccom/
 ```
 
 ### **Contributing**
+
 1. Fork the repository
 2. Create a feature branch
 3. Run `ccom workflow quality` before committing
@@ -379,11 +414,13 @@ ccom/
 ## 🔍 Troubleshooting
 
 ### **File Monitoring Not Working?**
+
 - **Windows + OneDrive**: Files in OneDrive sync may not trigger events immediately
 - **Solution**: Test in `C:\temp` or similar non-synced location
 - **Alternative**: File monitoring works best with direct editor saves (VS Code, etc.)
 
 ### **GitHub Actions Failing?**
+
 ```bash
 # Check if CCOM is properly installed
 pip show ccom
@@ -394,6 +431,7 @@ ccom workflow security
 ```
 
 ### **Quality Checks Failing?**
+
 ```bash
 # See specific issues
 ccom workflow quality
@@ -406,12 +444,14 @@ npm run format        # Fix formatting
 ## 📈 Roadmap
 
 ### **v0.4 (Next Release)**
+
 - [ ] PyPI package distribution
 - [ ] VS Code extension integration
 - [ ] More deployment platforms (Docker, AWS)
 - [ ] Enhanced error reporting
 
 ### **v0.5 (Future)**
+
 - [ ] Web dashboard for project overview
 - [ ] Team collaboration features
 - [ ] Custom workflow templates
@@ -431,4 +471,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 **Made with 💻 for developers who want enterprise-grade automation without enterprise-grade complexity**
 
-*One command. Quality assured. Deploy with confidence.*
+_One command. Quality assured. Deploy with confidence._
