@@ -18,7 +18,7 @@ class ToolsManager:
     """Main orchestrator for development tool management"""
 
     REQUIRED_TOOLS = {
-        "javascript": ["eslint", "prettier", "jshint"],
+        "javascript": ["eslint", "@eslint/js", "globals", "eslint-plugin-import", "eslint-plugin-unused-imports", "prettier", "jshint"],
         "typescript": [
             "typescript",
             "@typescript-eslint/parser",
@@ -424,7 +424,9 @@ class NpmToolInstaller:
             "scripts": {
                 "test": 'echo "Error: no test specified" && exit 1',
                 "lint": "eslint .",
+                "lint:fix": "eslint . --fix",
                 "format": "prettier --write .",
+                "format:check": "prettier --check ."
             },
             "devDependencies": {},
         }
@@ -524,11 +526,17 @@ class ToolConfigGenerator:
             self.setup_git_hooks()
 
     def generate_eslint_config(self):
-        """Generate .eslintrc.json"""
-        config_file = self.project_root / ".eslintrc.json"
+        """Generate eslint.config.mjs for ESLint v9 Flat Config"""
+        config_file = self.project_root / "eslint.config.mjs"
+        legacy_config = self.project_root / ".eslintrc.json"
+
+        # Remove legacy config if it exists
+        if legacy_config.exists():
+            legacy_config.unlink()
+            print(f"🗑️ Removed legacy ESLint config: {legacy_config}")
 
         if config_file.exists():
-            print(f"ℹ️ ESLint config already exists: {config_file}")
+            print(f"ℹ️ ESLint v9 config already exists: {config_file}")
             return
 
         # Detect if TypeScript is used
@@ -538,48 +546,192 @@ class ToolConfigGenerator:
             or any(self.project_root.glob("**/*.tsx"))
         )
 
-        config = {
-            "env": {"browser": True, "es2021": True, "node": True},
-            "extends": ["eslint:recommended"],
-            "parserOptions": {"ecmaVersion": 12, "sourceType": "module"},
-            "rules": {
-                "no-unused-vars": "warn",
-                "no-console": "warn",
-                "semi": ["error", "always"],
-                "quotes": ["error", "single"],
-            },
-        }
+        config_content = '''import js from "@eslint/js";
+import globals from "globals";
+import importPlugin from "eslint-plugin-import";
+import unusedImports from "eslint-plugin-unused-imports";
+
+export default [
+  js.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021,
+      },
+      ecmaVersion: 2021,
+      sourceType: "module",
+    },
+    plugins: {
+      import: importPlugin,
+      "unused-imports": unusedImports,
+    },
+    rules: {
+      "no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
+      ],
+      "no-console": "warn",
+      semi: ["error", "always"],
+      quotes: ["error", "single"],
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
+          "newlines-between": "always",
+        },
+      ],
+    },
+  },
+];
+'''
 
         if has_typescript:
-            config["extends"].extend(["@typescript-eslint/recommended"])
-            config["parser"] = "@typescript-eslint/parser"
-            config["plugins"] = ["@typescript-eslint"]
+            config_content = '''import js from "@eslint/js";
+import globals from "globals";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsparser from "@typescript-eslint/parser";
+import importPlugin from "eslint-plugin-import";
+import unusedImports from "eslint-plugin-unused-imports";
+
+export default [
+  js.configs.recommended,
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tsparser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021,
+      },
+      ecmaVersion: 2021,
+      sourceType: "module",
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+      import: importPlugin,
+      "unused-imports": unusedImports,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules,
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
+      ],
+      "no-console": "warn",
+      semi: ["error", "always"],
+      quotes: ["error", "single"],
+    },
+  },
+];
+'''
 
         with open(config_file, "w") as f:
-            json.dump(config, f, indent=2)
+            f.write(config_content)
 
-        print(f"✅ Generated ESLint config: {config_file}")
+        print(f"✅ Generated ESLint v9 config: {config_file}")
 
     def generate_prettier_config(self):
-        """Generate .prettierrc"""
-        config_file = self.project_root / ".prettierrc"
+        """Generate .prettierrc.json and .prettierignore"""
+        config_file = self.project_root / ".prettierrc.json"
+        ignore_file = self.project_root / ".prettierignore"
 
-        if config_file.exists():
+        # Generate .prettierrc.json
+        if not config_file.exists():
+            config = {
+                "semi": True,
+                "trailingComma": "es5",
+                "singleQuote": True,
+                "printWidth": 80,
+                "tabWidth": 2,
+                "useTabs": False,
+                "bracketSpacing": True,
+                "arrowParens": "always"
+            }
+
+            with open(config_file, "w") as f:
+                json.dump(config, f, indent=2)
+
+            print(f"✅ Generated Prettier config: {config_file}")
+        else:
             print(f"ℹ️ Prettier config already exists: {config_file}")
-            return
 
-        config = {
-            "semi": True,
-            "trailingComma": "es5",
-            "singleQuote": True,
-            "printWidth": 80,
-            "tabWidth": 2,
-        }
+        # Generate .prettierignore
+        if not ignore_file.exists():
+            ignore_content = """# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-        with open(config_file, "w") as f:
-            json.dump(config, f, indent=2)
+# Build outputs
+dist/
+build/
+.next/
+out/
 
-        print(f"✅ Generated Prettier config: {config_file}")
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.min.js
+*.min.css
+"""
+
+            with open(ignore_file, "w") as f:
+                f.write(ignore_content)
+
+            print(f"✅ Generated Prettier ignore: {ignore_file}")
+        else:
+            print(f"ℹ️ Prettier ignore already exists: {ignore_file}")
 
     def generate_python_configs(self, tools: List[str]):
         """Generate Python tool configurations"""
