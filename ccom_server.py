@@ -12,13 +12,55 @@ import subprocess
 import os
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Set
+import sys
 
 app = FastAPI(
     title="CCOM Remote Server",
     description="Execute CCOM commands remotely from iOS/mobile devices",
     version="0.3.0",
 )
+
+# Security: Command allowlist
+ALLOWED_COMMANDS = {"context", "quality", "security", "deploy", "build", "principles", "validate"}
+ALLOWED_WORKFLOW_ACTIONS = {"context", "quality", "security", "deploy", "build", "setup"}
+
+def is_allowed_command(cmd: str) -> bool:
+    """Validate command against allowlist"""
+    cmd = cmd.strip().lower()
+
+    # Direct commands
+    if cmd in ALLOWED_COMMANDS:
+        return True
+
+    # Workflow commands
+    if cmd.startswith("workflow "):
+        action = cmd.split(" ", 1)[1].strip()
+        return action in ALLOWED_WORKFLOW_ACTIONS
+
+    # Principles-related commands
+    if any(keyword in cmd for keyword in ["principles", "kiss", "dry", "solid", "yagni", "complexity"]):
+        return True
+
+    return False
+
+def get_trusted_projects() -> Set[str]:
+    """Get set of trusted project paths"""
+    try:
+        projects_data = list_projects()
+        return {p["path"] for p in projects_data["projects"]}
+    except Exception:
+        return set()
+
+def is_trusted_path(project_path: str) -> bool:
+    """Validate project path is trusted"""
+    if not project_path:
+        return False
+
+    trusted_paths = get_trusted_projects()
+    normalized_path = os.path.normpath(os.path.abspath(project_path))
+
+    return normalized_path in trusted_paths
 
 
 class CCOMCommand(BaseModel):
@@ -95,10 +137,8 @@ def dashboard():
         </div>
 
         <div class="project-selector">
-            <select id="project-select" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; margin-bottom: 10px;">
-                <option value="todo">TODO</option>
-                <option value="ccom">CCOM</option>
-                <option value="uwa">UWA</option>
+            <select id="project-select" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.9); border: none; border-radius: 8px; color: #333; margin-bottom: 10px;">
+                <option value="">Loading projects...</option>
             </select>
             <div class="status">
                 <span class="status-dot"></span>
@@ -125,28 +165,62 @@ def dashboard():
             <p>Executing command...</p>
         </div>
 
-        <div class="result" id="result"></div>
+        <div class="result" id="result" role="region" aria-live="polite" tabindex="-1"></div>
     </div>
 
     <script>
-        let currentProject = 'todo';
+        let projects = [];
+        let currentProjectPath = null;
+
+        // Load projects from server
+        async function loadProjects() {
+            try {
+                const response = await fetch('/projects');
+                const data = await response.json();
+                projects = data.projects || [];
+
+                const select = document.getElementById('project-select');
+                select.innerHTML = projects.map(p =>
+                    `<option value="${p.path}">${p.name}</option>`
+                ).join('');
+
+                // Restore last selected project or use first
+                const lastSelected = localStorage.getItem('ccom.selectedProject');
+                if (lastSelected && projects.some(p => p.path === lastSelected)) {
+                    select.value = lastSelected;
+                    currentProjectPath = lastSelected;
+                } else if (projects.length > 0) {
+                    currentProjectPath = projects[0].path;
+                }
+
+                loadProjectStatus();
+            } catch (error) {
+                console.error('Failed to load projects:', error);
+                document.getElementById('project-select').innerHTML =
+                    '<option value="">Error loading projects</option>';
+            }
+        }
 
         // Handle project selector change
         document.getElementById('project-select').addEventListener('change', function(e) {
-            currentProject = e.target.value;
+            currentProjectPath = e.target.value;
+            localStorage.setItem('ccom.selectedProject', currentProjectPath);
             loadProjectStatus();
         });
 
         async function loadProjectStatus() {
+            if (!currentProjectPath) return;
+
             try {
                 const response = await fetch('/context', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ project_path: `C:/Users/DR/OneDrive/projects/${currentProject}` })
+                    body: JSON.stringify({ project_path: currentProjectPath })
                 });
                 const data = await response.json();
 
-                document.getElementById('project-name').textContent = currentProject.toUpperCase();
+                const projectName = projects.find(p => p.path === currentProjectPath)?.name || 'Unknown';
+                document.getElementById('project-name').textContent = projectName.toUpperCase();
                 document.getElementById('project-status').textContent =
                     data.success ? '✅ Production Ready' : '⚠️ Needs Attention';
             } catch (error) {
@@ -162,7 +236,7 @@ def dashboard():
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         command: action === 'context' ? 'context' : `workflow ${action}`,
-                        project_path: `C:/Users/DR/OneDrive/projects/${currentProject}`
+                        project_path: currentProjectPath
                     })
                 });
                 const data = await response.json();
@@ -185,7 +259,7 @@ def dashboard():
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         command: command,
-                        project_path: `C:/Users/DR/OneDrive/projects/${currentProject}`
+                        project_path: currentProjectPath
                     })
                 });
                 const data = await response.json();
@@ -202,6 +276,11 @@ def dashboard():
             if (show) {
                 document.getElementById('result').style.display = 'none';
             }
+            setBusy(show); // Disable/enable buttons during execution
+        }
+
+        function setBusy(busy) {
+            document.querySelectorAll('.actions .btn, .quick-chat .btn').forEach(b => b.disabled = busy);
         }
 
         function showResult(data) {
@@ -215,6 +294,7 @@ def dashboard():
                 <pre style="white-space: pre-wrap; margin-top: 10px;">${data.output || data.error || JSON.stringify(data, null, 2)}</pre>
             `;
             resultDiv.style.display = 'block';
+            resultDiv.focus(); // Accessibility: bring into screen-reader and keyboard focus
         }
 
         // Load project status on page load
@@ -224,6 +304,9 @@ def dashboard():
         document.getElementById('chatInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') sendChat();
         });
+
+        // Initialize on page load
+        loadProjects();
     </script>
 </body>
 </html>
@@ -243,8 +326,20 @@ def health_check():
 def execute_ccom(cmd: CCOMCommand):
     """Execute CCOM command remotely"""
     try:
+        # Security: Validate command against allowlist
+        if not is_allowed_command(cmd.command):
+            raise HTTPException(
+                status_code=400, detail=f"Command not allowed: {cmd.command}"
+            )
+
         # Default to current directory if no project path specified
         project_path = cmd.project_path or "."
+
+        # Security: Validate project path is trusted
+        if cmd.project_path and not is_trusted_path(project_path):
+            raise HTTPException(
+                status_code=400, detail="Unknown or untrusted project path"
+            )
 
         # Validate project path exists
         if not os.path.exists(project_path):
@@ -392,6 +487,12 @@ def list_projects():
 def get_project_context(request: dict):
     """Get project context for iOS display"""
     project_path = request.get("project_path", ".")
+
+    # Security: Validate project path is trusted
+    if request.get("project_path") and not is_trusted_path(project_path):
+        raise HTTPException(
+            status_code=400, detail="Unknown or untrusted project path"
+        )
 
     try:
         # Execute context command using Popen for better output capture
