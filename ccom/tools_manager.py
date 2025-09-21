@@ -18,7 +18,15 @@ class ToolsManager:
     """Main orchestrator for development tool management"""
 
     REQUIRED_TOOLS = {
-        "javascript": ["eslint", "@eslint/js", "globals", "eslint-plugin-import", "eslint-plugin-unused-imports", "prettier", "jshint"],
+        "javascript": [
+            "eslint",
+            "@eslint/js",
+            "globals",
+            "eslint-plugin-import",
+            "eslint-plugin-unused-imports",
+            "prettier",
+            "jshint",
+        ],
         "typescript": [
             "typescript",
             "@typescript-eslint/parser",
@@ -229,7 +237,13 @@ class ToolsManager:
             self.config_generator.generate_all_configs(required_tools)
 
             # Add npm scripts to package.json if it's a Node.js project
-            if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+            if self.tools_state.get("project_type") in [
+                "javascript",
+                "typescript",
+                "react",
+                "angular",
+                "vue",
+            ]:
                 print("📝 Ensuring npm scripts are configured...")
                 self.config_generator.add_npm_scripts()
 
@@ -278,7 +292,13 @@ class ToolsManager:
             self.config_generator.generate_all_configs(required_tools)
 
             # Add npm scripts to package.json if it's a Node.js project
-            if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+            if self.tools_state.get("project_type") in [
+                "javascript",
+                "typescript",
+                "react",
+                "angular",
+                "vue",
+            ]:
                 print("📝 Adding npm scripts to package.json...")
                 self.config_generator.add_npm_scripts()
 
@@ -295,14 +315,22 @@ class ToolsManager:
             available_tools = []
             installed_tools = self.check_tool_availability(force_refresh=True)
             for tool in required_tools:
-                if installed_tools.get(tool, {}).get('installed', False):
+                if installed_tools.get(tool, {}).get("installed", False):
                     available_tools.append(tool)
 
             if available_tools:
-                print(f"⚙️ Generating configurations for available tools: {', '.join(available_tools)}")
+                print(
+                    f"⚙️ Generating configurations for available tools: {', '.join(available_tools)}"
+                )
                 self.config_generator.generate_all_configs(available_tools)
 
-                if self.tools_state.get('project_type') in ['javascript', 'typescript', 'react', 'angular', 'vue']:
+                if self.tools_state.get("project_type") in [
+                    "javascript",
+                    "typescript",
+                    "react",
+                    "angular",
+                    "vue",
+                ]:
                     print("📝 Adding npm scripts for available tools...")
                     self.config_generator.add_npm_scripts()
 
@@ -356,7 +384,7 @@ class NpmToolInstaller:
                 "eslint-plugin-import",
                 "eslint-plugin-unused-imports",
                 "@typescript-eslint/parser",
-                "@typescript-eslint/eslint-plugin"
+                "@typescript-eslint/eslint-plugin",
             ]
 
             if tool_name in plugin_packages:
@@ -370,7 +398,7 @@ class NpmToolInstaller:
                 text=True,
                 timeout=10,
                 cwd=self.project_root,
-                shell=True
+                shell=True,
             )
 
             if result.returncode == 0:
@@ -383,7 +411,7 @@ class NpmToolInstaller:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                shell=True
+                shell=True,
             )
 
             if result.returncode == 0 and tool_name in result.stdout:
@@ -399,15 +427,23 @@ class NpmToolInstaller:
         try:
             # Check in package.json devDependencies first
             if self.package_json.exists():
-                with open(self.package_json, 'r') as f:
+                with open(self.package_json, "r") as f:
                     pkg_data = json.load(f)
-                    dev_deps = pkg_data.get('devDependencies', {})
-                    deps = pkg_data.get('dependencies', {})
+                    dev_deps = pkg_data.get("devDependencies", {})
+                    deps = pkg_data.get("dependencies", {})
 
                     if package_name in dev_deps:
-                        return {"installed": True, "version": dev_deps[package_name], "scope": "local"}
+                        return {
+                            "installed": True,
+                            "version": dev_deps[package_name],
+                            "scope": "local",
+                        }
                     elif package_name in deps:
-                        return {"installed": True, "version": deps[package_name], "scope": "local"}
+                        return {
+                            "installed": True,
+                            "version": deps[package_name],
+                            "scope": "local",
+                        }
 
             # Check if package exists in node_modules
             node_modules_path = self.project_root / "node_modules" / package_name
@@ -415,9 +451,13 @@ class NpmToolInstaller:
                 # Try to read package.json from node_modules
                 pkg_json = node_modules_path / "package.json"
                 if pkg_json.exists():
-                    with open(pkg_json, 'r') as f:
+                    with open(pkg_json, "r") as f:
                         pkg_info = json.load(f)
-                        return {"installed": True, "version": pkg_info.get("version", "unknown"), "scope": "local"}
+                        return {
+                            "installed": True,
+                            "version": pkg_info.get("version", "unknown"),
+                            "scope": "local",
+                        }
                 else:
                     return {"installed": True, "version": "unknown", "scope": "local"}
 
@@ -443,7 +483,12 @@ class NpmToolInstaller:
             print(f"🔄 Running: {cmd_str}")
 
             result = subprocess.run(
-                cmd_str, cwd=self.project_root, capture_output=True, text=True, timeout=300, shell=True
+                cmd_str,
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                shell=True,
             )
 
             if result.returncode == 0:
@@ -472,7 +517,7 @@ class NpmToolInstaller:
                 "lint": "eslint .",
                 "lint:fix": "eslint . --fix",
                 "format": "prettier --write .",
-                "format:check": "prettier --check ."
+                "format:check": "prettier --check .",
             },
             "devDependencies": {},
         }
@@ -588,11 +633,19 @@ class ToolConfigGenerator:
         # Detect if TypeScript is used (excluding node_modules)
         has_typescript = (
             (self.project_root / "tsconfig.json").exists()
-            or any(p for p in self.project_root.glob("**/*.ts") if "node_modules" not in str(p))
-            or any(p for p in self.project_root.glob("**/*.tsx") if "node_modules" not in str(p))
+            or any(
+                p
+                for p in self.project_root.glob("**/*.ts")
+                if "node_modules" not in str(p)
+            )
+            or any(
+                p
+                for p in self.project_root.glob("**/*.tsx")
+                if "node_modules" not in str(p)
+            )
         )
 
-        config_content = '''import js from '@eslint/js';
+        config_content = """import js from '@eslint/js';
 import globals from 'globals';
 import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
@@ -664,10 +717,10 @@ export default [
     }
   }
 ];
-'''
+"""
 
         if has_typescript:
-            config_content = '''import js from '@eslint/js';
+            config_content = """import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
@@ -733,7 +786,7 @@ export default [
     }
   }
 ];
-'''
+"""
 
         with open(config_file, "w") as f:
             f.write(config_content)
@@ -755,7 +808,7 @@ export default [
                 "tabWidth": 2,
                 "useTabs": False,
                 "bracketSpacing": True,
-                "arrowParens": "always"
+                "arrowParens": "always",
             }
 
             with open(config_file, "w") as f:
@@ -935,7 +988,11 @@ pnpm-lock.yaml
                 "lint:fix": "eslint . --fix",
                 "format": "prettier --write .",
                 "format:check": "prettier --check .",
-                "test": "jest" if "jest" in data.get("devDependencies", {}) else "echo \"Error: no test specified\" && exit 1"
+                "test": (
+                    "jest"
+                    if "jest" in data.get("devDependencies", {})
+                    else 'echo "Error: no test specified" && exit 1'
+                ),
             }
 
             scripts_added = []
@@ -964,13 +1021,13 @@ pnpm-lock.yaml
             "description": "Project managed by CCOM",
             "main": "index.js",
             "scripts": {
-                "test": "echo \"Error: no test specified\" && exit 1",
+                "test": 'echo "Error: no test specified" && exit 1',
                 "lint": "eslint .",
                 "lint:fix": "eslint . --fix",
                 "format": "prettier --write .",
-                "format:check": "prettier --check ."
+                "format:check": "prettier --check .",
             },
-            "devDependencies": {}
+            "devDependencies": {},
         }
 
         with open(package_json, "w") as f:
