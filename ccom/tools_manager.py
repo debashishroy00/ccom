@@ -585,11 +585,11 @@ class ToolConfigGenerator:
             print(f"ℹ️ ESLint v9 config already exists: {config_file}")
             return
 
-        # Detect if TypeScript is used
+        # Detect if TypeScript is used (excluding node_modules)
         has_typescript = (
             (self.project_root / "tsconfig.json").exists()
-            or any(self.project_root.glob("**/*.ts"))
-            or any(self.project_root.glob("**/*.tsx"))
+            or any(p for p in self.project_root.glob("**/*.ts") if "node_modules" not in str(p))
+            or any(p for p in self.project_root.glob("**/*.tsx") if "node_modules" not in str(p))
         )
 
         config_content = '''import js from '@eslint/js';
@@ -598,6 +598,16 @@ import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
+  {
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      '.git/**',
+      '.ccom/**',
+      '.claude/**'
+    ]
+  },
   js.configs.recommended,
   {
     languageOptions: {
@@ -625,7 +635,7 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       semi: ['error', 'always'],
       quotes: ['error', 'single'],
       'import/order': [
@@ -644,6 +654,15 @@ export default [
       ],
     },
   },
+  {
+    files: ['.claude/**', '.ccom/**'],
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'off',
+      'unused-imports/no-unused-vars': 'off'
+    }
+  }
 ];
 '''
 
@@ -656,6 +675,16 @@ import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
+  {
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      '.git/**',
+      '.ccom/**',
+      '.claude/**'
+    ]
+  },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
@@ -688,11 +717,21 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       semi: ['error', 'always'],
       quotes: ['error', 'single'],
     },
   },
+  {
+    files: ['.claude/**', '.ccom/**'],
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'off',
+      'unused-imports/no-unused-vars': 'off'
+    }
+  }
 ];
 '''
 
@@ -770,6 +809,10 @@ pnpm-lock.yaml
 # Generated files
 *.min.js
 *.min.css
+
+# CCOM/Claude generated and scaffold files
+.ccom/
+.claude/
 """
 
             with open(ignore_file, "w") as f:
