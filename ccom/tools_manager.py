@@ -349,7 +349,21 @@ class NpmToolInstaller:
     def check_tool(self, tool_name: str) -> Dict:
         """Check if npm tool is installed"""
         try:
-            # Check locally first
+            # Special handling for ESLint plugins and packages that don't have CLI
+            plugin_packages = [
+                "@eslint/js",
+                "globals",
+                "eslint-plugin-import",
+                "eslint-plugin-unused-imports",
+                "@typescript-eslint/parser",
+                "@typescript-eslint/eslint-plugin"
+            ]
+
+            if tool_name in plugin_packages:
+                # Check if package exists in node_modules or package.json
+                return self._check_package_existence(tool_name)
+
+            # Check locally first for CLI tools
             result = subprocess.run(
                 f"npx {tool_name} --version",
                 capture_output=True,
@@ -374,6 +388,38 @@ class NpmToolInstaller:
 
             if result.returncode == 0 and tool_name in result.stdout:
                 return {"installed": True, "version": "global", "scope": "global"}
+
+            return {"installed": False, "version": None}
+
+        except Exception as e:
+            return {"installed": False, "version": None, "error": str(e)}
+
+    def _check_package_existence(self, package_name: str) -> Dict:
+        """Check if a package exists in node_modules or package.json"""
+        try:
+            # Check in package.json devDependencies first
+            if self.package_json.exists():
+                with open(self.package_json, 'r') as f:
+                    pkg_data = json.load(f)
+                    dev_deps = pkg_data.get('devDependencies', {})
+                    deps = pkg_data.get('dependencies', {})
+
+                    if package_name in dev_deps:
+                        return {"installed": True, "version": dev_deps[package_name], "scope": "local"}
+                    elif package_name in deps:
+                        return {"installed": True, "version": deps[package_name], "scope": "local"}
+
+            # Check if package exists in node_modules
+            node_modules_path = self.project_root / "node_modules" / package_name
+            if node_modules_path.exists():
+                # Try to read package.json from node_modules
+                pkg_json = node_modules_path / "package.json"
+                if pkg_json.exists():
+                    with open(pkg_json, 'r') as f:
+                        pkg_info = json.load(f)
+                        return {"installed": True, "version": pkg_info.get("version", "unknown"), "scope": "local"}
+                else:
+                    return {"installed": True, "version": "unknown", "scope": "local"}
 
             return {"installed": False, "version": None}
 
@@ -546,10 +592,10 @@ class ToolConfigGenerator:
             or any(self.project_root.glob("**/*.tsx"))
         )
 
-        config_content = '''import js from "@eslint/js";
-import globals from "globals";
-import importPlugin from "eslint-plugin-import";
-import unusedImports from "eslint-plugin-unused-imports";
+        config_content = '''import js from '@eslint/js';
+import globals from 'globals';
+import importPlugin from 'eslint-plugin-import';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
   js.configs.recommended,
@@ -561,39 +607,39 @@ export default [
         ...globals.es2021,
       },
       ecmaVersion: 2021,
-      sourceType: "module",
+      sourceType: 'module',
     },
     plugins: {
       import: importPlugin,
-      "unused-imports": unusedImports,
+      'unused-imports': unusedImports,
     },
     rules: {
-      "no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "error",
-      "unused-imports/no-unused-vars": [
-        "warn",
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          vars: "all",
-          varsIgnorePattern: "^_",
-          args: "after-used",
-          argsIgnorePattern: "^_",
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
         },
       ],
-      "no-console": "warn",
-      semi: ["error", "always"],
-      quotes: ["error", "single"],
-      "import/order": [
-        "error",
+      'no-console': 'warn',
+      semi: ['error', 'always'],
+      quotes: ['error', 'single'],
+      'import/order': [
+        'error',
         {
           groups: [
-            "builtin",
-            "external",
-            "internal",
-            "parent",
-            "sibling",
-            "index",
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
           ],
-          "newlines-between": "always",
+          'newlines-between': 'always',
         },
       ],
     },
@@ -602,17 +648,17 @@ export default [
 '''
 
         if has_typescript:
-            config_content = '''import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "@typescript-eslint/eslint-plugin";
-import tsparser from "@typescript-eslint/parser";
-import importPlugin from "eslint-plugin-import";
-import unusedImports from "eslint-plugin-unused-imports";
+            config_content = '''import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import importPlugin from 'eslint-plugin-import';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
   js.configs.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsparser,
       globals: {
@@ -621,30 +667,30 @@ export default [
         ...globals.es2021,
       },
       ecmaVersion: 2021,
-      sourceType: "module",
+      sourceType: 'module',
     },
     plugins: {
-      "@typescript-eslint": tseslint,
+      '@typescript-eslint': tseslint,
       import: importPlugin,
-      "unused-imports": unusedImports,
+      'unused-imports': unusedImports,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "error",
-      "unused-imports/no-unused-vars": [
-        "warn",
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          vars: "all",
-          varsIgnorePattern: "^_",
-          args: "after-used",
-          argsIgnorePattern: "^_",
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
         },
       ],
-      "no-console": "warn",
-      semi: ["error", "always"],
-      quotes: ["error", "single"],
+      'no-console': 'warn',
+      semi: ['error', 'always'],
+      quotes: ['error', 'single'],
     },
   },
 ];
