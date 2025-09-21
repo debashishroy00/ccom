@@ -8,39 +8,56 @@ import argparse
 import subprocess
 from pathlib import Path
 
+
 def get_template_path():
     """Get path to template files"""
     return Path(__file__).parent / "templates"
+
 
 def run_ccom_command(args):
     """Run Node.js ccom.js command with proper error handling"""
     try:
         cmd = ["node", ".claude/ccom.js"] + args
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', check=False)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
 
         # Print stdout if available
         if result.stdout:
             # Handle emoji output on Windows
             try:
-                print(result.stdout, end='')
+                print(result.stdout, end="")
             except UnicodeEncodeError:
                 # Fallback for Windows console without UTF-8 support
-                print(result.stdout.encode('ascii', 'replace').decode('ascii'), end='')
+                print(result.stdout.encode("ascii", "replace").decode("ascii"), end="")
 
         # Print stderr if available
         if result.stderr:
             try:
-                print(result.stderr, file=sys.stderr, end='')
+                print(result.stderr, file=sys.stderr, end="")
             except UnicodeEncodeError:
-                print(result.stderr.encode('ascii', 'replace').decode('ascii'), file=sys.stderr, end='')
+                print(
+                    result.stderr.encode("ascii", "replace").decode("ascii"),
+                    file=sys.stderr,
+                    end="",
+                )
 
         return result.returncode == 0
     except FileNotFoundError:
-        print("ERROR: Node.js not found. Please install Node.js to use CCOM.", file=sys.stderr)
+        print(
+            "ERROR: Node.js not found. Please install Node.js to use CCOM.",
+            file=sys.stderr,
+        )
         return False
     except Exception as e:
         print(f"ERROR: Failed to run ccom command: {e}", file=sys.stderr)
         return False
+
 
 def init_project():
     """Initialize CCO in current directory"""
@@ -87,6 +104,7 @@ def init_project():
 
     return True
 
+
 def show_status():
     """Show CCOM status in current directory"""
     claude_dir = Path.cwd() / ".claude"
@@ -103,17 +121,20 @@ def show_status():
     # Run the node command to show status
     return run_ccom_command(["start"])
 
+
 def main():
     """Main CLI entry point"""
     parser = argparse.ArgumentParser(
         description="CCOM - Claude Code Orchestrator and Memory",
-        epilog="For more info: https://github.com/debashishroy00/ccom"
+        epilog="For more info: https://github.com/debashishroy00/ccom",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Init command
-    init_parser = subparsers.add_parser("init", help="Initialize CCOM in current directory")
+    init_parser = subparsers.add_parser(
+        "init", help="Initialize CCOM in current directory"
+    )
 
     # Status command
     status_parser = subparsers.add_parser("status", help="Show CCOM status")
@@ -124,7 +145,9 @@ def main():
     # Remember command
     remember_parser = subparsers.add_parser("remember", help="Remember a feature")
     remember_parser.add_argument("name", help="Feature name to remember")
-    remember_parser.add_argument("description", nargs="?", help="Optional feature description")
+    remember_parser.add_argument(
+        "description", nargs="?", help="Optional feature description"
+    )
 
     # Clear command
     clear_parser = subparsers.add_parser("clear", help="Clear memory")
@@ -133,15 +156,25 @@ def main():
     stats_parser = subparsers.add_parser("stats", help="Show memory usage statistics")
 
     list_parser = subparsers.add_parser("list", help="List features with age")
-    list_parser.add_argument("sort", nargs="?", default="created", help="Sort by: created or name")
+    list_parser.add_argument(
+        "sort", nargs="?", default="created", help="Sort by: created or name"
+    )
 
     archive_parser = subparsers.add_parser("archive", help="Archive old features")
-    archive_parser.add_argument("days", nargs="?", type=int, default=30, help="Archive features older than N days (default: 30)")
+    archive_parser.add_argument(
+        "days",
+        nargs="?",
+        type=int,
+        default=30,
+        help="Archive features older than N days (default: 30)",
+    )
 
     remove_parser = subparsers.add_parser("remove", help="Remove specific feature")
     remove_parser.add_argument("name", help="Feature name to remove")
 
-    compact_parser = subparsers.add_parser("compact", help="Compact memory by truncating long descriptions")
+    compact_parser = subparsers.add_parser(
+        "compact", help="Compact memory by truncating long descriptions"
+    )
 
     args = parser.parse_args()
 
@@ -182,6 +215,7 @@ def main():
     elif args.command == "compact":
         success = run_ccom_command(["compact"])
         sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

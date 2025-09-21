@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from threading import Thread, Lock
 from typing import Dict, List, Set, Optional
 
+
 class CCOMFileMonitor:
     """
     CCOM File Monitor - Real-time quality enforcement via file watching
@@ -43,11 +44,13 @@ class CCOMFileMonitor:
         try:
             # Try importing from installed package first
             from ccom.orchestrator import CCOMOrchestrator
+
             self.ccom = CCOMOrchestrator()
         except ImportError:
             # Fallback to local import
             sys.path.append(str(self.project_root / "ccom"))
             from orchestrator import CCOMOrchestrator
+
             self.ccom = CCOMOrchestrator()
 
     def load_config(self) -> dict:
@@ -71,7 +74,7 @@ class CCOMFileMonitor:
                 "src/**/*",
                 "auth.js",
                 "script.js",
-                "index.html"
+                "index.html",
             ],
             "ignore_patterns": [
                 "node_modules/**",
@@ -79,24 +82,24 @@ class CCOMFileMonitor:
                 "build/**",
                 ".git/**",
                 "*.log",
-                "*.tmp"
+                "*.tmp",
             ],
             "quality_triggers": {
                 "debounce_ms": 1000,  # Wait 1s after last change
-                "batch_changes": True, # Process multiple files together
-                "smart_detection": True # Only trigger on meaningful changes
+                "batch_changes": True,  # Process multiple files together
+                "smart_detection": True,  # Only trigger on meaningful changes
             },
             "actions": {
                 "on_js_change": ["quality-enforcer"],
                 "on_python_change": ["quality-enforcer"],
                 "on_html_change": ["quality-enforcer"],
-                "on_any_change": []  # Always run these
-            }
+                "on_any_change": [],  # Always run these
+            },
         }
 
         if self.config_file.exists():
             try:
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, "r") as f:
                     loaded_config = json.load(f)
                     # Merge with defaults
                     for key, value in default_config.items():
@@ -113,13 +116,13 @@ class CCOMFileMonitor:
     def save_config(self, config: dict):
         """Save file monitoring configuration"""
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(config, f, indent=2)
 
     def get_file_hash(self, file_path: Path) -> str:
         """Get SHA256 hash of file contents for change detection"""
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
         except Exception:
             return ""
@@ -161,11 +164,11 @@ class CCOMFileMonitor:
         actions = []
 
         # Add type-specific actions
-        if file_ext in ['.js', '.jsx', '.ts', '.tsx']:
+        if file_ext in [".js", ".jsx", ".ts", ".tsx"]:
             actions.extend(self.config["actions"].get("on_js_change", []))
-        elif file_ext == '.py':
+        elif file_ext == ".py":
             actions.extend(self.config["actions"].get("on_python_change", []))
-        elif file_ext in ['.html', '.htm']:
+        elif file_ext in [".html", ".htm"]:
             actions.extend(self.config["actions"].get("on_html_change", []))
 
         # Add universal actions
@@ -206,8 +209,9 @@ class CCOMFileMonitor:
                     return
 
             # 3) watch patterns (use fnmatch)
-            matches_pattern = any(fnmatch.fnmatch(rel_posix, pat)
-                                  for pat in self.config["watch_patterns"])
+            matches_pattern = any(
+                fnmatch.fnmatch(rel_posix, pat) for pat in self.config["watch_patterns"]
+            )
             if not matches_pattern:
                 return
 
@@ -236,6 +240,7 @@ class CCOMFileMonitor:
 
     def schedule_batch_processing(self):
         """Schedule batch processing after debounce period"""
+
         def delayed_process():
             time.sleep(self.config["quality_triggers"]["debounce_ms"] / 1000)
 
@@ -254,7 +259,9 @@ class CCOMFileMonitor:
         Run quality actions for changed files using CCOM native execution
         """
         try:
-            print(f"🔧 **CCOM FILE MONITOR** – Processing {len(changed_files)} files...")
+            print(
+                f"🔧 **CCOM FILE MONITOR** – Processing {len(changed_files)} files..."
+            )
 
             # Determine actions to run
             all_actions = set()
@@ -287,7 +294,9 @@ class CCOMFileMonitor:
             if success_count == len(all_actions):
                 print(f"✅ **CCOM FILE MONITOR** – All quality checks passed")
             else:
-                print(f"⚠️  **CCOM FILE MONITOR** – {success_count}/{len(all_actions)} actions succeeded")
+                print(
+                    f"⚠️  **CCOM FILE MONITOR** – {success_count}/{len(all_actions)} actions succeeded"
+                )
 
         except Exception as e:
             print(f"❌ Error running quality actions: {e}")
@@ -314,14 +323,17 @@ class CCOMFileMonitor:
         try:
             result = subprocess.run(
                 ["npm", "list", "chokidar"],
-                capture_output=True, text=True, cwd=self.project_root
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
             )
 
             if result.returncode != 0:
                 print("📦 Installing chokidar for file monitoring...")
                 subprocess.run(
                     ["npm", "install", "--save-dev", "chokidar"],
-                    cwd=self.project_root, check=True
+                    cwd=self.project_root,
+                    check=True,
                 )
                 print("✅ Chokidar installed")
         except Exception as e:
@@ -342,7 +354,7 @@ class CCOMFileMonitor:
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
             )
 
             print("✅ **CCOM FILE MONITOR** – Active")
@@ -377,7 +389,7 @@ class CCOMFileMonitor:
         bridge_path = self.project_root / ".ccom" / "file-watcher.js"
         bridge_path.parent.mkdir(parents=True, exist_ok=True)
 
-        bridge_content = f'''#!/usr/bin/env node
+        bridge_content = f"""#!/usr/bin/env node
 /**
  * CCOM File Watcher Bridge - Chokidar to Python
  * Watches files and reports changes to CCOM file monitor
@@ -432,22 +444,29 @@ process.on('SIGINT', () => {{
   console.log('\\nFile watcher shutting down...');
   watcher.close().then(() => process.exit(0));
 }});
-'''
+"""
 
-        with open(bridge_path, 'w', encoding='utf-8') as f:
+        with open(bridge_path, "w", encoding="utf-8") as f:
             f.write(bridge_content)
 
         return bridge_path
+
 
 def main():
     """CLI entry point for CCOM file monitor"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="CCOM File Monitor - Real-time quality enforcement")
+    parser = argparse.ArgumentParser(
+        description="CCOM File Monitor - Real-time quality enforcement"
+    )
     parser.add_argument("--start", action="store_true", help="Start file monitoring")
-    parser.add_argument("--config", action="store_true", help="Show current configuration")
+    parser.add_argument(
+        "--config", action="store_true", help="Show current configuration"
+    )
     parser.add_argument("--enable", action="store_true", help="Enable file monitoring")
-    parser.add_argument("--disable", action="store_true", help="Disable file monitoring")
+    parser.add_argument(
+        "--disable", action="store_true", help="Disable file monitoring"
+    )
 
     args = parser.parse_args()
 
@@ -482,6 +501,7 @@ def main():
         parser.print_help()
 
     return 0
+
 
 if __name__ == "__main__":
     exit(main())

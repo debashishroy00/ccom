@@ -17,18 +17,21 @@ from typing import Optional
 app = FastAPI(
     title="CCOM Remote Server",
     description="Execute CCOM commands remotely from iOS/mobile devices",
-    version="0.3.0"
+    version="0.3.0",
 )
+
 
 class CCOMCommand(BaseModel):
     command: str
     project_path: Optional[str] = None
+
 
 class CCOMResponse(BaseModel):
     success: bool
     output: str
     error: str
     project_info: Optional[dict] = None
+
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
@@ -226,10 +229,15 @@ def dashboard():
 </html>
     """
 
+
 @app.get("/api/health")
 def health_check():
     """Health check endpoint for API"""
-    return {"status": "CCOM Remote Server v0.3 - Ready", "endpoints": ["/ccom", "/projects", "/context"]}
+    return {
+        "status": "CCOM Remote Server v0.3 - Ready",
+        "endpoints": ["/ccom", "/projects", "/context"],
+    }
+
 
 @app.post("/ccom", response_model=CCOMResponse)
 def execute_ccom(cmd: CCOMCommand):
@@ -240,10 +248,13 @@ def execute_ccom(cmd: CCOMCommand):
 
         # Validate project path exists
         if not os.path.exists(project_path):
-            raise HTTPException(status_code=400, detail=f"Project path does not exist: {project_path}")
+            raise HTTPException(
+                status_code=400, detail=f"Project path does not exist: {project_path}"
+            )
 
         # Execute CCOM command using Popen for better output capture
         import sys
+
         original_cwd = os.getcwd()
         os.chdir(project_path)
 
@@ -252,19 +263,16 @@ def execute_ccom(cmd: CCOMCommand):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            encoding='utf-8',
-            errors='replace',
-            env=dict(os.environ, PYTHONIOENCODING='utf-8:replace')
+            encoding="utf-8",
+            errors="replace",
+            env=dict(os.environ, PYTHONIOENCODING="utf-8:replace"),
         )
 
         stdout, stderr = proc.communicate(timeout=60)
         os.chdir(original_cwd)
 
         result = subprocess.CompletedProcess(
-            args=None,
-            returncode=proc.returncode,
-            stdout=stdout,
-            stderr=stderr
+            args=None, returncode=proc.returncode, stdout=stdout, stderr=stderr
         )
 
         # Get project info if available
@@ -277,7 +285,9 @@ def execute_ccom(cmd: CCOMCommand):
                     project_info = {
                         "name": memory_data.get("project", {}).get("name", "Unknown"),
                         "features": len(memory_data.get("features", {})),
-                        "version": memory_data.get("metadata", {}).get("version", "Unknown")
+                        "version": memory_data.get("metadata", {}).get(
+                            "version", "Unknown"
+                        ),
                     }
         except:
             pass
@@ -291,19 +301,20 @@ def execute_ccom(cmd: CCOMCommand):
 
         # Add stderr but filter out warnings
         if result.stderr and result.stderr.strip():
-            stderr_lines = result.stderr.split('\n')
+            stderr_lines = result.stderr.split("\n")
             clean_stderr = []
             for line in stderr_lines:
-                if ('RuntimeWarning' not in line and
-                    'frozen runpy' not in line and
-                    'INFO:' not in line and
-                    line.strip()):
+                if (
+                    "RuntimeWarning" not in line
+                    and "frozen runpy" not in line
+                    and "INFO:" not in line
+                    and line.strip()
+                ):
                     clean_stderr.append(line)
             if clean_stderr:
                 output_lines.extend(clean_stderr)
 
-        full_output = '\n'.join(output_lines).strip()
-
+        full_output = "\n".join(output_lines).strip()
 
         # If we don't get output but have project info, create a summary
         if not full_output and project_info and result.returncode == 0:
@@ -316,13 +327,16 @@ def execute_ccom(cmd: CCOMCommand):
             success=result.returncode == 0,
             output=full_output,
             error="" if result.returncode == 0 else "",
-            project_info=project_info
+            project_info=project_info,
         )
 
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="Command timed out after 60 seconds")
+        raise HTTPException(
+            status_code=408, detail="Command timed out after 60 seconds"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
 
 @app.get("/projects")
 def list_projects():
@@ -335,7 +349,7 @@ def list_projects():
         Path.home() / "projects",
         Path.home() / "code",
         Path.home() / "dev",
-        Path.cwd()
+        Path.cwd(),
     ]
 
     for search_path in search_paths:
@@ -347,21 +361,32 @@ def list_projects():
                         if memory_file.exists():
                             with open(memory_file) as f:
                                 memory_data = json.load(f)
-                                projects.append({
-                                    "name": memory_data.get("project", {}).get("name", item.name),
-                                    "path": str(item),
-                                    "features": len(memory_data.get("features", {})),
-                                    "created": memory_data.get("project", {}).get("created", "Unknown")
-                                })
+                                projects.append(
+                                    {
+                                        "name": memory_data.get("project", {}).get(
+                                            "name", item.name
+                                        ),
+                                        "path": str(item),
+                                        "features": len(
+                                            memory_data.get("features", {})
+                                        ),
+                                        "created": memory_data.get("project", {}).get(
+                                            "created", "Unknown"
+                                        ),
+                                    }
+                                )
                     except:
-                        projects.append({
-                            "name": item.name,
-                            "path": str(item),
-                            "features": 0,
-                            "created": "Unknown"
-                        })
+                        projects.append(
+                            {
+                                "name": item.name,
+                                "path": str(item),
+                                "features": 0,
+                                "created": "Unknown",
+                            }
+                        )
 
     return {"projects": projects}
+
 
 @app.post("/context")
 def get_project_context(request: dict):
@@ -371,6 +396,7 @@ def get_project_context(request: dict):
     try:
         # Execute context command using Popen for better output capture
         import sys
+
         original_cwd = os.getcwd()
         os.chdir(project_path)
 
@@ -379,35 +405,30 @@ def get_project_context(request: dict):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            encoding='utf-8',
-            errors='replace',
-            env=dict(os.environ, PYTHONIOENCODING='utf-8:replace')
+            encoding="utf-8",
+            errors="replace",
+            env=dict(os.environ, PYTHONIOENCODING="utf-8:replace"),
         )
 
         stdout, stderr = proc.communicate(timeout=30)
         os.chdir(original_cwd)
 
         result = subprocess.CompletedProcess(
-            args=None,
-            returncode=proc.returncode,
-            stdout=stdout,
-            stderr=stderr
+            args=None, returncode=proc.returncode, stdout=stdout, stderr=stderr
         )
 
         if result.returncode == 0:
             return {
                 "success": True,
                 "context": result.stdout,
-                "formatted_for_mobile": True
+                "formatted_for_mobile": True,
             }
         else:
-            return {
-                "success": False,
-                "error": result.stderr
-            }
+            return {"success": False, "error": result.stderr}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Context error: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn
@@ -415,8 +436,8 @@ if __name__ == "__main__":
 
     # Handle Windows console encoding
     if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
     print("🚀 Starting CCOM Remote Server v0.3")
     print("📱 Access from iOS: http://100.115.44.58:9001")

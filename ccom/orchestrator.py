@@ -13,8 +13,9 @@ from datetime import datetime
 
 # Handle Windows console encoding
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 class CCOMOrchestrator:
     """Core orchestration engine for CCOM + Claude Code integration"""
@@ -24,6 +25,7 @@ class CCOMOrchestrator:
         self.claude_dir = self.project_root / ".claude"
         self.ccom_dir = self.project_root / ".claude"
         self.memory = self.load_memory()
+        self.tools_manager = None
 
     def load_memory(self):
         """Load existing CCOM memory"""
@@ -38,14 +40,14 @@ class CCOMOrchestrator:
         return {
             "project": {
                 "name": self.project_root.name,
-                "created": datetime.now().strftime("%Y-%m-%d")
+                "created": datetime.now().strftime("%Y-%m-%d"),
             },
             "features": {},
             "metadata": {
                 "version": "0.3",
                 "created": datetime.now().isoformat(),
-                "lastCleanup": datetime.now().isoformat()
-            }
+                "lastCleanup": datetime.now().isoformat(),
+            },
         }
 
     def save_memory(self):
@@ -54,7 +56,7 @@ class CCOMOrchestrator:
             memory_file = self.ccom_dir / "memory.json"
             self.ccom_dir.mkdir(exist_ok=True)
 
-            with open(memory_file, 'w') as f:
+            with open(memory_file, "w") as f:
                 json.dump(self.memory, f, indent=2)
 
             return True
@@ -62,26 +64,76 @@ class CCOMOrchestrator:
             print(f"⚠️  Could not save memory: {e}")
             return False
 
+    def get_tools_manager(self):
+        """Get or create tools manager instance"""
+        if self.tools_manager is None:
+            try:
+                from ccom.tools_manager import ToolsManager
+
+                self.tools_manager = ToolsManager(self.project_root)
+            except ImportError:
+                print("⚠️ Tools manager not available")
+                return None
+        return self.tools_manager
+
+    def ensure_tools_installed(self, required_tools=None):
+        """Ensure required tools are installed before running quality checks"""
+        tools_manager = self.get_tools_manager()
+        if not tools_manager:
+            return True  # Skip if tools manager not available
+
+        try:
+            installed_tools = tools_manager.check_tool_availability()
+            project_tools = required_tools or tools_manager.get_tools_for_project()
+
+            missing_tools = [
+                tool
+                for tool in project_tools
+                if not installed_tools.get(tool, {}).get("installed", False)
+            ]
+
+            if missing_tools:
+                print(f"⚠️ Missing development tools: {', '.join(missing_tools)}")
+                print("🔧 Installing missing tools automatically...")
+
+                success = tools_manager.install_missing_tools()
+                if not success:
+                    print(
+                        "❌ Some tools failed to install - quality checks may be limited"
+                    )
+                    return False
+
+            return True
+
+        except Exception as e:
+            print(f"⚠️ Tool check error: {e}")
+            return True  # Don't block operations on tool errors
+
     def check_memory_for_duplicate(self, feature_name):
         """Bridge to JavaScript memory system for duplicate checking"""
         try:
             import subprocess
+
             result = subprocess.run(
                 ["node", ".claude/ccom.js", "check", feature_name],
-                capture_output=True, text=True, cwd=os.getcwd()
+                capture_output=True,
+                text=True,
+                cwd=os.getcwd(),
             )
             return "EXISTS" in result.stdout
         except:
             # Fallback to Python memory check
-            features = self.memory.get('features', {})
+            features = self.memory.get("features", {})
             feature_lower = feature_name.lower()
 
             for existing in features.keys():
                 existing_lower = existing.lower()
                 # Check for exact or fuzzy match
-                if (feature_lower in existing_lower or
-                    existing_lower in feature_lower or
-                    feature_lower == existing_lower):
+                if (
+                    feature_lower in existing_lower
+                    or existing_lower in feature_lower
+                    or feature_lower == existing_lower
+                ):
                     return True
             return False
 
@@ -94,109 +146,282 @@ class CCOMOrchestrator:
         # === RAG-SPECIFIC NATURAL LANGUAGE PATTERNS ===
 
         # Enterprise RAG validation
-        if any(phrase in command_lower for phrase in [
-            "enterprise rag", "complete rag", "full rag", "rag system", "rag validation",
-            "validate my rag", "check my rag", "audit my rag", "enterprise ai",
-            "validate rag system", "check rag system", "audit rag system"
-        ]):
+        if any(
+            phrase in command_lower
+            for phrase in [
+                "enterprise rag",
+                "complete rag",
+                "full rag",
+                "rag system",
+                "rag validation",
+                "validate my rag",
+                "check my rag",
+                "audit my rag",
+                "enterprise ai",
+                "validate rag system",
+                "check rag system",
+                "audit rag system",
+            ]
+        ):
             return self.run_workflow("enterprise_rag")
 
         # Vector store validation
-        elif any(phrase in command_lower for phrase in [
-            "vector", "embedding", "chromadb", "weaviate", "faiss", "pinecone", "qdrant",
-            "check vectors", "validate embeddings", "vector store", "semantic search",
-            "validate vectors", "check embedding", "vector validation"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "vector",
+                "embedding",
+                "chromadb",
+                "weaviate",
+                "faiss",
+                "pinecone",
+                "qdrant",
+                "check vectors",
+                "validate embeddings",
+                "vector store",
+                "semantic search",
+                "validate vectors",
+                "check embedding",
+                "vector validation",
+            ]
+        ):
             return self.run_workflow("vector_validation")
 
         # Graph database validation
-        elif any(phrase in command_lower for phrase in [
-            "graph", "neo4j", "cypher", "arangodb", "knowledge graph", "graph database",
-            "check graph", "graph security", "validate graph", "graph patterns",
-            "validate neo4j", "check cypher", "knowledge graph security"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "graph",
+                "neo4j",
+                "cypher",
+                "arangodb",
+                "knowledge graph",
+                "graph database",
+                "check graph",
+                "graph security",
+                "validate graph",
+                "graph patterns",
+                "validate neo4j",
+                "check cypher",
+                "knowledge graph security",
+            ]
+        ):
             return self.run_workflow("graph_security")
 
         # Hybrid RAG validation
-        elif any(phrase in command_lower for phrase in [
-            "hybrid", "fusion", "rerank", "multi", "combine", "blend",
-            "vector and keyword", "dense and sparse", "hybrid search", "fusion search",
-            "check hybrid", "validate fusion", "reranking validation"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "hybrid",
+                "fusion",
+                "rerank",
+                "multi",
+                "combine",
+                "blend",
+                "vector and keyword",
+                "dense and sparse",
+                "hybrid search",
+                "fusion search",
+                "check hybrid",
+                "validate fusion",
+                "reranking validation",
+            ]
+        ):
             return self.run_workflow("hybrid_rag")
 
         # Agentic RAG validation
-        elif any(phrase in command_lower for phrase in [
-            "agent", "agentic", "react", "chain of thought", "cot", "reasoning",
-            "tool", "agent safety", "agent validation", "reasoning patterns",
-            "validate agents", "check reasoning", "agent security", "tool safety"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "agent",
+                "agentic",
+                "react",
+                "chain of thought",
+                "cot",
+                "reasoning",
+                "tool",
+                "agent safety",
+                "agent validation",
+                "reasoning patterns",
+                "validate agents",
+                "check reasoning",
+                "agent security",
+                "tool safety",
+            ]
+        ):
             return self.run_workflow("agentic_rag")
 
         # RAG Quality validation
-        elif any(phrase in command_lower for phrase in [
-            "rag quality", "rag patterns", "ai quality", "llm quality", "retrieval quality",
-            "validate ai", "check llm", "ai validation", "llm validation"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "rag quality",
+                "rag patterns",
+                "ai quality",
+                "llm quality",
+                "retrieval quality",
+                "validate ai",
+                "check llm",
+                "ai validation",
+                "llm validation",
+            ]
+        ):
             return self.run_workflow("rag_quality")
 
         # AWS RAG - AWS-specific patterns
-        elif any(phrase in command_lower for phrase in [
-            "aws", "bedrock", "titan", "langchain", "mongodb atlas", "mongodb vector",
-            "ecs", "fargate", "lambda", "api gateway", "aws rag", "aws stack",
-            "check aws", "validate bedrock", "audit aws", "aws deployment",
-            "titan embed", "claude bedrock", "aws ai", "aws llm"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "aws",
+                "bedrock",
+                "titan",
+                "langchain",
+                "mongodb atlas",
+                "mongodb vector",
+                "ecs",
+                "fargate",
+                "lambda",
+                "api gateway",
+                "aws rag",
+                "aws stack",
+                "check aws",
+                "validate bedrock",
+                "audit aws",
+                "aws deployment",
+                "titan embed",
+                "claude bedrock",
+                "aws ai",
+                "aws llm",
+            ]
+        ):
             return self.run_workflow("aws_rag")
 
         # Angular validation - Frontend patterns
-        elif any(phrase in command_lower for phrase in [
-            "angular", "rxjs", "observable", "subscription", "memory leak",
-            "change detection", "component", "service", "angular performance",
-            "check angular", "validate angular", "frontend", "typescript patterns"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "angular",
+                "rxjs",
+                "observable",
+                "subscription",
+                "memory leak",
+                "change detection",
+                "component",
+                "service",
+                "angular performance",
+                "check angular",
+                "validate angular",
+                "frontend",
+                "typescript patterns",
+            ]
+        ):
             return self.run_workflow("angular_validation")
 
         # Cost optimization - AWS cost patterns
-        elif any(phrase in command_lower for phrase in [
-            "cost", "expensive", "budget", "billing", "optimize cost", "save money",
-            "cost optimization", "aws cost", "bedrock cost", "check cost",
-            "reduce cost", "cost tracking", "spending", "price optimization"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "cost",
+                "expensive",
+                "budget",
+                "billing",
+                "optimize cost",
+                "save money",
+                "cost optimization",
+                "aws cost",
+                "bedrock cost",
+                "check cost",
+                "reduce cost",
+                "cost tracking",
+                "spending",
+                "price optimization",
+            ]
+        ):
             return self.run_workflow("cost_optimization")
 
         # S3 security - Storage security patterns
-        elif any(phrase in command_lower for phrase in [
-            "s3 security", "presigned url", "multipart upload", "s3 cors",
-            "bucket security", "s3 encryption", "storage security", "file upload",
-            "check s3", "validate s3", "s3 policy", "s3 access"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "s3 security",
+                "presigned url",
+                "multipart upload",
+                "s3 cors",
+                "bucket security",
+                "s3 encryption",
+                "storage security",
+                "file upload",
+                "check s3",
+                "validate s3",
+                "s3 policy",
+                "s3 access",
+            ]
+        ):
             return self.run_workflow("s3_security")
 
         # Performance optimization - Performance patterns
-        elif any(phrase in command_lower for phrase in [
-            "performance", "latency", "speed", "slow", "fast", "optimize performance",
-            "caching", "monitoring", "throughput", "response time", "performance check",
-            "check performance", "performance audit", "optimize speed"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "performance",
+                "latency",
+                "speed",
+                "slow",
+                "fast",
+                "optimize performance",
+                "caching",
+                "monitoring",
+                "throughput",
+                "response time",
+                "performance check",
+                "check performance",
+                "performance audit",
+                "optimize speed",
+            ]
+        ):
             return self.run_workflow("performance_optimization")
 
         # Complete stack validation - Full stack patterns
-        elif any(phrase in command_lower for phrase in [
-            "complete stack", "full stack", "entire stack", "everything", "all checks",
-            "complete validation", "full validation", "production ready", "deploy ready",
-            "check everything", "validate all", "complete audit", "comprehensive check"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "complete stack",
+                "full stack",
+                "entire stack",
+                "everything",
+                "all checks",
+                "complete validation",
+                "full validation",
+                "production ready",
+                "deploy ready",
+                "check everything",
+                "validate all",
+                "complete audit",
+                "comprehensive check",
+            ]
+        ):
             return self.run_workflow("complete_stack")
 
         # === STANDARD WORKFLOW PATTERNS ===
 
         # Workflow commands (traditional)
-        elif any(word in command_lower for word in ["workflow", "pipeline", "ci", "automation"]):
+        elif any(
+            word in command_lower
+            for word in ["workflow", "pipeline", "ci", "automation"]
+        ):
             return self.handle_workflow_command(command)
 
         # Build commands
-        elif any(word in command_lower for word in ["build", "compile", "package", "prepare release", "production build"]):
+        elif any(
+            word in command_lower
+            for word in [
+                "build",
+                "compile",
+                "package",
+                "prepare release",
+                "production build",
+            ]
+        ):
             # Extract feature name
             feature_name = command.replace("ccom", "").replace("build", "").strip()
 
@@ -209,7 +434,9 @@ class CCOMOrchestrator:
             return self.build_sequence()
 
         # Deploy commands
-        elif any(word in command_lower for word in ["deploy", "ship", "go live", "launch"]):
+        elif any(
+            word in command_lower for word in ["deploy", "ship", "go live", "launch"]
+        ):
             return self.deploy_sequence()
 
         # Quality commands
@@ -217,23 +444,45 @@ class CCOMOrchestrator:
             return self.quality_sequence()
 
         # Security commands
-        elif any(word in command_lower for word in ["secure", "safety", "protect", "scan"]):
+        elif any(
+            word in command_lower for word in ["secure", "safety", "protect", "scan"]
+        ):
             return self.security_sequence()
 
         # File monitoring commands
-        elif any(word in command_lower for word in ["watch", "monitor", "file monitoring", "auto quality", "real-time"]):
+        elif any(
+            word in command_lower
+            for word in [
+                "watch",
+                "monitor",
+                "file monitoring",
+                "auto quality",
+                "real-time",
+            ]
+        ):
             return self.handle_file_monitoring_command(command)
 
         # Context command - comprehensive project intelligence
-        elif any(phrase in command_lower for phrase in [
-            "context", "project context", "show context", "load context",
-            "project summary", "what is this project", "project overview",
-            "catch me up", "bring me up to speed"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "context",
+                "project context",
+                "show context",
+                "load context",
+                "project summary",
+                "what is this project",
+                "project overview",
+                "catch me up",
+                "bring me up to speed",
+            ]
+        ):
             return self.show_project_context()
 
         # Memory commands
-        elif any(word in command_lower for word in ["remember", "memory", "status", "forget"]):
+        elif any(
+            word in command_lower for word in ["remember", "memory", "status", "forget"]
+        ):
             return self.handle_memory_command(command)
 
         # Init commands
@@ -241,7 +490,9 @@ class CCOMOrchestrator:
             return self.handle_init_command()
 
         else:
-            print(f"❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands")
+            print(
+                f"❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"
+            )
             return False
 
     def deploy_sequence(self):
@@ -314,7 +565,6 @@ class CCOMOrchestrator:
         print(f"🤖 CCOM executing {agent_name}...")
         return self.execute_agent_implementation(agent_name)
 
-
     def execute_agent_implementation(self, agent_name):
         """
         CCOM Native Agent Implementation
@@ -326,7 +576,7 @@ class CCOMOrchestrator:
             "quality-enforcer": self.run_quality_enforcement,
             "security-guardian": self.run_security_scan,
             "builder-agent": self.run_build_process,
-            "deployment-specialist": self.run_deployment_process
+            "deployment-specialist": self.run_deployment_process,
         }
 
         if agent_name in implementations:
@@ -339,70 +589,133 @@ class CCOMOrchestrator:
         """CCOM Native Quality Enforcement Implementation"""
         print("🔧 **CCOM QUALITY** – Running enterprise standards...")
 
+        try:
+            from ccom.validators import ValidationOrchestrator
+
+            # Create validation orchestrator
+            validator = ValidationOrchestrator(
+                self.project_root, self.get_tools_manager()
+            )
+
+            # Run validations with auto-fix
+            results = validator.run_all_validations(auto_fix=True)
+
+            # Print summary
+            validator.print_summary()
+
+            # Determine overall success
+            report = validator.generate_report()
+            success = report["overall_score"] >= 80 and report["total_issues"] == 0
+
+            if success:
+                print("✅ **QUALITY STATUS**: Enterprise Grade")
+            else:
+                print(
+                    "🔧 **QUALITY STATUS**: Improvements Applied - Review remaining issues"
+                )
+
+            return success
+
+        except ImportError:
+            print("⚠️ Advanced validation not available - falling back to basic checks")
+            return self._run_basic_quality_checks()
+
+    def _run_basic_quality_checks(self):
+        """Fallback basic quality checks"""
+        # Ensure required tools are installed
+        if not self.ensure_tools_installed(["eslint", "prettier"]):
+            print("⚠️ Proceeding with limited quality checks")
+
         # Check if we have package.json with lint script
         package_json = self.project_root / "package.json"
         if package_json.exists():
             try:
                 # Try running lint with shell=True for Windows compatibility
-                result = subprocess.run("npm run lint",
-                                      shell=True, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    "npm run lint",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
 
                 if result.returncode == 0:
                     print("✅ Code quality: Enterprise grade")
                     return True
                 else:
                     print("🔧 Found quality issues, attempting auto-fix...")
-                    print(f"Lint output: {result.stdout}")
-                    if result.stderr:
-                        print(f"Lint errors: {result.stderr}")
 
                     # Try auto-fix
-                    fix_result = subprocess.run("npm run lint -- --fix",
-                                              shell=True, capture_output=True, text=True, timeout=30)
+                    fix_result = subprocess.run(
+                        "npm run lint -- --fix",
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
 
                     if fix_result.returncode == 0:
                         print("✅ Quality issues fixed automatically")
                         return True
                     else:
-                        print("⚠️  Some quality issues need manual attention")
-                        print(f"Fix output: {fix_result.stdout}")
+                        print("⚠️ Some quality issues need manual attention")
                         return False
 
             except subprocess.TimeoutExpired:
-                print("⚠️  Lint command timed out")
+                print("⚠️ Lint command timed out")
                 return False
             except Exception as e:
-                print(f"⚠️  Error running lint: {e}")
+                print(f"⚠️ Error running lint: {e}")
                 return False
         else:
-            print("ℹ️  No package.json found - skipping lint checks")
+            print("ℹ️ No package.json found - skipping lint checks")
             return True
 
     def run_security_scan(self):
         """CCOM Native Security Guardian Implementation"""
         print("🔒 **CCOM SECURITY** – Bank-level protection scan...")
 
+        # Ensure security tools are available
+        tools_manager = self.get_tools_manager()
+        if tools_manager and tools_manager.tools_state.get("project_type") == "python":
+            self.ensure_tools_installed(["bandit", "safety"])
+
         security_issues = []
 
         # 1. Dependency vulnerability scanning
         try:
-            result = subprocess.run("npm audit --json",
-                                  shell=True, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                "npm audit --json",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 audit_data = json.loads(result.stdout)
-                vulnerabilities = audit_data.get('vulnerabilities', {})
+                vulnerabilities = audit_data.get("vulnerabilities", {})
 
                 if vulnerabilities:
-                    high_critical = sum(1 for v in vulnerabilities.values()
-                                      if v.get('severity') in ['high', 'critical'])
+                    high_critical = sum(
+                        1
+                        for v in vulnerabilities.values()
+                        if v.get("severity") in ["high", "critical"]
+                    )
                     if high_critical > 0:
-                        security_issues.append(f"🚨 {high_critical} high/critical vulnerabilities found")
+                        security_issues.append(
+                            f"🚨 {high_critical} high/critical vulnerabilities found"
+                        )
                         print("🛠️  Attempting to fix vulnerabilities...")
 
                         # Try auto-fix
-                        fix_result = subprocess.run("npm audit fix",
-                                                  shell=True, capture_output=True, text=True, timeout=60)
+                        fix_result = subprocess.run(
+                            "npm audit fix",
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            timeout=60,
+                        )
                         if fix_result.returncode == 0:
                             print("✅ Vulnerabilities automatically fixed")
                         else:
@@ -433,18 +746,19 @@ class CCOMOrchestrator:
             (r'password\s*=\s*["\'].*["\']', "Hardcoded password detected"),
             (r'api[_-]?key\s*=\s*["\'].*["\']', "Hardcoded API key detected"),
             (r'secret\s*=\s*["\'].*["\']', "Hardcoded secret detected"),
-            (r'eval\s*\(', "Dangerous eval() usage detected"),
-            (r'innerHTML\s*=', "Potential XSS vulnerability"),
-            (r'document\.write\s*\(', "Dangerous document.write usage"),
+            (r"eval\s*\(", "Dangerous eval() usage detected"),
+            (r"innerHTML\s*=", "Potential XSS vulnerability"),
+            (r"document\.write\s*\(", "Dangerous document.write usage"),
         ]
 
         try:
             import re
+
             for file_path in self.project_root.rglob("*.js"):
                 if "node_modules" in str(file_path):
                     continue
 
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
 
                 for pattern, message in security_patterns:
@@ -464,15 +778,24 @@ class CCOMOrchestrator:
                     data = json.load(f)
 
                 # Check for security-related dependencies
-                dependencies = data.get('dependencies', {})
-                dev_dependencies = data.get('devDependencies', {})
+                dependencies = data.get("dependencies", {})
+                dev_dependencies = data.get("devDependencies", {})
                 all_deps = {**dependencies, **dev_dependencies}
 
-                security_packages = ['helmet', 'express-rate-limit', 'cors', 'express-validator']
-                missing_security = [pkg for pkg in security_packages if pkg not in all_deps]
+                security_packages = [
+                    "helmet",
+                    "express-rate-limit",
+                    "cors",
+                    "express-validator",
+                ]
+                missing_security = [
+                    pkg for pkg in security_packages if pkg not in all_deps
+                ]
 
                 if missing_security:
-                    print(f"💡 Consider adding security packages: {', '.join(missing_security)}")
+                    print(
+                        f"💡 Consider adding security packages: {', '.join(missing_security)}"
+                    )
 
             except Exception as e:
                 print(f"ℹ️  Configuration check skipped: {e}")
@@ -508,8 +831,13 @@ class CCOMOrchestrator:
         try:
             # Check if build succeeds
             if self.has_build_script():
-                result = subprocess.run("npm run build",
-                                      shell=True, capture_output=True, text=True, timeout=120)
+                result = subprocess.run(
+                    "npm run build",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
                 if result.returncode != 0:
                     print("❌ Build failed")
                     return False
@@ -517,8 +845,9 @@ class CCOMOrchestrator:
 
             # Check if tests pass
             if self.has_test_script():
-                result = subprocess.run("npm test",
-                                      shell=True, capture_output=True, text=True, timeout=60)
+                result = subprocess.run(
+                    "npm test", shell=True, capture_output=True, text=True, timeout=60
+                )
                 if result.returncode != 0:
                     print("⚠️  Some tests failed - proceeding with caution")
                 else:
@@ -539,16 +868,23 @@ class CCOMOrchestrator:
                     data = json.load(f)
 
                 if "deploy" in data.get("scripts", {}):
-                    result = subprocess.run("npm run deploy",
-                                          shell=True, capture_output=True, text=True, timeout=300)
+                    result = subprocess.run(
+                        "npm run deploy",
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=300,
+                    )
 
                     if result.returncode == 0:
                         print("✅ Deployment command executed successfully")
                         if result.stdout:
                             # Look for deployment URL in output
-                            lines = result.stdout.split('\n')
+                            lines = result.stdout.split("\n")
                             for line in lines:
-                                if 'http' in line and ('deployed' in line.lower() or 'live' in line.lower()):
+                                if "http" in line and (
+                                    "deployed" in line.lower() or "live" in line.lower()
+                                ):
                                     print(f"🌐 App URL: {line.strip()}")
                         return True
                     else:
@@ -618,7 +954,7 @@ class CCOMOrchestrator:
                 "timestamp": datetime.now().isoformat(),
                 "status": "successful",
                 "quality_checks": "passed",
-                "security_checks": "passed"
+                "security_checks": "passed",
             }
 
             # Add to memory
@@ -666,10 +1002,12 @@ class CCOMOrchestrator:
 
             # Check file sizes (simplified check)
             if project_type == "node":
-                src_files = list(self.project_root.glob("**/*.js")) + \
-                           list(self.project_root.glob("**/*.jsx")) + \
-                           list(self.project_root.glob("**/*.ts")) + \
-                           list(self.project_root.glob("**/*.tsx"))
+                src_files = (
+                    list(self.project_root.glob("**/*.js"))
+                    + list(self.project_root.glob("**/*.jsx"))
+                    + list(self.project_root.glob("**/*.ts"))
+                    + list(self.project_root.glob("**/*.tsx"))
+                )
 
                 for file in src_files[:10]:  # Check first 10 files
                     if file.stat().st_size > 50000:  # 50KB warning
@@ -687,8 +1025,13 @@ class CCOMOrchestrator:
 
             if project_type == "node":
                 # Install dependencies
-                result = subprocess.run("npm ci || npm install",
-                                      shell=True, capture_output=True, text=True, timeout=120)
+                result = subprocess.run(
+                    "npm ci || npm install",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
                 if result.returncode != 0:
                     print("❌ Failed to install dependencies")
                     return False
@@ -699,23 +1042,34 @@ class CCOMOrchestrator:
                     scripts = data.get("scripts", {})
 
                 if "build" in scripts:
-                    result = subprocess.run("npm run build",
-                                          shell=True, capture_output=True, text=True, timeout=180)
+                    result = subprocess.run(
+                        "npm run build",
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=180,
+                    )
                     build_success = result.returncode == 0
                     build_output = result.stdout
                 else:
                     # Try common build commands
                     for cmd in ["npx vite build", "npx webpack", "npx tsc"]:
-                        result = subprocess.run(cmd,
-                                              shell=True, capture_output=True, text=True, timeout=180)
+                        result = subprocess.run(
+                            cmd, shell=True, capture_output=True, text=True, timeout=180
+                        )
                         if result.returncode == 0:
                             build_success = True
                             build_output = result.stdout
                             break
 
             elif project_type == "python":
-                result = subprocess.run("pip install -U build && python -m build",
-                                      shell=True, capture_output=True, text=True, timeout=180)
+                result = subprocess.run(
+                    "pip install -U build && python -m build",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=180,
+                )
                 build_success = result.returncode == 0
                 build_output = result.stdout
 
@@ -742,14 +1096,18 @@ class CCOMOrchestrator:
                 output_dir = self.project_root / dir_name
                 if output_dir.exists() and output_dir.is_dir():
                     # Calculate size
-                    total_size = sum(f.stat().st_size for f in output_dir.rglob("*") if f.is_file())
+                    total_size = sum(
+                        f.stat().st_size for f in output_dir.rglob("*") if f.is_file()
+                    )
                     print(f"- Output: {dir_name}/")
                     print(f"- Total size: {total_size / 1024:.1f}KB")
 
                     # List largest files
-                    files = sorted(output_dir.rglob("*"),
-                                 key=lambda f: f.stat().st_size if f.is_file() else 0,
-                                 reverse=True)
+                    files = sorted(
+                        output_dir.rglob("*"),
+                        key=lambda f: f.stat().st_size if f.is_file() else 0,
+                        reverse=True,
+                    )
 
                     print("- Largest files:")
                     for f in files[:5]:
@@ -785,8 +1143,13 @@ class CCOMOrchestrator:
                     data = json.load(f)
 
                 if "deploy" in data.get("scripts", {}):
-                    result = subprocess.run("npm run deploy",
-                                          shell=True, capture_output=True, text=True, timeout=120)
+                    result = subprocess.run(
+                        "npm run deploy",
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=120,
+                    )
                     print(f"Deploy output: {result.stdout}")
                     if result.stderr:
                         print(f"Deploy errors: {result.stderr}")
@@ -833,7 +1196,9 @@ class CCOMOrchestrator:
     def start_file_monitoring(self):
         """Start the CCOM file monitoring system"""
         try:
-            print("🔍 **CCOM FILE MONITOR** – Starting real-time quality enforcement...")
+            print(
+                "🔍 **CCOM FILE MONITOR** – Starting real-time quality enforcement..."
+            )
 
             # Import and initialize the file monitor
             from ccom.file_monitor import CCOMFileMonitor
@@ -863,9 +1228,15 @@ class CCOMOrchestrator:
             print("📋 **CCOM FILE MONITOR** – Configuration:")
             print(f"  📂 Project: {self.project_root}")
             print(f"  ⚡ Enabled: {monitor.config['enabled']}")
-            print(f"  📋 Watch patterns: {len(monitor.config['watch_patterns'])} patterns")
-            print(f"  🚫 Ignore patterns: {len(monitor.config['ignore_patterns'])} patterns")
-            print(f"  ⏱️  Debounce: {monitor.config['quality_triggers']['debounce_ms']}ms")
+            print(
+                f"  📋 Watch patterns: {len(monitor.config['watch_patterns'])} patterns"
+            )
+            print(
+                f"  🚫 Ignore patterns: {len(monitor.config['ignore_patterns'])} patterns"
+            )
+            print(
+                f"  ⏱️  Debounce: {monitor.config['quality_triggers']['debounce_ms']}ms"
+            )
 
             return True
 
@@ -880,53 +1251,134 @@ class CCOMOrchestrator:
         # === RAG-SPECIFIC NATURAL LANGUAGE PATTERNS ===
 
         # Enterprise RAG - comprehensive validation
-        if any(phrase in command_lower for phrase in [
-            "enterprise rag", "complete rag", "full rag", "rag system", "rag validation",
-            "validate my rag", "check my rag", "audit my rag", "enterprise ai"
-        ]):
+        if any(
+            phrase in command_lower
+            for phrase in [
+                "enterprise rag",
+                "complete rag",
+                "full rag",
+                "rag system",
+                "rag validation",
+                "validate my rag",
+                "check my rag",
+                "audit my rag",
+                "enterprise ai",
+            ]
+        ):
             return self.run_workflow("enterprise_rag")
 
         # Vector stores - ChromaDB, Weaviate, FAISS, etc.
-        elif any(phrase in command_lower for phrase in [
-            "vector", "embedding", "chromadb", "weaviate", "faiss", "pinecone", "qdrant",
-            "check vectors", "validate embeddings", "vector store", "semantic search"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "vector",
+                "embedding",
+                "chromadb",
+                "weaviate",
+                "faiss",
+                "pinecone",
+                "qdrant",
+                "check vectors",
+                "validate embeddings",
+                "vector store",
+                "semantic search",
+            ]
+        ):
             return self.run_workflow("vector_validation")
 
         # Graph databases - Neo4j, ArangoDB, etc.
-        elif any(phrase in command_lower for phrase in [
-            "graph", "neo4j", "cypher", "arangodb", "knowledge graph", "graph database",
-            "check graph", "graph security", "validate graph", "graph patterns"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "graph",
+                "neo4j",
+                "cypher",
+                "arangodb",
+                "knowledge graph",
+                "graph database",
+                "check graph",
+                "graph security",
+                "validate graph",
+                "graph patterns",
+            ]
+        ):
             return self.run_workflow("graph_security")
 
         # Hybrid RAG - fusion, reranking, multi-modal
-        elif any(phrase in command_lower for phrase in [
-            "hybrid", "fusion", "rerank", "multi", "combine", "blend",
-            "vector and keyword", "dense and sparse", "hybrid search", "fusion search"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "hybrid",
+                "fusion",
+                "rerank",
+                "multi",
+                "combine",
+                "blend",
+                "vector and keyword",
+                "dense and sparse",
+                "hybrid search",
+                "fusion search",
+            ]
+        ):
             return self.run_workflow("hybrid_rag")
 
         # Agentic RAG - ReAct, CoT, agents, tools
-        elif any(phrase in command_lower for phrase in [
-            "agent", "agentic", "react", "chain of thought", "cot", "reasoning",
-            "tool", "agent safety", "agent validation", "reasoning patterns"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "agent",
+                "agentic",
+                "react",
+                "chain of thought",
+                "cot",
+                "reasoning",
+                "tool",
+                "agent safety",
+                "agent validation",
+                "reasoning patterns",
+            ]
+        ):
             return self.run_workflow("agentic_rag")
 
         # RAG Quality - general RAG patterns
-        elif any(phrase in command_lower for phrase in [
-            "rag quality", "rag patterns", "ai quality", "llm quality", "retrieval quality"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "rag quality",
+                "rag patterns",
+                "ai quality",
+                "llm quality",
+                "retrieval quality",
+            ]
+        ):
             return self.run_workflow("rag_quality")
 
         # AWS RAG - AWS-specific patterns
-        elif any(phrase in command_lower for phrase in [
-            "aws", "bedrock", "titan", "langchain", "mongodb atlas", "mongodb vector",
-            "ecs", "fargate", "lambda", "api gateway", "aws rag", "aws stack",
-            "check aws", "validate bedrock", "audit aws", "aws deployment",
-            "titan embed", "claude bedrock", "aws ai", "aws llm"
-        ]):
+        elif any(
+            phrase in command_lower
+            for phrase in [
+                "aws",
+                "bedrock",
+                "titan",
+                "langchain",
+                "mongodb atlas",
+                "mongodb vector",
+                "ecs",
+                "fargate",
+                "lambda",
+                "api gateway",
+                "aws rag",
+                "aws stack",
+                "check aws",
+                "validate bedrock",
+                "audit aws",
+                "aws deployment",
+                "titan embed",
+                "claude bedrock",
+                "aws ai",
+                "aws llm",
+            ]
+        ):
             return self.run_workflow("aws_rag")
 
         # === STANDARD WORKFLOWS ===
@@ -945,8 +1397,12 @@ class CCOMOrchestrator:
         else:
             print("🔄 **CCOM WORKFLOWS** – Natural language automation")
             print("\n📖 Standard workflows:")
-            print("  ccom check quality             → Quality gates (lint, format, tests)")
-            print("  ccom scan security             → Security audit (dependencies, secrets)")
+            print(
+                "  ccom check quality             → Quality gates (lint, format, tests)"
+            )
+            print(
+                "  ccom scan security             → Security audit (dependencies, secrets)"
+            )
             print("  ccom deploy my app             → Full deployment pipeline")
             print("  ccom setup github actions      → Create CI/CD workflows")
             print("\n🧠 Enterprise RAG workflows:")
@@ -961,9 +1417,15 @@ class CCOMOrchestrator:
             print("  ccom audit ecs deployment      → ECS/Lambda/S3 validation")
             print("  ccom check titan embeddings    → AWS Titan embedding validation")
             print("\n🎯 Critical Gap workflows:")
-            print("  ccom check angular             → RxJS memory leaks & change detection")
-            print("  ccom optimize cost              → AWS cost tracking & optimization")
-            print("  ccom validate s3 security       → Presigned URLs & multipart uploads")
+            print(
+                "  ccom check angular             → RxJS memory leaks & change detection"
+            )
+            print(
+                "  ccom optimize cost              → AWS cost tracking & optimization"
+            )
+            print(
+                "  ccom validate s3 security       → Presigned URLs & multipart uploads"
+            )
             print("  ccom check performance          → Monitoring, caching & latency")
             print("  ccom validate complete stack    → All validators for production")
             print("\n💡 Use natural language - CCOM understands your intent!")
@@ -1017,12 +1479,12 @@ class CCOMOrchestrator:
         print("\n🧠 CCOM Memory")
         print("=" * 40)
 
-        if not self.memory['features']:
+        if not self.memory["features"]:
             print("No features remembered yet.")
         else:
-            for name, feature in self.memory['features'].items():
+            for name, feature in self.memory["features"].items():
                 print(f"• {name}")
-                if feature.get('description'):
+                if feature.get("description"):
                     print(f"  {feature['description']}")
 
         print("=" * 40)
@@ -1035,7 +1497,9 @@ class CCOMOrchestrator:
 
         # === PROJECT OVERVIEW ===
         project_info = self.analyze_project_structure()
-        print(f"📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files")
+        print(
+            f"📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files"
+        )
 
         # === ARCHITECTURE ===
         print(f"🏗️ **Architecture**: {project_info['architecture']}")
@@ -1043,7 +1507,9 @@ class CCOMOrchestrator:
 
         # === CURRENT HEALTH STATUS ===
         health = self.get_current_health_status()
-        print(f"📈 **Quality**: {health['quality']} | **Security**: {health['security']} | **Status**: {health['status']}")
+        print(
+            f"📈 **Quality**: {health['quality']} | **Security**: {health['security']} | **Status**: {health['status']}"
+        )
 
         # === RECENT ACTIVITY ===
         recent_features = self.get_recent_features(limit=3)
@@ -1067,7 +1533,7 @@ class CCOMOrchestrator:
         # === FILE STATUS ===
         file_status = self.get_file_status()
         print(f"\n📂 **Key Files**: {', '.join(file_status['key_files'])}")
-        if file_status['recent_changes']:
+        if file_status["recent_changes"]:
             print(f"🔄 **Recent Changes**: {file_status['recent_changes']}")
 
         print("=" * 60)
@@ -1076,7 +1542,7 @@ class CCOMOrchestrator:
 
     def analyze_project_structure(self):
         """Analyze project structure and return summary"""
-        project_name = self.memory['project']['name']
+        project_name = self.memory["project"]["name"]
 
         # Detect project type and architecture
         project_type = "Unknown"
@@ -1091,16 +1557,16 @@ class CCOMOrchestrator:
                 tech_stack.append("Node.js")
                 with open(self.project_root / "package.json") as f:
                     pkg_data = json.load(f)
-                    deps = list(pkg_data.get('dependencies', {}).keys())
-                    if 'react' in deps:
+                    deps = list(pkg_data.get("dependencies", {}).keys())
+                    if "react" in deps:
                         tech_stack.append("React")
                         project_type = "React App"
                         architecture = "SPA"
-                    elif 'angular' in deps or '@angular/core' in deps:
+                    elif "angular" in deps or "@angular/core" in deps:
                         tech_stack.append("Angular")
                         project_type = "Angular App"
                         architecture = "SPA"
-                    elif 'vue' in deps:
+                    elif "vue" in deps:
                         tech_stack.append("Vue")
                         project_type = "Vue App"
                         architecture = "SPA"
@@ -1108,28 +1574,47 @@ class CCOMOrchestrator:
                         project_type = "Node.js App"
 
             # Check for PWA indicators
-            if (self.project_root / "manifest.json").exists() or (self.project_root / "sw.js").exists():
+            if (self.project_root / "manifest.json").exists() or (
+                self.project_root / "sw.js"
+            ).exists():
                 architecture = "PWA"
                 tech_stack.append("PWA")
 
             # Check for Python
-            if (self.project_root / "requirements.txt").exists() or (self.project_root / "pyproject.toml").exists():
+            if (self.project_root / "requirements.txt").exists() or (
+                self.project_root / "pyproject.toml"
+            ).exists():
                 tech_stack.append("Python")
                 project_type = "Python App"
 
             # Check for static site
-            if (self.project_root / "index.html").exists() and not (self.project_root / "package.json").exists():
+            if (self.project_root / "index.html").exists() and not (
+                self.project_root / "package.json"
+            ).exists():
                 project_type = "Static Site"
                 architecture = "Static HTML"
                 tech_stack = ["HTML", "CSS", "JavaScript"]
 
             # Count files and lines
             for file_path in self.project_root.rglob("*"):
-                if file_path.is_file() and not any(ignore in str(file_path) for ignore in ['.git', 'node_modules', '__pycache__', '.claude']):
+                if file_path.is_file() and not any(
+                    ignore in str(file_path)
+                    for ignore in [".git", "node_modules", "__pycache__", ".claude"]
+                ):
                     files += 1
-                    if file_path.suffix in ['.js', '.py', '.html', '.css', '.ts', '.jsx', '.tsx']:
+                    if file_path.suffix in [
+                        ".js",
+                        ".py",
+                        ".html",
+                        ".css",
+                        ".ts",
+                        ".jsx",
+                        ".tsx",
+                    ]:
                         try:
-                            with open(file_path, encoding='utf-8', errors='ignore') as f:
+                            with open(
+                                file_path, encoding="utf-8", errors="ignore"
+                            ) as f:
                                 lines += len(f.readlines())
                         except:
                             pass
@@ -1138,12 +1623,12 @@ class CCOMOrchestrator:
             pass
 
         return {
-            'name': project_name,
-            'type': project_type,
-            'architecture': architecture,
-            'tech_stack': tech_stack or ["Unknown"],
-            'lines': lines,
-            'files': files
+            "name": project_name,
+            "type": project_type,
+            "architecture": architecture,
+            "tech_stack": tech_stack or ["Unknown"],
+            "lines": lines,
+            "files": files,
         }
 
     def get_current_health_status(self):
@@ -1154,59 +1639,62 @@ class CCOMOrchestrator:
         status = "Unknown"
 
         # Look for recent quality audits in features
-        for feature_name, feature in self.memory['features'].items():
-            desc = feature.get('description', '').lower()
-            if 'quality' in desc:
-                if 'a+' in desc or '99/100' in desc or '98/100' in desc:
+        for feature_name, feature in self.memory["features"].items():
+            desc = feature.get("description", "").lower()
+            if "quality" in desc:
+                if "a+" in desc or "99/100" in desc or "98/100" in desc:
                     quality = "A+ (99/100)"
-                elif 'grade' in desc:
+                elif "grade" in desc:
                     quality = "Enterprise Grade"
-            if 'security' in desc:
-                if 'bank-level' in desc or 'bank level' in desc:
+            if "security" in desc:
+                if "bank-level" in desc or "bank level" in desc:
                     security = "Bank-level"
-                elif 'zero vulnerabilities' in desc:
+                elif "zero vulnerabilities" in desc:
                     security = "Secure"
 
         # Check deployment status
-        if 'deployments' in self.memory and self.memory['deployments']:
-            latest_deploy = self.memory['deployments'][-1]
-            if latest_deploy.get('status') == 'successful':
+        if "deployments" in self.memory and self.memory["deployments"]:
+            latest_deploy = self.memory["deployments"][-1]
+            if latest_deploy.get("status") == "successful":
                 status = "Production Ready"
 
         return {
-            'quality': quality or "Unknown",
-            'security': security or "Unknown",
-            'status': status or "Ready for Testing"
+            "quality": quality or "Unknown",
+            "security": security or "Unknown",
+            "status": status or "Ready for Testing",
         }
 
     def get_recent_features(self, limit=3):
         """Get recent features from memory"""
         features = []
-        for name, feature in list(self.memory['features'].items())[-limit:]:
-            summary = feature.get('description', '')[:80] + '...' if len(feature.get('description', '')) > 80 else feature.get('description', 'No description')
-            features.append({
-                'name': name.replace('_', ' ').title(),
-                'summary': summary
-            })
+        for name, feature in list(self.memory["features"].items())[-limit:]:
+            summary = (
+                feature.get("description", "")[:80] + "..."
+                if len(feature.get("description", "")) > 80
+                else feature.get("description", "No description")
+            )
+            features.append(
+                {"name": name.replace("_", " ").title(), "summary": summary}
+            )
         return features
 
     def detect_current_focus(self):
         """Detect what the user is currently working on"""
         # Look at the most recent feature for clues
-        if self.memory['features']:
-            latest_feature = list(self.memory['features'].items())[-1]
-            desc = latest_feature[1].get('description', '').lower()
+        if self.memory["features"]:
+            latest_feature = list(self.memory["features"].items())[-1]
+            desc = latest_feature[1].get("description", "").lower()
 
-            if 'password reset' in desc or 'email' in desc:
+            if "password reset" in desc or "email" in desc:
                 return "Password reset and email integration"
-            elif 'auth' in desc or 'authentication' in desc:
+            elif "auth" in desc or "authentication" in desc:
                 return "Authentication system enhancement"
-            elif 'deployment' in desc or 'production' in desc:
+            elif "deployment" in desc or "production" in desc:
                 return "Production deployment"
-            elif 'quality' in desc or 'audit' in desc:
+            elif "quality" in desc or "audit" in desc:
                 return "Code quality improvement"
             else:
-                return latest_feature[0].replace('_', ' ').title()
+                return latest_feature[0].replace("_", " ").title()
         return None
 
     def generate_suggestions(self):
@@ -1214,14 +1702,18 @@ class CCOMOrchestrator:
         suggestions = []
 
         # Look at recent work to suggest next steps
-        if self.memory['features']:
-            latest_desc = list(self.memory['features'].values())[-1].get('description', '').lower()
+        if self.memory["features"]:
+            latest_desc = (
+                list(self.memory["features"].values())[-1]
+                .get("description", "")
+                .lower()
+            )
 
-            if 'auth' in latest_desc and 'password reset' not in latest_desc:
+            if "auth" in latest_desc and "password reset" not in latest_desc:
                 suggestions.append("Add password reset functionality")
-            if 'quality' in latest_desc and 'deploy' not in latest_desc:
+            if "quality" in latest_desc and "deploy" not in latest_desc:
                 suggestions.append("Run deployment workflow")
-            if 'security' in latest_desc:
+            if "security" in latest_desc:
                 suggestions.append("Review and fix any security findings")
 
         # Check if GitHub Actions is set up
@@ -1239,7 +1731,15 @@ class CCOMOrchestrator:
         recent_changes = None
 
         # Identify key files
-        common_files = ['index.html', 'app.js', 'main.js', 'script.js', 'auth.js', 'package.json', 'README.md']
+        common_files = [
+            "index.html",
+            "app.js",
+            "main.js",
+            "script.js",
+            "auth.js",
+            "package.json",
+            "README.md",
+        ]
         for filename in common_files:
             if (self.project_root / filename).exists():
                 key_files.append(filename)
@@ -1248,17 +1748,29 @@ class CCOMOrchestrator:
         try:
             files = list(self.project_root.rglob("*"))
             if files:
-                recent_file = max([f for f in files if f.is_file() and not any(ignore in str(f) for ignore in ['.git', 'node_modules', '.claude'])],
-                                key=lambda x: x.stat().st_mtime, default=None)
+                recent_file = max(
+                    [
+                        f
+                        for f in files
+                        if f.is_file()
+                        and not any(
+                            ignore in str(f)
+                            for ignore in [".git", "node_modules", ".claude"]
+                        )
+                    ],
+                    key=lambda x: x.stat().st_mtime,
+                    default=None,
+                )
                 if recent_file:
                     recent_changes = f"{recent_file.name} (recently modified)"
         except:
             pass
 
         return {
-            'key_files': key_files[:5],  # Limit to 5 key files
-            'recent_changes': recent_changes
+            "key_files": key_files[:5],  # Limit to 5 key files
+            "recent_changes": recent_changes,
         }
+
 
 def main():
     """Main CLI entry point for testing"""
@@ -1273,6 +1785,7 @@ def main():
     command = " ".join(sys.argv[1:])
     orchestrator = CCOMOrchestrator()
     orchestrator.handle_natural_language(command)
+
 
 if __name__ == "__main__":
     main()

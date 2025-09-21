@@ -11,6 +11,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
+
 class CCOMWorkflows:
     """
     Solo developer workflow automation
@@ -44,7 +45,7 @@ class CCOMWorkflows:
             "cost_optimization": self.workflow_cost_optimization,
             "s3_security": self.workflow_s3_security,
             "performance_optimization": self.workflow_performance_optimization,
-            "complete_stack": self.workflow_complete_stack
+            "complete_stack": self.workflow_complete_stack,
         }
 
         if workflow_name not in workflows:
@@ -63,7 +64,7 @@ class CCOMWorkflows:
             ("Lint Check", self.run_linting),
             ("Format Check", self.run_formatting),
             ("Type Check", self.run_type_checking),
-            ("Basic Tests", self.run_basic_tests)
+            ("Basic Tests", self.run_basic_tests),
         ]
 
         results = []
@@ -94,7 +95,7 @@ class CCOMWorkflows:
         steps = [
             ("Dependency Audit", self.run_dependency_audit),
             ("Secret Scanning", self.run_secret_scan),
-            ("Code Security", self.run_code_security_scan)
+            ("Code Security", self.run_code_security_scan),
         ]
 
         issues_found = 0
@@ -156,8 +157,11 @@ class CCOMWorkflows:
                 # Try npm script first
                 result = subprocess.run(
                     "npm run lint",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=30
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=30,
                 )
                 if result.returncode == 0:
                     return True
@@ -165,8 +169,11 @@ class CCOMWorkflows:
                 # Fallback to eslint
                 result = subprocess.run(
                     "npx eslint .",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=30
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=30,
                 )
                 return result.returncode == 0
 
@@ -180,8 +187,11 @@ class CCOMWorkflows:
             if (self.project_root / "package.json").exists():
                 result = subprocess.run(
                     "npx prettier --check .",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=30
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=30,
                 )
                 return result.returncode == 0
             return True
@@ -194,8 +204,11 @@ class CCOMWorkflows:
             if (self.project_root / "tsconfig.json").exists():
                 result = subprocess.run(
                     "npx tsc --noEmit",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=60
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=60,
                 )
                 return result.returncode == 0
             return True
@@ -208,8 +221,11 @@ class CCOMWorkflows:
             if (self.project_root / "package.json").exists():
                 result = subprocess.run(
                     "npm test",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=120
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=120,
                 )
                 # Many projects don't have tests - don't fail
                 return True
@@ -223,8 +239,11 @@ class CCOMWorkflows:
             if (self.project_root / "package.json").exists():
                 result = subprocess.run(
                     "npm audit --audit-level=high",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=30
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=30,
                 )
                 # Count vulnerabilities from output
                 if "vulnerabilities" in result.stdout:
@@ -242,7 +261,7 @@ class CCOMWorkflows:
                 r'password\s*=\s*["\'].*["\']',
                 r'api[_-]?key\s*=\s*["\'].*["\']',
                 r'secret\s*=\s*["\'].*["\']',
-                r'token\s*=\s*["\'].*["\']'
+                r'token\s*=\s*["\'].*["\']',
             ]
 
             issues = 0
@@ -251,7 +270,7 @@ class CCOMWorkflows:
                     continue
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                     for pattern in patterns:
@@ -271,10 +290,10 @@ class CCOMWorkflows:
             import re
 
             dangerous_patterns = [
-                r'eval\s*\(',
-                r'innerHTML\s*=',
-                r'document\.write\s*\(',
-                r'setTimeout\s*\(\s*["\'].*["\']'
+                r"eval\s*\(",
+                r"innerHTML\s*=",
+                r"document\.write\s*\(",
+                r'setTimeout\s*\(\s*["\'].*["\']',
             ]
 
             issues = 0
@@ -283,7 +302,7 @@ class CCOMWorkflows:
                     continue
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read()
 
                     for pattern in dangerous_patterns:
@@ -308,8 +327,11 @@ class CCOMWorkflows:
                 if "build" in data.get("scripts", {}):
                     result = subprocess.run(
                         "npm run build",
-                        shell=True, capture_output=True, text=True,
-                        cwd=self.project_root, timeout=180
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        cwd=self.project_root,
+                        timeout=180,
                     )
                     return result.returncode == 0
 
@@ -351,8 +373,11 @@ class CCOMWorkflows:
                 # Use netlify CLI if available
                 result = subprocess.run(
                     "netlify deploy --prod",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=300
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=300,
                 )
                 return result.returncode == 0
 
@@ -360,8 +385,11 @@ class CCOMWorkflows:
                 # Use vercel CLI if available
                 result = subprocess.run(
                     "vercel --prod",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=300
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=300,
                 )
                 return result.returncode == 0
 
@@ -369,8 +397,11 @@ class CCOMWorkflows:
                 # Run custom deploy script
                 result = subprocess.run(
                     "npm run deploy",
-                    shell=True, capture_output=True, text=True,
-                    cwd=self.project_root, timeout=300
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    timeout=300,
                 )
                 return result.returncode == 0
 
@@ -420,7 +451,7 @@ jobs:
 """
 
         workflow_file = workflow_dir / "ccom-quality.yml"
-        with open(workflow_file, 'w') as f:
+        with open(workflow_file, "w") as f:
             f.write(workflow_content)
 
         print(f"✅ Created GitHub workflow: {workflow_file}")
@@ -436,7 +467,7 @@ jobs:
             ("Vector Store Validation", self.run_vector_store_validation),
             ("Graph DB Security", self.run_graph_db_validation),
             ("Hybrid RAG Patterns", self.run_hybrid_rag_validation),
-            ("Agentic RAG Safety", self.run_agentic_rag_validation)
+            ("Agentic RAG Safety", self.run_agentic_rag_validation),
         ]
 
         results = []
@@ -480,7 +511,9 @@ jobs:
         if result["passed"]:
             print("✅ **GRAPH SECURITY** – Graph patterns are secure")
         else:
-            print("⚠️  **GRAPH SECURITY** – Security issues found in graph implementation")
+            print(
+                "⚠️  **GRAPH SECURITY** – Security issues found in graph implementation"
+            )
 
         return result["passed"]
 
@@ -522,12 +555,21 @@ jobs:
         quality_result = self.workflow_quality()
         security_result = self.workflow_security()
 
-        all_results = [vector_result, graph_result, hybrid_result, agentic_result, quality_result, security_result]
+        all_results = [
+            vector_result,
+            graph_result,
+            hybrid_result,
+            agentic_result,
+            quality_result,
+            security_result,
+        ]
         passed = sum(all_results)
         total = len(all_results)
 
         if passed == total:
-            print("🎉 **ENTERPRISE RAG** – All validations passed! System is production-ready")
+            print(
+                "🎉 **ENTERPRISE RAG** – All validations passed! System is production-ready"
+            )
             return True
         else:
             print(f"⚠️  **ENTERPRISE RAG** – {passed}/{total} validations passed")
@@ -577,69 +619,96 @@ jobs:
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/aws-bedrock-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "AWS Bedrock validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"AWS Bedrock validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"AWS Bedrock validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_mongodb_validation(self):
         """Execute MongoDB Atlas validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/mongodb-vector-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "MongoDB validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"MongoDB validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"MongoDB validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_aws_deployment_validation(self):
         """Execute AWS deployment validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/aws-deployment-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "AWS deployment validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"AWS deployment validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"AWS deployment validation failed: {e}",
+                "details": str(e),
+            }
 
     def workflow_angular_validation(self):
         """Angular-specific validation (RxJS, change detection, performance)"""
@@ -776,105 +845,144 @@ jobs:
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/angular-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Angular validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Angular validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Angular validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_cost_validation(self):
         """Execute AWS cost validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/aws-cost-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Cost validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Cost validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Cost validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_s3_security_validation(self):
         """Execute S3 security validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/s3-security-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "S3 security validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"S3 security validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"S3 security validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_performance_validation(self):
         """Execute performance validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/performance-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Performance validation completed"
             for line in output_lines:
-                if "validation" in line.lower() and ("results" in line.lower() or "completed" in line.lower()):
+                if "validation" in line.lower() and (
+                    "results" in line.lower() or "completed" in line.lower()
+                ):
                     summary = line.strip()
                     break
 
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Performance validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Performance validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_vector_store_validation(self):
         """Execute vector store validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/vector-store-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             # Parse validation result
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             # Extract summary from output
             summary = "Vector validation completed"
@@ -886,19 +994,26 @@ jobs:
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Vector validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Vector validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_graph_db_validation(self):
         """Execute graph database validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/graph-db-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Graph DB validation completed"
             for line in output_lines:
@@ -909,19 +1024,26 @@ jobs:
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Graph DB validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Graph DB validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_hybrid_rag_validation(self):
         """Execute hybrid RAG validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/hybrid-rag-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Hybrid RAG validation completed"
             for line in output_lines:
@@ -932,19 +1054,26 @@ jobs:
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Hybrid RAG validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Hybrid RAG validation failed: {e}",
+                "details": str(e),
+            }
 
     def run_agentic_rag_validation(self):
         """Execute agentic RAG validator"""
         try:
             result = subprocess.run(
                 f"node {self.project_root}/.claude/validators/agentic-rag-validator.js",
-                shell=True, capture_output=True, text=True,
-                cwd=self.project_root, timeout=60
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
             )
 
             passed = result.returncode == 0
-            output_lines = result.stdout.split('\n')
+            output_lines = result.stdout.split("\n")
 
             summary = "Agentic RAG validation completed"
             for line in output_lines:
@@ -955,17 +1084,37 @@ jobs:
             return {"passed": passed, "summary": summary, "details": result.stdout}
 
         except Exception as e:
-            return {"passed": False, "summary": f"Agentic RAG validation failed: {e}", "details": str(e)}
+            return {
+                "passed": False,
+                "summary": f"Agentic RAG validation failed: {e}",
+                "details": str(e),
+            }
+
 
 def main():
     """CLI entry point for workflows"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="CCOM Workflows - Solo Developer CI/CD")
-    parser.add_argument("workflow", choices=["quality", "security", "deploy", "full", "setup",
-                                               "rag_quality", "vector_validation", "graph_security",
-                                               "hybrid_rag", "agentic_rag", "enterprise_rag"],
-                       help="Workflow to run")
+    parser = argparse.ArgumentParser(
+        description="CCOM Workflows - Solo Developer CI/CD"
+    )
+    parser.add_argument(
+        "workflow",
+        choices=[
+            "quality",
+            "security",
+            "deploy",
+            "full",
+            "setup",
+            "rag_quality",
+            "vector_validation",
+            "graph_security",
+            "hybrid_rag",
+            "agentic_rag",
+            "enterprise_rag",
+        ],
+        help="Workflow to run",
+    )
 
     args = parser.parse_args()
 
@@ -976,6 +1125,7 @@ def main():
     else:
         success = workflows.run_workflow(args.workflow)
         sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

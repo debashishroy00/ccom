@@ -1,0 +1,43 @@
+{
+  "installed_tools": {
+    "safety": {
+      "installed": false,
+      "version": null
+    },
+    "black": {
+      "installed": true,
+      "version": "python -m black, 25.1.0 (compiled: yes)"
+    },
+    "lint-staged": {
+      "installed": false,
+      "version": null,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "bandit": {
+      "installed": false,
+      "version": null
+    },
+    "husky": {
+      "installed": false,
+      "version": null,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "mypy": {
+      "installed": false,
+      "version": null
+    },
+    "pylint": {
+      "installed": false,
+      "version": null
+    },
+    "flake8": {
+      "installed": false,
+      "version": null
+    }
+  },
+  "tool_versions": {},
+  "last_check": "2025-09-20T22:58:54.682723",
+  "project_type": "python",
+  "custom_tools": [],
+  "configurations": {}
+}
