@@ -15,7 +15,10 @@
       "Bash(node:*)",
       "Bash(npx complexity-report:*)",
       "Bash(python:*)",
-      "Bash(npx jscpd:*)"
+      "Bash(npx jscpd:*)",
+      "Read(//c/Users/DR/OneDrive/projects/todo/**)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

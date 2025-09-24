@@ -42,6 +42,31 @@ def is_allowed_command(cmd: str) -> bool:
     if any(keyword in cmd for keyword in ["principles", "kiss", "dry", "solid", "yagni", "complexity"]):
         return True
 
+    # Natural language patterns for quality
+    quality_patterns = ["check quality", "run quality", "quality check", "code quality", "lint", "format"]
+    if any(pattern in cmd for pattern in quality_patterns):
+        return True
+
+    # Natural language patterns for security
+    security_patterns = ["check security", "security check", "vulnerabilities", "security scan", "audit", "secure"]
+    if any(pattern in cmd for pattern in security_patterns):
+        return True
+
+    # Natural language patterns for context
+    context_patterns = ["show context", "project context", "context", "show project", "project status", "project summary"]
+    if any(pattern in cmd for pattern in context_patterns):
+        return True
+
+    # Natural language patterns for deployment
+    deploy_patterns = ["deploy", "deployment", "ship", "release", "launch", "go live"]
+    if any(pattern in cmd for pattern in deploy_patterns):
+        return True
+
+    # Memory-related commands
+    memory_patterns = ["remember", "memory", "save", "recall", "forget"]
+    if any(pattern in cmd for pattern in memory_patterns):
+        return True
+
     return False
 
 def get_trusted_projects() -> Set[str]:
@@ -174,12 +199,30 @@ def dashboard():
 
         // Load projects from server
         async function loadProjects() {
+            console.log('Starting loadProjects...');
             try {
+                console.log('Fetching /projects...');
                 const response = await fetch('/projects');
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
+                console.log('Projects data:', data);
                 projects = data.projects || [];
 
                 const select = document.getElementById('project-select');
+                if (!select) {
+                    throw new Error('project-select element not found');
+                }
+
+                if (projects.length === 0) {
+                    select.innerHTML = '<option value="">No projects found</option>';
+                    return;
+                }
+
                 select.innerHTML = projects.map(p =>
                     `<option value="${p.path}">${p.name}</option>`
                 ).join('');
@@ -193,12 +236,20 @@ def dashboard():
                     currentProjectPath = projects[0].path;
                 }
 
+                console.log('Projects loaded successfully, current:', currentProjectPath);
                 loadProjectStatus();
             } catch (error) {
                 console.error('Failed to load projects:', error);
-                document.getElementById('project-select').innerHTML =
-                    '<option value="">Error loading projects</option>';
+                const select = document.getElementById('project-select');
+                if (select) {
+                    select.innerHTML = '<option value="">Error loading projects</option>';
+                }
             }
+        }
+
+        // Helper function to normalize Windows paths for JSON
+        function normalizePathForJSON(path) {
+            return path ? path.replace(/\\\\/g, '/') : path;
         }
 
         // Handle project selector change
@@ -209,22 +260,43 @@ def dashboard():
         });
 
         async function loadProjectStatus() {
-            if (!currentProjectPath) return;
+            console.log('Starting loadProjectStatus, currentProjectPath:', currentProjectPath);
+
+            if (!currentProjectPath) {
+                console.log('No currentProjectPath, skipping status load');
+                document.getElementById('project-status').textContent = 'No project selected';
+                return;
+            }
 
             try {
+                console.log('Fetching project status for:', currentProjectPath);
+                const normalizedPath = normalizePathForJSON(currentProjectPath);
+                console.log('Normalized path:', normalizedPath);
+
                 const response = await fetch('/context', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ project_path: currentProjectPath })
+                    body: JSON.stringify({ project_path: normalizedPath })
                 });
+
+                console.log('Context response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
+                console.log('Context data received:', data.success);
 
                 const projectName = projects.find(p => p.path === currentProjectPath)?.name || 'Unknown';
                 document.getElementById('project-name').textContent = projectName.toUpperCase();
                 document.getElementById('project-status').textContent =
-                    data.success ? '✅ Production Ready' : '⚠️ Needs Attention';
+                    data.success ? 'Production Ready' : 'Needs Attention';
+
+                console.log('Project status updated');
             } catch (error) {
-                document.getElementById('project-status').textContent = '❌ Connection Error';
+                console.error('Failed to load project status:', error);
+                document.getElementById('project-status').textContent = 'Connection Error';
             }
         }
 
@@ -236,7 +308,7 @@ def dashboard():
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         command: action === 'context' ? 'context' : `workflow ${action}`,
-                        project_path: currentProjectPath
+                        project_path: normalizePathForJSON(currentProjectPath)
                     })
                 });
                 const data = await response.json();
@@ -259,7 +331,7 @@ def dashboard():
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         command: command,
-                        project_path: currentProjectPath
+                        project_path: normalizePathForJSON(currentProjectPath)
                     })
                 });
                 const data = await response.json();
@@ -290,15 +362,12 @@ def dashboard():
                 return;
             }
             resultDiv.innerHTML = `
-                <h4>${data.success ? '✅ Success' : '❌ Error'}</h4>
+                <h4>${data.success ? 'Success' : 'Error'}</h4>
                 <pre style="white-space: pre-wrap; margin-top: 10px;">${data.output || data.error || JSON.stringify(data, null, 2)}</pre>
             `;
             resultDiv.style.display = 'block';
             resultDiv.focus(); // Accessibility: bring into screen-reader and keyboard focus
         }
-
-        // Load project status on page load
-        loadProjectStatus();
 
         // Allow Enter key in chat input
         document.getElementById('chatInput').addEventListener('keypress', function(e) {
@@ -306,7 +375,19 @@ def dashboard():
         });
 
         // Initialize on page load
-        loadProjects();
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing CCOM Mobile UI...');
+            loadProjects();
+        });
+
+        // Also call immediately in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            // Still loading, wait for DOMContentLoaded
+        } else {
+            // DOM already loaded
+            console.log('DOM already loaded, initializing CCOM Mobile UI...');
+            loadProjects();
+        }
     </script>
 </body>
 </html>
