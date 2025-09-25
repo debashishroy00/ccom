@@ -10,6 +10,7 @@ import json
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from .auto_context import get_auto_context
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -26,6 +27,9 @@ class CCOMOrchestrator:
         self.ccom_dir = self.project_root / ".claude"
         self.memory = self.load_memory()
         self.tools_manager = None
+
+        # Initialize automatic context capture
+        self.auto_context = get_auto_context(self.project_root.name)
 
     def load_memory(self):
         """Load existing CCOM memory"""
@@ -274,6 +278,9 @@ class CCOMOrchestrator:
         """Parse natural language commands and execute appropriate actions"""
         command_lower = command.lower().strip()
         print(f"🎯 Processing command: '{command}'")
+
+        # Capture command execution
+        self.auto_context.capture_command(command)
 
         # Use pattern matcher to find the appropriate workflow
         workflow = self._match_command_pattern(command_lower, command)
@@ -1349,13 +1356,18 @@ class CCOMOrchestrator:
     def run_workflow(self, workflow_name):
         """Execute a CCOM workflow using the workflows module"""
         try:
+            # Capture workflow start
+            self.auto_context.capture_workflow(workflow_name, "started")
+
             # Import and initialize workflows
             from ccom.workflows import CCOMWorkflows
 
             workflows = CCOMWorkflows(self.project_root)
 
             if workflow_name == "setup":
-                return workflows.create_github_workflow()
+                result = workflows.create_github_workflow()
+                self.auto_context.capture_workflow(workflow_name, "completed", {"result": "GitHub workflow created"})
+                return result
             else:
                 return workflows.run_workflow(workflow_name)
 

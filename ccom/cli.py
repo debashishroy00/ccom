@@ -9,6 +9,7 @@ import argparse
 from pathlib import Path
 from ccom.orchestrator import CCOMOrchestrator
 from ccom.tools_manager import ToolsManager
+from ccom.mcp_bridge import MCPMemoryBridge
 
 
 def create_enhanced_cli():
@@ -79,6 +80,47 @@ def create_enhanced_cli():
         help="Show comprehensive tools status report",
     )
 
+    # Context management commands (MCP Memory Keeper integration)
+    context_group = parser.add_argument_group("context commands", "Memory and context management")
+    context_group.add_argument(
+        "--context-note",
+        nargs=2,
+        metavar=("FEATURE", "NOTE"),
+        help="Save a note about a feature: --context-note auth 'Using JWT tokens'",
+    )
+    context_group.add_argument(
+        "--context-resume",
+        type=str,
+        metavar="FEATURE",
+        help="Resume work on a feature with context: --context-resume auth",
+    )
+    context_group.add_argument(
+        "--context-search",
+        type=str,
+        metavar="QUERY",
+        help="Search context: --context-search 'JWT token'",
+    )
+    context_group.add_argument(
+        "--context-checkpoint",
+        nargs="?",
+        const=True,
+        metavar="NAME",
+        help="Create a context checkpoint: --context-checkpoint [name]",
+    )
+    context_group.add_argument(
+        "--context-status",
+        action="store_true",
+        help="Show memory status and statistics",
+    )
+    context_group.add_argument(
+        "--context-summary",
+        nargs="?",
+        const=24,
+        type=int,
+        metavar="HOURS",
+        help="Show intelligent summary of recent work (default: 24 hours)",
+    )
+
     # Advanced options
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Verbose output for debugging"
@@ -123,6 +165,27 @@ def handle_traditional_commands(args, orchestrator):
         return True
     elif args.tools_status:
         handle_tools_status_command()
+        return True
+
+    # Handle context commands (MCP Memory Keeper integration)
+    elif args.context_note:
+        handle_context_note(args.context_note[0], args.context_note[1])
+        return True
+    elif args.context_resume:
+        handle_context_resume(args.context_resume)
+        return True
+    elif args.context_search:
+        handle_context_search(args.context_search)
+        return True
+    elif args.context_checkpoint:
+        name = args.context_checkpoint if args.context_checkpoint != True else None
+        handle_context_checkpoint(name)
+        return True
+    elif args.context_status:
+        handle_context_status()
+        return True
+    elif args.context_summary is not None:
+        handle_context_summary(args.context_summary)
         return True
 
     return False
@@ -234,6 +297,114 @@ def handle_tools_status_command():
 
     except Exception as e:
         print(f"❌ Status report error: {e}")
+
+
+def handle_context_note(feature: str, note: str):
+    """Save a note about a feature to memory"""
+    try:
+        bridge = MCPMemoryBridge()
+        success = bridge.save_context(feature, "note", note, "normal")
+
+        if success:
+            print(f"✅ Saved note for {feature}: {note}")
+        else:
+            print(f"❌ Failed to save note for {feature}")
+    except Exception as e:
+        print(f"❌ Error saving context: {e}")
+
+
+def handle_context_resume(feature: str):
+    """Resume work on a feature with full context"""
+    try:
+        bridge = MCPMemoryBridge()
+        print(f"🧠 **Resuming work on: {feature}**\n")
+
+        context = bridge.get_resume_context(feature)
+        formatted_context = bridge.format_context_for_display(context)
+
+        if formatted_context.strip() and formatted_context != "No context found for this feature.":
+            print(formatted_context)
+        else:
+            print(f"No previous context found for {feature}")
+            print("💡 Use 'ccom --context-note' to start tracking context for this feature.")
+    except Exception as e:
+        print(f"❌ Error retrieving context: {e}")
+
+
+def handle_context_search(query: str):
+    """Search context across all features"""
+    try:
+        bridge = MCPMemoryBridge()
+        results = bridge.search_context(query, limit=10)
+
+        if results:
+            print(f"🔍 **Search results for: {query}**\n")
+            for item in results:
+                timestamp = item.get('timestamp', '')[:16].replace('T', ' ')
+                category = item.get('category', 'note').upper()
+                content = item.get('value', '')[:100] + ('...' if len(item.get('value', '')) > 100 else '')
+                print(f"[{timestamp}] {category}: {content}")
+        else:
+            print(f"No results found for: {query}")
+    except Exception as e:
+        print(f"❌ Error searching context: {e}")
+
+
+def handle_context_checkpoint(name: str = None):
+    """Create a checkpoint of current context"""
+    try:
+        bridge = MCPMemoryBridge()
+        checkpoint_name = bridge.create_checkpoint(name)
+
+        if checkpoint_name:
+            print(f"✅ Checkpoint created: {checkpoint_name}")
+            print(f"💡 Use this key to restore: {checkpoint_name}")
+        else:
+            print("❌ Failed to create checkpoint")
+    except Exception as e:
+        print(f"❌ Error creating checkpoint: {e}")
+
+
+def handle_context_status():
+    """Show memory status and statistics"""
+    try:
+        bridge = MCPMemoryBridge()
+        stats = bridge.get_statistics()
+
+        print(f"💾 **Memory Status for {bridge.project_name}**\n")
+        print(f"Total Items: {stats['total_items']}")
+
+        if stats['categories']:
+            print(f"\nBy Category:")
+            for cat, count in sorted(stats['categories'].items()):
+                print(f"  • {cat}: {count}")
+
+        if stats['priorities']:
+            print(f"\nBy Priority:")
+            for pri, count in sorted(stats['priorities'].items()):
+                print(f"  • {pri}: {count}")
+
+        if stats['channels']:
+            print(f"\nChannels: {', '.join(stats['channels'])}")
+
+        if stats['checkpoints']:
+            print(f"\nCheckpoints: {stats['checkpoints']}")
+
+        if stats['total_items'] == 0:
+            print("\n💡 Context will be captured automatically as you use CCOM commands")
+            print("   Manual tracking: ccom --context-note <feature> '<note>'")
+    except Exception as e:
+        print(f"❌ Error getting status: {e}")
+
+
+def handle_context_summary(hours: int = 24):
+    """Show intelligent summary of recent work"""
+    try:
+        bridge = MCPMemoryBridge()
+        summary = bridge.get_intelligent_summary(hours)
+        print(summary)
+    except Exception as e:
+        print(f"❌ Error generating summary: {e}")
 
 
 def init_ccom_project(force=False):

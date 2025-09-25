@@ -18,7 +18,13 @@
       "Bash(npx jscpd:*)",
       "Read(//c/Users/DR/OneDrive/projects/todo/**)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "WebFetch(domain:github.com)",
+      "Read(//c/tmp/**)",
+      "Bash(cat:*)",
+      "mcp__ide__executeCode",
+      "Bash(npx mcp-memory-keeper:*)",
+      "Bash(mcp-memory-keeper:*)"
     ],
     "deny": [],
     "ask": []

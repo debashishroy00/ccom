@@ -1,64 +1,64 @@
 {
   "installed_tools": {
-    "bandit": {
-      "installed": true,
-      "version": "__main__.py 1.8.6"
-    },
-    "radon": {
-      "installed": true,
-      "version": "6.0.1"
-    },
-    "mypy": {
-      "installed": true,
-      "version": "mypy 1.18.2 (compiled: yes)"
-    },
-    "black": {
-      "installed": true,
-      "version": "python -m black, 25.1.0 (compiled: yes)"
-    },
-    "flake8": {
-      "installed": true,
-      "version": "7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0, radon: 6.0.1)"
-    },
-    "pytest": {
-      "installed": true,
-      "version": "pytest 8.3.5"
-    },
     "jscpd": {
       "installed": true,
       "version": "4.0.5",
       "scope": "local"
+    },
+    "radon": {
+      "installed": true,
+      "version": "6.0.1"
     },
     "madge": {
       "installed": true,
       "version": "8.0.0",
       "scope": "local"
     },
-    "lint-staged": {
-      "installed": true,
-      "version": "16.1.6",
-      "scope": "local"
-    },
     "complexity-report": {
+      "installed": false,
+      "version": null
+    },
+    "pylint": {
       "installed": true,
-      "version": "Available via npx"
+      "version": "pylint 3.3.8"
+    },
+    "black": {
+      "installed": true,
+      "version": "python -m black, 25.1.0 (compiled: yes)"
+    },
+    "mypy": {
+      "installed": true,
+      "version": "mypy 1.18.2 (compiled: yes)"
+    },
+    "bandit": {
+      "installed": true,
+      "version": "__main__.py 1.8.6"
+    },
+    "flake8": {
+      "installed": true,
+      "version": "7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0, radon: 6.0.1)"
+    },
+    "safety": {
+      "installed": true,
+      "version": "safety, version 3.6.1"
     },
     "husky": {
       "installed": true,
       "version": "",
       "scope": "local"
     },
-    "pylint": {
+    "lint-staged": {
       "installed": true,
-      "version": "pylint 3.3.8"
+      "version": "16.2.1",
+      "scope": "local"
     },
-    "safety": {
+    "pytest": {
       "installed": true,
-      "version": "safety, version 3.6.1"
+      "version": "pytest 8.3.5"
     }
   },
   "tool_versions": {},
-  "last_check": "2025-09-21T17:11:11.545529",
+  "last_check": "2025-09-25T18:34:17.267717",
   "project_type": "python",
   "custom_tools": [],
   "configurations": {}
