@@ -682,9 +682,9 @@ def init_ccom_project(force=False):
     orchestrator.save_memory()
     print("✅ Initialized memory system")
 
-    # Setup session continuity hooks
-    print("\n🔗 Setting up session continuity...")
-    setup_session_continuity(claude_dir)
+    # Session continuity is available via 'ccom what did we discuss' - no automatic hooks
+    # Users can enable SessionStart hooks manually if desired
+    # setup_session_continuity(claude_dir)
 
     # Install development tools
     print("\n🔧 Setting up development tools...")
