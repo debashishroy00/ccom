@@ -572,7 +572,12 @@ def setup_session_continuity(claude_dir):
 
         settings['hooks']['SessionStart'] = [
             {
-                "command": "python .claude/hooks/session_start.py"
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python .claude/hooks/session_start.py"
+                    }
+                ]
             }
         ]
 

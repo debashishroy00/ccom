@@ -1447,16 +1447,47 @@ class CCOMOrchestrator:
         return True
 
     def show_project_context(self):
-        """Show comprehensive project context using MCP Memory Keeper"""
-        print("\n🎯 **PROJECT CONTEXT LOADED**")
+        """Show comprehensive project context with automatic session continuity"""
+        print("\n🎯 **SESSION CONTINUITY LOADED**")
         print("=" * 60)
 
-        # === GET MCP CONTEXT ===
-        context = self.mcp.get_project_context()
+        # === MCP MEMORY FIRST ===
+        print("🧠 **MCP MEMORY CONTEXT** (Previous Sessions):")
+        print("-" * 50)
 
-        if "error" in context:
-            print(f"⚠️ Error loading context: {context['error']}")
-            return False
+        try:
+            # Get MCP context
+            context = self.mcp.get_project_context()
+
+            if "error" not in context:
+                activity = context["activity_summary"]
+                print(f"📊 **Total Items**: {context['total_context_items']}")
+                print(f"📈 **Recent Activity**: {activity['total']} interactions ({activity['timeframe']})")
+
+                if activity.get("categories"):
+                    print("\n🎯 **Active Categories**:")
+                    for cat, count in activity["categories"].items():
+                        print(f"   • {cat.title()}: {count}")
+
+                if context.get("recent_successes"):
+                    print("\n✅ **Recent Successes**:")
+                    for success in context["recent_successes"][:3]:
+                        print(f"   • {success}")
+
+                if context.get("recent_issues"):
+                    print("\n⚠️ **Recent Issues**:")
+                    for issue in context["recent_issues"][:3]:
+                        print(f"   • {issue}")
+
+                print(f"\n💾 **Database**: {context['database']}")
+            else:
+                print("⚠️ MCP context not available - using legacy memory")
+        except Exception as e:
+            print(f"⚠️ MCP error: {e}")
+
+        # === LEGACY MEMORY CONTEXT ===
+        print("\n📋 **LEGACY MEMORY CONTEXT** (JSON System):")
+        print("-" * 50)
 
         # === PROJECT OVERVIEW ===
         project_info = self.analyze_project_structure()
