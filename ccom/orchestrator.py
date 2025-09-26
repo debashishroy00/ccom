@@ -10,7 +10,7 @@ import json
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from .universal_capture import get_universal_capture
+from .mcp_native import get_mcp_integration
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -28,8 +28,8 @@ class CCOMOrchestrator:
         self.memory = self.load_memory()
         self.tools_manager = None
 
-        # Initialize universal context capture (like mem0)
-        self.universal_capture = get_universal_capture(self.project_root.name)
+        # Initialize native MCP Memory Keeper integration
+        self.mcp = get_mcp_integration(str(self.project_root))
 
     def load_memory(self):
         """Load existing CCOM memory"""
@@ -289,7 +289,7 @@ class CCOMOrchestrator:
         if workflow_result is not None:
             # Simulate output collection (in real implementation, collect actual output)
             output = "Command executed successfully"
-            self.universal_capture.capture_interaction(
+            self.mcp.capture_interaction(
                 input_text=command,
                 output_text=output,
                 metadata={
@@ -301,7 +301,7 @@ class CCOMOrchestrator:
         else:
             error_output = "❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"
             print(error_output)
-            self.universal_capture.capture_interaction(
+            self.mcp.capture_interaction(
                 input_text=command,
                 output_text=error_output,
                 metadata={
@@ -1439,15 +1439,32 @@ class CCOMOrchestrator:
         return True
 
     def show_project_context(self):
-        """Show comprehensive project context for Claude Code"""
+        """Show comprehensive project context using MCP Memory Keeper"""
         print("\n🎯 **PROJECT CONTEXT LOADED**")
         print("=" * 60)
+
+        # === GET MCP CONTEXT ===
+        context = self.mcp.get_project_context()
+
+        if "error" in context:
+            print(f"⚠️ Error loading context: {context['error']}")
+            return False
 
         # === PROJECT OVERVIEW ===
         project_info = self.analyze_project_structure()
         print(
             f"📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files"
         )
+
+        # === MCP MEMORY STATUS ===
+        activity = context["activity_summary"]
+        print(f"🧠 **Memory**: {context['total_context_items']} items | Database: {context['database']}")
+        print(f"📊 **Activity**: {activity['total']} interactions ({activity['timeframe']})")
+
+        # === RECENT CONTEXT ===
+        if activity.get("categories"):
+            cat_summary = ", ".join([f"{k}: {v}" for k, v in activity["categories"].items()])
+            print(f"🎯 **Active Areas**: {cat_summary}")
 
         # === ARCHITECTURE ===
         print(f"🏗️ **Architecture**: {project_info['architecture']}")

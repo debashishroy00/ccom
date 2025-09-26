@@ -27,7 +27,10 @@
       "Bash(mcp-memory-keeper:*)",
       "Bash(cmd.exe:*)",
       "Bash(ccom:*)",
-      "WebSearch"
+      "WebSearch",
+      "Read(//c/Users/DR/**)",
+      "Bash(sqlite3:*)",
+      "Bash(./node_modules/.bin/mcp-memory-keeper:*)"
     ],
     "deny": [],
     "ask": []

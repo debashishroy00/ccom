@@ -9,8 +9,7 @@ import argparse
 from pathlib import Path
 from ccom.orchestrator import CCOMOrchestrator
 from ccom.tools_manager import ToolsManager
-from ccom.mcp_bridge import MCPMemoryBridge
-from ccom.universal_capture import get_universal_capture
+from ccom.mcp_native import get_mcp_integration
 import io
 import contextlib
 
@@ -32,8 +31,10 @@ def create_enhanced_cli():
     parser.add_argument(
         "--status", action="store_true", help="Show CCOM and project status"
     )
-    parser.add_argument("--memory", action="store_true", help="Show memory contents")
-    parser.add_argument("--stats", action="store_true", help="Show memory statistics")
+    parser.add_argument("--memory", action="store_true", help="Show MCP memory contents")
+    parser.add_argument("--stats", action="store_true", help="Show MCP memory statistics")
+    parser.add_argument("--mcp-context", action="store_true", help="Show MCP project context")
+    parser.add_argument("--mcp-activity", action="store_true", help="Show MCP activity summary")
     parser.add_argument(
         "--remember", type=str, help='Remember a feature: --remember "auth system"'
     )
@@ -148,7 +149,13 @@ def handle_traditional_commands(args, orchestrator):
         orchestrator.show_status()
         return True
     elif args.memory:
-        orchestrator.show_memory()
+        handle_mcp_memory_command()
+        return True
+    elif args.mcp_context:
+        handle_mcp_context_command()
+        return True
+    elif args.mcp_activity:
+        handle_mcp_activity_command()
         return True
     elif args.remember:
         orchestrator.handle_memory_command(f"remember {args.remember}")
@@ -477,9 +484,9 @@ def capture_command_execution(command_text: str, orchestrator):
         if not output_text.strip():
             output_text = "Command executed" if result else "Command failed"
 
-        # Use universal capture to save everything
-        universal_capture = get_universal_capture()
-        universal_capture.capture_interaction(
+        # Use MCP native integration to save everything
+        mcp = get_mcp_integration()
+        mcp.capture_interaction(
             input_text=command_text,
             output_text=output_text,
             metadata={
@@ -728,6 +735,100 @@ For more info: https://github.com/your-repo/ccom
 """
     )
 
+
+def handle_mcp_memory_command():
+    """Handle MCP memory display command"""
+    try:
+        mcp = get_mcp_integration()
+        context = mcp.get_context(limit=20)
+
+        if not context:
+            print("🧠 **MCP Memory**: No context stored yet")
+            return
+
+        print("\n🧠 **MCP MEMORY** (Recent Context)")
+        print("=" * 50)
+
+        for item in context:
+            timestamp = item.get('created_at', 'Unknown')[:16]
+            category = item.get('category', 'unknown').title()
+            key = item.get('key', 'Unknown')
+            value = item.get('value', '')[:100]
+
+            print(f"📝 [{timestamp}] {category}: {key}")
+            print(f"   💬 {value}...")
+            print()
+
+    except Exception as e:
+        print(f"❌ Error accessing MCP memory: {e}")
+
+def handle_mcp_context_command():
+    """Handle MCP project context command"""
+    try:
+        mcp = get_mcp_integration()
+        context = mcp.get_project_context()
+
+        print("\n🎯 **MCP PROJECT CONTEXT**")
+        print("=" * 50)
+
+        if "error" in context:
+            print(f"❌ Error: {context['error']}")
+            return
+
+        activity = context["activity_summary"]
+        print(f"📊 **Total Items**: {context['total_context_items']}")
+        print(f"📈 **Recent Activity**: {activity['total']} interactions ({activity['timeframe']})")
+
+        if activity.get("categories"):
+            print("\n🎯 **Active Categories**:")
+            for cat, count in activity["categories"].items():
+                print(f"   • {cat.title()}: {count}")
+
+        if context.get("recent_successes"):
+            print("\n✅ **Recent Successes**:")
+            for success in context["recent_successes"][:3]:
+                print(f"   • {success}")
+
+        if context.get("recent_issues"):
+            print("\n⚠️ **Recent Issues**:")
+            for issue in context["recent_issues"][:3]:
+                print(f"   • {issue}")
+
+    except Exception as e:
+        print(f"❌ Error accessing MCP context: {e}")
+
+def handle_mcp_activity_command():
+    """Handle MCP activity summary command"""
+    try:
+        mcp = get_mcp_integration()
+        activity = mcp.get_activity_summary(hours=24)
+
+        print("\n📊 **MCP ACTIVITY SUMMARY** (Last 24h)")
+        print("=" * 50)
+
+        if "error" in activity:
+            print(f"❌ Error: {activity['error']}")
+            return
+
+        print(f"📈 **Total Interactions**: {activity['total']}")
+
+        if activity.get("categories"):
+            print("\n🎯 **By Category**:")
+            for cat, count in activity["categories"].items():
+                print(f"   • {cat.title()}: {count}")
+
+        if activity.get("recent_successes"):
+            print("\n✅ **Recent Successes**:")
+            for success in activity["recent_successes"]:
+                print(f"   • {success}")
+
+        if activity.get("recent_errors"):
+            print("\n❌ **Recent Errors**:")
+            for error in activity["recent_errors"]:
+                print(f"   • {error}")
+
+    except Exception as e:
+        print(f"❌ Error accessing MCP activity: {e}")
 
 def main():
     """Enhanced main CLI entry point"""

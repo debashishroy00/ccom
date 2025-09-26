@@ -1,5 +1,20 @@
 # CCOM Integration for Claude Code v0.3
 
+## **CRITICAL RULES - READ FIRST**
+
+### **🚨 NEVER AUTO-PUSH TO GIT**
+- **NEVER** use `git push` command automatically
+- **NEVER** commit and push in the same operation
+- **ALWAYS** let the user decide when to push changes
+- Only commit when explicitly requested by user
+- Use `git add` and `git commit` only when user asks
+- **Remember**: The user controls their repository, not Claude
+
+### **Git Operations Policy**
+- ✅ **Allowed**: `git status`, `git diff`, `git log`, `git add`, `git commit` (when requested)
+- ❌ **Forbidden**: `git push`, automatic pushes, unsolicited commits
+- 🔍 **Always ask**: Before any git operation that changes remote state
+
 ## **ARCHITECTURE**: CCOM as the Orchestration Layer
 
 **REALITY-BASED DESIGN**: CCOM provides the orchestration layer that Claude Code lacks.

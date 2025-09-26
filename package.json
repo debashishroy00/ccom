@@ -27,5 +27,8 @@
       "black",
       "pylint"
     ]
+  },
+  "dependencies": {
+    "mcp-memory-keeper": "^0.10.2"
   }
 }
