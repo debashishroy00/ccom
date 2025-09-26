@@ -531,6 +531,61 @@ def capture_command_execution(command_text: str, orchestrator):
         return False
 
 
+def setup_session_continuity(claude_dir):
+    """Setup SessionStart hook for automatic context loading"""
+    try:
+        import shutil
+        import json
+
+        # Create hooks directory
+        hooks_dir = claude_dir / "hooks"
+        hooks_dir.mkdir(exist_ok=True)
+
+        # Copy session start hook template
+        ccom_dir = Path(__file__).parent.parent
+        template_file = ccom_dir / "ccom" / "templates" / "session_start_hook.py"
+        hook_file = hooks_dir / "session_start.py"
+
+        if template_file.exists():
+            shutil.copy2(template_file, hook_file)
+            # Make executable on Unix systems
+            hook_file.chmod(0o755)
+            print("✅ Installed SessionStart hook")
+        else:
+            print("⚠️ SessionStart hook template not found")
+
+        # Update settings.local.json to include hook configuration
+        settings_file = claude_dir / "settings.local.json"
+
+        if settings_file.exists():
+            try:
+                with open(settings_file, 'r') as f:
+                    settings = json.load(f)
+            except json.JSONDecodeError:
+                settings = {}
+        else:
+            settings = {}
+
+        # Add SessionStart hook configuration
+        if 'hooks' not in settings:
+            settings['hooks'] = {}
+
+        settings['hooks']['SessionStart'] = [
+            {
+                "command": "python .claude/hooks/session_start.py"
+            }
+        ]
+
+        # Write updated settings
+        with open(settings_file, 'w') as f:
+            json.dump(settings, f, indent=2)
+
+        print("✅ Configured automatic session continuity")
+        print("💡 New Claude Code sessions will automatically load project context")
+
+    except Exception as e:
+        print(f"⚠️ Session continuity setup failed: {e}")
+
 def init_ccom_project(force=False):
     """Initialize CCOM v0.3 in current project"""
     print("🚀 Initializing CCOM v0.3 in current project...")
@@ -621,6 +676,10 @@ def init_ccom_project(force=False):
     orchestrator = CCOMOrchestrator()
     orchestrator.save_memory()
     print("✅ Initialized memory system")
+
+    # Setup session continuity hooks
+    print("\n🔗 Setting up session continuity...")
+    setup_session_continuity(claude_dir)
 
     # Install development tools
     print("\n🔧 Setting up development tools...")

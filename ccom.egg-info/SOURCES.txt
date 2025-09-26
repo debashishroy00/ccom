@@ -25,3 +25,4 @@ ccom.egg-info/entry_points.txt
 ccom.egg-info/top_level.txt
 ccom/templates/CLAUDE.md
 ccom/templates/ccom.js
+ccom/templates/session_start_hook.py
