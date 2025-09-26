@@ -257,6 +257,15 @@ class CCOMOrchestrator:
 
     def _match_command_pattern(self, command_lower, original_command):
         """Match command patterns to workflows"""
+        # MCP Memory patterns - prioritize MCP for session/memory queries
+        if self._matches_patterns(command_lower, [
+            "discuss", "discussed", "past session", "previous session", "last session",
+            "what did we", "session history", "previous work", "past work", "highlights",
+            "key highlights", "session recap", "what happened", "review session",
+            "session summary", "past discussions", "previous discussions"
+        ]):
+            return self.show_mcp_session_summary()
+
         # RAG-specific patterns
         rag_workflow = self._match_rag_patterns(command_lower)
         if rag_workflow:
@@ -1444,6 +1453,67 @@ class CCOMOrchestrator:
                     print(f"  {feature['description']}")
 
         print("=" * 40)
+        return True
+
+    def show_mcp_session_summary(self):
+        """Show session summary using MCP Memory Keeper (prioritized over legacy)"""
+        print("\n🧠 **SESSION HISTORY FROM MCP MEMORY**")
+        print("=" * 60)
+
+        try:
+            # Get MCP context and activity
+            context = self.mcp.get_project_context()
+            activity = self.mcp.get_activity_summary(hours=48)
+
+            if "error" not in context and "error" not in activity:
+                print(f"📊 **Total Interactions**: {context['total_context_items']} (preserved across sessions)")
+                print(f"📈 **Recent Activity**: {activity['total']} interactions in last 48 hours")
+
+                # Show categories
+                if activity.get("categories"):
+                    print("\n🎯 **Activity Breakdown**:")
+                    for cat, count in activity["categories"].items():
+                        print(f"   • {cat.title()}: {count}")
+
+                # Show recent successes
+                if context.get("recent_successes"):
+                    print("\n✅ **Key Achievements** (Recent Sessions):")
+                    for success in context["recent_successes"]:
+                        print(f"   • {success}")
+
+                # Show recent issues
+                if context.get("recent_issues"):
+                    print("\n⚠️ **Issues Encountered**:")
+                    for issue in context["recent_issues"]:
+                        print(f"   • {issue}")
+
+                # Show decisions
+                if context.get("recent_decisions"):
+                    print("\n💡 **Key Decisions Made**:")
+                    for decision in context["recent_decisions"]:
+                        print(f"   • {decision}")
+
+                print(f"\n💾 **MCP Database**: {context['database']} ({context['total_context_items']} items)")
+                print("\n🎯 **Context Continuity**: All past work and decisions preserved in MCP Memory")
+
+            else:
+                print("⚠️ MCP Memory not available - using legacy system")
+                return self.show_legacy_memory()
+
+        except Exception as e:
+            print(f"⚠️ MCP error: {e}")
+            return self.show_legacy_memory()
+
+        return True
+
+    def show_legacy_memory(self):
+        """Fallback to legacy JSON memory system"""
+        print("\n📋 **LEGACY MEMORY SYSTEM**")
+        print("-" * 40)
+        for name, feature in self.memory["features"].items():
+            print(f"• {name}")
+            if feature.get("description"):
+                print(f"  {feature['description']}")
         return True
 
     def show_project_context(self):
