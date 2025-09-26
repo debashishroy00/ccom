@@ -10,6 +10,9 @@ from pathlib import Path
 from ccom.orchestrator import CCOMOrchestrator
 from ccom.tools_manager import ToolsManager
 from ccom.mcp_bridge import MCPMemoryBridge
+from ccom.universal_capture import get_universal_capture
+import io
+import contextlib
 
 
 def create_enhanced_cli():
@@ -120,6 +123,11 @@ def create_enhanced_cli():
         metavar="HOURS",
         help="Show intelligent summary of recent work (default: 24 hours)",
     )
+    context_group.add_argument(
+        "--universal-memory",
+        action="store_true",
+        help="Show recent memory (like mem0) - all captured interactions",
+    )
 
     # Advanced options
     parser.add_argument(
@@ -186,6 +194,9 @@ def handle_traditional_commands(args, orchestrator):
         return True
     elif args.context_summary is not None:
         handle_context_summary(args.context_summary)
+        return True
+    elif args.universal_memory:
+        handle_universal_memory()
         return True
 
     return False
@@ -405,6 +416,100 @@ def handle_context_summary(hours: int = 24):
         print(summary)
     except Exception as e:
         print(f"❌ Error generating summary: {e}")
+
+
+def handle_universal_memory():
+    """Show universal memory like mem0 - all captured interactions"""
+    try:
+        universal = get_universal_capture()
+        context = universal.get_recent_context(hours=24)
+
+        print("🧠 **Universal Memory (Last 24h)** - Like mem0\n")
+
+        print(f"📊 **Activity Overview:**")
+        print(f"  Total interactions: {context['total_interactions']}")
+
+        if context['features']:
+            print(f"\n🎯 **Active Features:**")
+            for feature, count in sorted(context['features'].items(), key=lambda x: x[1], reverse=True):
+                print(f"  • {feature}: {count} interactions")
+
+        if context['key_facts']:
+            print(f"\n💡 **Key Facts:**")
+            for fact in context['key_facts'][:5]:
+                print(f"  • {fact}")
+
+        if context['issues']:
+            print(f"\n⚠️  **Issues Found:**")
+            for issue in context['issues'][:3]:
+                print(f"  • {issue}")
+
+        if context['successes']:
+            print(f"\n✅ **Recent Successes:**")
+            for success in context['successes'][:3]:
+                print(f"  • {success}")
+
+        if context['total_interactions'] == 0:
+            print("No interactions captured yet. Use CCOM commands to start building memory!")
+
+    except Exception as e:
+        print(f"❌ Error accessing universal memory: {e}")
+
+
+def capture_command_execution(command_text: str, orchestrator):
+    """
+    Universal capture wrapper - captures ALL command output like mem0.
+    No pattern matching needed - just capture everything!
+    """
+    # Capture stdout to get complete output
+    captured_output = io.StringIO()
+
+    try:
+        # Redirect stdout to capture all output
+        with contextlib.redirect_stdout(captured_output):
+            # Execute the command
+            result = orchestrator.handle_natural_language(command_text)
+
+        # Get the captured output
+        output_text = captured_output.getvalue()
+
+        # If no output was captured, create a simple status message
+        if not output_text.strip():
+            output_text = "Command executed" if result else "Command failed"
+
+        # Use universal capture to save everything
+        universal_capture = get_universal_capture()
+        universal_capture.capture_interaction(
+            input_text=command_text,
+            output_text=output_text,
+            metadata={
+                'success': bool(result),
+                'command_type': 'natural_language'
+            }
+        )
+
+        # Print the output to user (since we captured it)
+        print(output_text)
+
+        return result
+
+    except Exception as e:
+        error_output = f"❌ Error executing command: {e}"
+        print(error_output)
+
+        # Still capture the error
+        universal_capture = get_universal_capture()
+        universal_capture.capture_interaction(
+            input_text=command_text,
+            output_text=error_output,
+            metadata={
+                'success': False,
+                'error': str(e),
+                'command_type': 'natural_language'
+            }
+        )
+
+        return False
 
 
 def init_ccom_project(force=False):
@@ -653,7 +758,8 @@ def main():
                 print(f"🧪 Dry run: Would execute '{command_text}'")
                 return
 
-            orchestrator.handle_natural_language(command_text)
+            # Universal capture - capture EVERYTHING like mem0
+            captured_output = capture_command_execution(command_text, orchestrator)
         else:
             print("❓ No command provided. Use 'ccom --help' for usage.")
 

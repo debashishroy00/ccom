@@ -43,14 +43,42 @@
       "id": "workflow-quality_progress_1758839672_1758839672",
       "timestamp": "2025-09-25T18:34:32.726248",
       "session_id": "default"
+    },
+    {
+      "key": "quality_progress_1758923608",
+      "value": "Command: test universal capture system",
+      "category": "progress",
+      "priority": "normal",
+      "channel": "ccom-ccom",
+      "metadata": {
+        "input": "test universal capture system",
+        "timestamp": "2025-09-26T17:53:28.393273"
+      },
+      "id": "quality_progress_1758923608_1758923608",
+      "timestamp": "2025-09-26T17:53:28.407273",
+      "session_id": "default"
+    },
+    {
+      "key": "quality_progress_1758923608",
+      "value": "Command: test universal capture system",
+      "category": "progress",
+      "priority": "normal",
+      "channel": "ccom-ccom",
+      "metadata": {
+        "input": "test universal capture system",
+        "timestamp": "2025-09-26T17:53:28.409565"
+      },
+      "id": "quality_progress_1758923608_1758923608",
+      "timestamp": "2025-09-26T17:53:28.427051",
+      "session_id": "default"
     }
   ],
   "sessions": [],
   "channels": {
     "ccom-ccom": {
       "created": "2025-09-25T18:27:45.721619",
-      "item_count": 4,
-      "last_activity": "2025-09-25T18:34:32.726248"
+      "item_count": 6,
+      "last_activity": "2025-09-26T17:53:28.427051"
     }
   },
   "checkpoints": {

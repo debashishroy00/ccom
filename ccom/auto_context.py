@@ -240,6 +240,60 @@ class AutoContextCapture:
             "normal"
         )
 
+    def capture_evaluation(self, evaluation_data: Dict):
+        """Capture comprehensive evaluation results"""
+        if not self.enabled:
+            return
+
+        feature = "evaluation"
+
+        # Capture the evaluation execution
+        if evaluation_data.get('command'):
+            self.bridge.save_context(
+                feature,
+                "progress",
+                f"Executed: {evaluation_data['command']}",
+                "normal"
+            )
+
+        # Capture overall grade/status
+        if evaluation_data.get('grade'):
+            self.bridge.save_context(
+                feature,
+                "note",
+                f"Current Status: {evaluation_data['grade']} - {evaluation_data.get('summary', '')}",
+                "high"
+            )
+
+        # Capture strengths
+        if evaluation_data.get('strengths'):
+            strengths_text = ", ".join(evaluation_data['strengths'][:5])
+            self.bridge.save_context(
+                feature,
+                "decision",
+                f"Strengths: {strengths_text}",
+                "high"
+            )
+
+        # Capture improvements
+        if evaluation_data.get('improvements'):
+            improvements_text = ", ".join(evaluation_data['improvements'][:5])
+            self.bridge.save_context(
+                feature,
+                "next_step",
+                f"Improvements needed: {improvements_text}",
+                "normal"
+            )
+
+        # Capture recommendations
+        if evaluation_data.get('recommendation'):
+            self.bridge.save_context(
+                feature,
+                "decision",
+                evaluation_data['recommendation'],
+                "high"
+            )
+
     def start_batch(self):
         """Start batch mode for multiple operations"""
         self.batch_mode = True

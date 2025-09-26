@@ -24,7 +24,10 @@
       "Bash(cat:*)",
       "mcp__ide__executeCode",
       "Bash(npx mcp-memory-keeper:*)",
-      "Bash(mcp-memory-keeper:*)"
+      "Bash(mcp-memory-keeper:*)",
+      "Bash(cmd.exe:*)",
+      "Bash(ccom:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

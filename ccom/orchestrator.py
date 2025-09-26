@@ -10,7 +10,7 @@ import json
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from .auto_context import get_auto_context
+from .universal_capture import get_universal_capture
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -28,8 +28,8 @@ class CCOMOrchestrator:
         self.memory = self.load_memory()
         self.tools_manager = None
 
-        # Initialize automatic context capture
-        self.auto_context = get_auto_context(self.project_root.name)
+        # Initialize universal context capture (like mem0)
+        self.universal_capture = get_universal_capture(self.project_root.name)
 
     def load_memory(self):
         """Load existing CCOM memory"""
@@ -279,16 +279,37 @@ class CCOMOrchestrator:
         command_lower = command.lower().strip()
         print(f"🎯 Processing command: '{command}'")
 
-        # Capture command execution
-        self.auto_context.capture_command(command)
+        # Capture input and prepare for output capture
+        start_time = datetime.now()
 
         # Use pattern matcher to find the appropriate workflow
-        workflow = self._match_command_pattern(command_lower, command)
-        if workflow is not None:
-            return workflow
+        workflow_result = self._match_command_pattern(command_lower, command)
 
-        print("❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands")
-        return False
+        # Capture the complete interaction (like mem0)
+        if workflow_result is not None:
+            # Simulate output collection (in real implementation, collect actual output)
+            output = "Command executed successfully"
+            self.universal_capture.capture_interaction(
+                input_text=command,
+                output_text=output,
+                metadata={
+                    'execution_time': (datetime.now() - start_time).total_seconds(),
+                    'success': True
+                }
+            )
+            return workflow_result
+        else:
+            error_output = "❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"
+            print(error_output)
+            self.universal_capture.capture_interaction(
+                input_text=command,
+                output_text=error_output,
+                metadata={
+                    'execution_time': (datetime.now() - start_time).total_seconds(),
+                    'success': False
+                }
+            )
+            return False
 
     def deploy_sequence(self):
         """Full enterprise deployment sequence"""
