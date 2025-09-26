@@ -8,8 +8,16 @@ cco/cli.py
 cco/templates/CLAUDE.md
 cco/templates/ccom.js
 ccom/__init__.py
+ccom/auto_context.py
 ccom/cli.py
+ccom/file_monitor.py
+ccom/mcp_bridge.py
+ccom/mcp_native.py
 ccom/orchestrator.py
+ccom/tools_manager.py
+ccom/universal_capture.py
+ccom/validators.py
+ccom/workflows.py
 ccom.egg-info/PKG-INFO
 ccom.egg-info/SOURCES.txt
 ccom.egg-info/dependency_links.txt

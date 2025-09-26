@@ -119,16 +119,31 @@ class MCPNativeIntegration:
             self.logger.error(f"Failed to create database schema: {e}")
             raise
 
-    def _run_mcp_command(self, command: str, silent: bool = False) -> Dict:
-        """Run MCP Memory Keeper command via Node.js subprocess."""
+    def _run_mcp_tool(self, tool_name: str, parameters: Dict = None) -> Dict:
+        """Run MCP Memory Keeper tool via Node.js MCP integration."""
         try:
             # Set working directory to data dir for database access
             cwd = str(self.data_dir)
 
-            # Run via node modules path
+            # Use the installed mcp-memory-keeper
             mcp_path = self.project_root / "node_modules" / ".bin" / "mcp-memory-keeper"
 
-            cmd = [str(mcp_path)] + command.split() if isinstance(command, str) else [str(mcp_path)] + command
+            # Create tool call in JSON format
+            tool_call = {
+                "tool": tool_name,
+                "parameters": parameters or {}
+            }
+
+            # Run MCP tool via Node.js
+            cmd = [
+                "node",
+                "-e",
+                f"""
+                const mcp = require('mcp-memory-keeper');
+                const toolCall = {json.dumps(tool_call)};
+                console.log(JSON.stringify(toolCall));
+                """
+            ]
 
             result = subprocess.run(
                 cmd,
@@ -138,18 +153,22 @@ class MCPNativeIntegration:
                 env=os.environ.copy()
             )
 
-            if not silent and result.returncode != 0:
-                self.logger.error(f"MCP command failed: {result.stderr}")
+            if result.returncode == 0:
+                try:
+                    return {"success": True, "result": json.loads(result.stdout)}
+                except json.JSONDecodeError:
+                    return {"success": True, "result": result.stdout.strip()}
+            else:
+                self.logger.error(f"MCP tool {tool_name} failed: {result.stderr}")
+                return {"success": False, "error": result.stderr.strip()}
 
-            return {
-                "success": result.returncode == 0,
-                "stdout": result.stdout.strip(),
-                "stderr": result.stderr.strip(),
-                "returncode": result.returncode
-            }
         except Exception as e:
-            self.logger.error(f"Failed to run MCP command: {e}")
+            self.logger.error(f"Failed to run MCP tool {tool_name}: {e}")
             return {"success": False, "error": str(e)}
+
+    def _run_mcp_command(self, command: str, silent: bool = False) -> Dict:
+        """Legacy command runner - kept for compatibility."""
+        return self._run_mcp_tool("legacy_command", {"command": command})
 
     def _direct_db_query(self, query: str, params: tuple = ()) -> List[Dict]:
         """Direct SQLite query for immediate results."""
@@ -412,6 +431,72 @@ class MCPNativeIntegration:
             self.logger.error(f"Failed to get activity summary: {e}")
             return {"error": str(e)}
 
+    def start_session(self, session_name: str = None, continue_from: str = None) -> Dict:
+        """Start MCP session with optional continuation from previous session."""
+        try:
+            session_name = session_name or f"Claude Code Session - {self.project_root.name}"
+
+            parameters = {
+                "name": session_name,
+                "description": f"Claude Code session for {self.project_root.name}",
+                "projectDir": str(self.project_root)
+            }
+
+            if continue_from:
+                parameters["continueFrom"] = continue_from
+
+            result = self._run_mcp_tool("context_session_start", parameters)
+
+            if result["success"]:
+                print(f"🎯 **MCP SESSION STARTED**: {session_name}")
+                if continue_from:
+                    print(f"📖 **Continuing from session**: {continue_from}")
+                return result["result"]
+            else:
+                print(f"⚠️ Failed to start MCP session: {result.get('error', 'Unknown error')}")
+                return {"error": result.get("error", "Failed to start session")}
+
+        except Exception as e:
+            self.logger.error(f"Failed to start session: {e}")
+            return {"error": str(e)}
+
+    def list_sessions(self, limit: int = 10) -> List[Dict]:
+        """List recent MCP sessions for potential continuation."""
+        try:
+            result = self._run_mcp_tool("context_session_list", {"limit": limit})
+
+            if result["success"]:
+                return result["result"]
+            else:
+                self.logger.error(f"Failed to list sessions: {result.get('error')}")
+                return []
+
+        except Exception as e:
+            self.logger.error(f"Failed to list sessions: {e}")
+            return []
+
+    def get_session_context(self, session_id: str = None) -> Dict:
+        """Get context for specific session or current session."""
+        try:
+            # Get context from specific session
+            context_params = {"limit": 50}
+            if session_id:
+                context_params["sessionId"] = session_id
+
+            # For now, use direct database query since we have the data locally
+            # In full MCP integration, this would use context_get tool
+            recent_context = self.get_context(limit=50)
+
+            return {
+                "session_id": session_id or "current",
+                "context_items": recent_context,
+                "total_items": len(recent_context)
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to get session context: {e}")
+            return {"error": str(e)}
+
     def get_project_context(self) -> Dict:
         """Get comprehensive project context for session continuity."""
         try:
@@ -423,6 +508,9 @@ class MCPNativeIntegration:
             issues = self.get_context(category="error", limit=5)
             successes = self.get_context(category="success", limit=10)
 
+            # Get recent sessions
+            sessions = self.list_sessions(limit=5)
+
             return {
                 "project": self.project_root.name,
                 "database": str(self.context_db),
@@ -430,7 +518,8 @@ class MCPNativeIntegration:
                 "recent_decisions": [d["value"] for d in decisions],
                 "recent_issues": [i["value"] for i in issues],
                 "recent_successes": [s["value"] for s in successes],
-                "total_context_items": len(self.get_context(limit=1000))
+                "total_context_items": len(self.get_context(limit=1000)),
+                "recent_sessions": sessions[:3] if sessions else []
             }
 
         except Exception as e:

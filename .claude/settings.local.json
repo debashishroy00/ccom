@@ -30,7 +30,10 @@
       "WebSearch",
       "Read(//c/Users/DR/**)",
       "Bash(sqlite3:*)",
-      "Bash(./node_modules/.bin/mcp-memory-keeper:*)"
+      "Bash(./node_modules/.bin/mcp-memory-keeper:*)",
+      "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -m ccom.cli \"test native mcp in todo\")",
+      "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -m ccom.cli --mcp-context)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

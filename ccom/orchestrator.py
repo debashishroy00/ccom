@@ -1378,7 +1378,11 @@ class CCOMOrchestrator:
         """Execute a CCOM workflow using the workflows module"""
         try:
             # Capture workflow start
-            self.auto_context.capture_workflow(workflow_name, "started")
+            self.mcp.save_context(
+                key=f"workflow_{workflow_name}",
+                value=f"Started workflow: {workflow_name}",
+                category="workflow"
+            )
 
             # Import and initialize workflows
             from ccom.workflows import CCOMWorkflows
@@ -1387,7 +1391,11 @@ class CCOMOrchestrator:
 
             if workflow_name == "setup":
                 result = workflows.create_github_workflow()
-                self.auto_context.capture_workflow(workflow_name, "completed", {"result": "GitHub workflow created"})
+                self.mcp.save_context(
+                    key=f"workflow_{workflow_name}_completed",
+                    value=f"Completed workflow: {workflow_name} - GitHub workflow created",
+                    category="success"
+                )
                 return result
             else:
                 return workflows.run_workflow(workflow_name)

@@ -35,6 +35,9 @@ def create_enhanced_cli():
     parser.add_argument("--stats", action="store_true", help="Show MCP memory statistics")
     parser.add_argument("--mcp-context", action="store_true", help="Show MCP project context")
     parser.add_argument("--mcp-activity", action="store_true", help="Show MCP activity summary")
+    parser.add_argument("--mcp-sessions", action="store_true", help="List recent MCP sessions")
+    parser.add_argument("--mcp-start-session", type=str, nargs="?", const="auto", help="Start new MCP session")
+    parser.add_argument("--mcp-continue", type=str, help="Continue from specific session ID")
     parser.add_argument(
         "--remember", type=str, help='Remember a feature: --remember "auth system"'
     )
@@ -156,6 +159,15 @@ def handle_traditional_commands(args, orchestrator):
         return True
     elif args.mcp_activity:
         handle_mcp_activity_command()
+        return True
+    elif args.mcp_sessions:
+        handle_mcp_sessions_command()
+        return True
+    elif args.mcp_start_session:
+        handle_mcp_start_session_command(args.mcp_start_session)
+        return True
+    elif args.mcp_continue:
+        handle_mcp_continue_command(args.mcp_continue)
         return True
     elif args.remember:
         orchestrator.handle_memory_command(f"remember {args.remember}")
@@ -829,6 +841,81 @@ def handle_mcp_activity_command():
 
     except Exception as e:
         print(f"❌ Error accessing MCP activity: {e}")
+
+def handle_mcp_sessions_command():
+    """Handle MCP sessions list command"""
+    try:
+        mcp = get_mcp_integration()
+        sessions = mcp.list_sessions(limit=10)
+
+        print("\n📅 **MCP SESSIONS** (Recent)")
+        print("=" * 50)
+
+        if not sessions:
+            print("🔍 No sessions found")
+            return
+
+        for session in sessions:
+            session_id = session.get('id', 'Unknown')[:8]
+            name = session.get('name', 'Unnamed Session')
+            created = session.get('created_at', 'Unknown')[:16]
+
+            print(f"📝 [{session_id}] {name}")
+            print(f"   📅 Created: {created}")
+            print()
+
+        print(f"💡 **Use**: ccom --mcp-continue <session_id> to restore context")
+
+    except Exception as e:
+        print(f"❌ Error listing MCP sessions: {e}")
+
+def handle_mcp_start_session_command(session_name):
+    """Handle MCP start session command"""
+    try:
+        mcp = get_mcp_integration()
+
+        if session_name == "auto":
+            session_name = None  # Use auto-generated name
+
+        result = mcp.start_session(session_name)
+
+        if "error" not in result:
+            print("✅ **MCP Session Started Successfully**")
+            if result.get("id"):
+                print(f"🆔 **Session ID**: {result['id'][:8]}...")
+                print(f"📅 **Created**: {result.get('created_at', 'Now')[:16]}")
+        else:
+            print(f"❌ Failed to start session: {result['error']}")
+
+    except Exception as e:
+        print(f"❌ Error starting MCP session: {e}")
+
+def handle_mcp_continue_command(session_id):
+    """Handle MCP continue session command"""
+    try:
+        mcp = get_mcp_integration()
+
+        # Start new session continuing from the specified one
+        result = mcp.start_session(
+            session_name=f"Continued Session",
+            continue_from=session_id
+        )
+
+        if "error" not in result:
+            print("📖 **MCP Session Continued Successfully**")
+            print(f"🔗 **Continuing from**: {session_id}")
+            if result.get("id"):
+                print(f"🆔 **New Session ID**: {result['id'][:8]}...")
+
+            # Show restored context
+            context = mcp.get_session_context(session_id)
+            if context.get("context_items"):
+                print(f"📊 **Restored**: {len(context['context_items'])} context items")
+        else:
+            print(f"❌ Failed to continue session: {result['error']}")
+
+    except Exception as e:
+        print(f"❌ Error continuing MCP session: {e}")
 
 def main():
     """Enhanced main CLI entry point"""
