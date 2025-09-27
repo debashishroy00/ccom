@@ -10,6 +10,7 @@ from pathlib import Path
 from ccom.orchestrator import CCOMOrchestrator
 from ccom.tools_manager import ToolsManager
 from ccom.mcp_native import get_mcp_integration
+from ccom.mcp_integration import MCPDirectIntegration
 import io
 import contextlib
 
@@ -330,10 +331,11 @@ def handle_tools_status_command():
 
 
 def handle_context_note(feature: str, note: str):
-    """Save a note about a feature to memory"""
+    """Save a note about a feature to memory (Phase 1: MCP Direct Integration)"""
     try:
-        bridge = MCPMemoryBridge()
-        success = bridge.save_context(feature, "note", note, "normal")
+        # Phase 1: Use MCP Direct Integration instead of bridge
+        mcp_direct = MCPDirectIntegration()
+        success = mcp_direct.save_context_note(feature, note, "note")
 
         if success:
             print(f"✅ Saved note for {feature}: {note}")
@@ -344,19 +346,15 @@ def handle_context_note(feature: str, note: str):
 
 
 def handle_context_resume(feature: str):
-    """Resume work on a feature with full context"""
+    """Resume work on a feature with full context (Phase 1: MCP Direct Integration)"""
     try:
-        bridge = MCPMemoryBridge()
+        # Phase 1: Use MCP Direct Integration
+        mcp_direct = MCPDirectIntegration()
         print(f"🧠 **Resuming work on: {feature}**\n")
 
-        context = bridge.get_resume_context(feature)
-        formatted_context = bridge.format_context_for_display(context)
-
-        if formatted_context.strip() and formatted_context != "No context found for this feature.":
-            print(formatted_context)
-        else:
-            print(f"No previous context found for {feature}")
-            print("💡 Use 'ccom --context-note' to start tracking context for this feature.")
+        context = mcp_direct.get_feature_context(feature)
+        # MCP Direct shows context via print statements to Claude
+        print("💡 Claude should display the MCP context above.")
     except Exception as e:
         print(f"❌ Error retrieving context: {e}")
 

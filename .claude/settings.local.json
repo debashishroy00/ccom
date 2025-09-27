@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -c \"\nimport sys\nsys.path.insert(0, ''/c/Users/DR/OneDrive/projects/ccom'')\nfrom ccom.orchestrator import CCOMOrchestrator\n\nprint(''=== TESTING CCOM ORCHESTRATOR DIRECTLY ==='')\norchestrator = CCOMOrchestrator()\n\n# Check what MCP instance it''s using\nprint(f''MCP instance: {type(orchestrator.mcp)}'')\nprint(f''MCP database path: {orchestrator.mcp.context_db}'')\n\n# Test if capture works\nprint(''\\nTesting capture...'')\nresult = orchestrator.mcp.capture_interaction(\n    ''debug test'',\n    ''testing if MCP capture works'',\n    {''debug'': True}\n)\nprint(f''Capture result: {result}'')\n\")"
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(npm info:*)",
+      "Bash(python:*)",
+      "mcp__ide__executeCode"
     ],
     "deny": [],
     "ask": []
