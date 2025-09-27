@@ -152,7 +152,7 @@ def handle_traditional_commands(args, orchestrator):
         orchestrator.show_status()
         return True
     elif args.memory:
-        handle_mcp_memory_command()
+        orchestrator.show_memory()
         return True
     elif args.mcp_context:
         handle_mcp_context_command()

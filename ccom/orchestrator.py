@@ -1189,13 +1189,30 @@ class CCOMOrchestrator:
 
     def handle_memory_command(self, command):
         """Handle memory-related commands"""
+        result = None
         if "status" in command.lower():
-            return self.show_status()
+            result = self.show_status()
         elif "memory" in command.lower():
-            return self.show_memory()
+            result = self.show_memory()
         else:
             print("Memory commands: status, memory")
-            return True
+            result = True
+
+        # Capture the interaction
+        try:
+            self.mcp.capture_interaction(
+                input_text=f"memory command: {command}",
+                output_text=f"CCOM memory command executed: {command}",
+                metadata={
+                    'timestamp': datetime.now().isoformat(),
+                    'command_type': 'memory_command',
+                    'success': True
+                }
+            )
+        except Exception as e:
+            self.logger.warning(f"Failed to capture memory command: {e}")
+
+        return result
 
     def handle_file_monitoring_command(self, command):
         """Handle file monitoring commands"""
@@ -1496,7 +1513,7 @@ class CCOMOrchestrator:
         print("=" * 40)
         print(f"Project: {self.memory['project']['name']}")
         print(f"Features: {len(self.memory['features'])}")
-        print(f"Version: {self.memory['metadata']['version']}")
+        print(f"Version: {self.memory.get('metadata', {}).get('version', '0.3')}")
 
         # Check Claude Code integration
         agents_dir = self.claude_dir / "agents"
@@ -1507,11 +1524,59 @@ class CCOMOrchestrator:
             print("Claude Code Agents: 0")
 
         print("=" * 40)
+
+        # Capture the status check
+        try:
+            self.mcp.capture_interaction(
+                input_text="show status",
+                output_text="CCOM status displayed",
+                metadata={
+                    'timestamp': datetime.now().isoformat(),
+                    'command_type': 'status_display',
+                    'success': True
+                }
+            )
+        except Exception as e:
+            self.logger.warning(f"Failed to capture status display: {e}")
+
         return True
 
     def show_memory(self):
-        """Show memory contents"""
-        print("\n🧠 CCOM Memory")
+        """Show memory contents - prioritize MCP over legacy JSON"""
+        result = None
+        try:
+            # Try MCP first (preferred system)
+            context = self.mcp.get_project_context()
+            activity = self.mcp.get_activity_summary(hours=48)
+
+            if "error" not in context and "error" not in activity and context.get('total_context_items', 0) > 0:
+                result = self.show_mcp_session_summary()
+            else:
+                # Fall back to legacy only if MCP has no data
+                result = self.show_legacy_memory()
+        except Exception as e:
+            print(f"⚠️ MCP error: {e}")
+            result = self.show_legacy_memory()
+
+        # Capture the memory access
+        try:
+            self.mcp.capture_interaction(
+                input_text="show memory",
+                output_text="CCOM memory display accessed",
+                metadata={
+                    'timestamp': datetime.now().isoformat(),
+                    'command_type': 'memory_display',
+                    'success': True
+                }
+            )
+        except Exception as e:
+            self.logger.warning(f"Failed to capture memory display: {e}")
+
+        return result
+
+    def show_legacy_memory(self):
+        """Show legacy JSON memory contents"""
+        print("\n🧠 CCOM Memory (Legacy)")
         print("=" * 40)
 
         if not self.memory["features"]:
