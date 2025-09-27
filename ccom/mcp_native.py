@@ -352,8 +352,15 @@ class MCPNativeIntegration:
                 "priority": "high"
             })
 
-        # Error detection
-        if any(word in output_text.lower() for word in ["error", "failed", "fail", "❌", "issue"]):
+        # Error detection - very specific to avoid false positives from status reports
+        actual_error_patterns = [
+            "❌ operation failed", "❌ error", "command failed:", "execution failed:",
+            "❌ deployment failed", "❌ build failed", "critical error:", "fatal error:",
+            "❌ security vulnerability", "❌ quality check failed"
+        ]
+
+        # Only flag as error if it's an actual operational failure, not status reporting
+        if any(pattern in output_text.lower() for pattern in actual_error_patterns):
             facts.append({
                 "value": f"Error encountered: {input_text}",
                 "category": "error",
