@@ -12,7 +12,6 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 from .mcp_native import get_mcp_integration
-from .mcp_integration import MCPDirectIntegration
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -37,9 +36,6 @@ class CCOMOrchestrator:
 
         # Initialize native MCP Memory Keeper integration
         self.mcp = get_mcp_integration(str(self.project_root))
-
-        # Initialize Phase 1 MCP direct integration (replaces dual memory system)
-        self.mcp_direct = MCPDirectIntegration()
 
         # Initialize conversation capture for Claude Code sessions
         self._init_conversation_bridge()
@@ -182,9 +178,7 @@ class CCOMOrchestrator:
                 text=True,
                 cwd=os.getcwd(),
             )
-            # Phase 1: Replace with MCP Direct Integration
-            existing_features = self.mcp_direct.check_feature_exists(feature_name)
-            return len(existing_features) > 0
+            return "EXISTS" in result.stdout
         except:
             # Fallback to Python memory check
             features = self.memory.get("features", {})
