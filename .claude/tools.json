@@ -1,56 +1,56 @@
 {
   "installed_tools": {
-    "jscpd": {
-      "installed": true,
-      "version": "4.0.5",
-      "scope": "local"
-    },
     "radon": {
       "installed": true,
       "version": "6.0.1"
-    },
-    "madge": {
-      "installed": true,
-      "version": "8.0.0",
-      "scope": "local"
-    },
-    "complexity-report": {
-      "installed": false,
-      "version": null
-    },
-    "pylint": {
-      "installed": true,
-      "version": "pylint 3.3.8"
     },
     "black": {
       "installed": true,
       "version": "python -m black, 25.1.0 (compiled: yes)"
     },
-    "mypy": {
-      "installed": true,
-      "version": "mypy 1.18.2 (compiled: yes)"
-    },
-    "bandit": {
-      "installed": true,
-      "version": "__main__.py 1.8.6"
-    },
     "flake8": {
       "installed": true,
       "version": "7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0, radon: 6.0.1)"
-    },
-    "safety": {
-      "installed": true,
-      "version": "safety, version 3.6.1"
     },
     "husky": {
       "installed": true,
       "version": "",
       "scope": "local"
     },
+    "jscpd": {
+      "installed": true,
+      "version": "4.0.5",
+      "scope": "local"
+    },
+    "complexity-report": {
+      "installed": false,
+      "version": null
+    },
     "lint-staged": {
       "installed": true,
       "version": "16.2.1",
       "scope": "local"
+    },
+    "safety": {
+      "installed": true,
+      "version": "safety, version 3.6.1"
+    },
+    "bandit": {
+      "installed": true,
+      "version": "__main__.py 1.8.6"
+    },
+    "madge": {
+      "installed": true,
+      "version": "8.0.0",
+      "scope": "local"
+    },
+    "mypy": {
+      "installed": true,
+      "version": "mypy 1.18.2 (compiled: yes)"
+    },
+    "pylint": {
+      "installed": true,
+      "version": "pylint 3.3.8"
     },
     "pytest": {
       "installed": true,
@@ -58,7 +58,7 @@
     }
   },
   "tool_versions": {},
-  "last_check": "2025-09-25T18:34:17.267717",
+  "last_check": "2025-09-27T15:17:01.554080",
   "project_type": "python",
   "custom_tools": [],
   "configurations": {}

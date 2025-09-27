@@ -16,12 +16,26 @@ from .auto_context import get_auto_context
 
 # Handle Windows console encoding
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except AttributeError:
+        # Python < 3.7 fallback
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
 
 
 class CCOMOrchestrator:
     """Core orchestration engine for CCOM + Claude Code integration"""
+
+    def _safe_subprocess(self, *args, **kwargs):
+        """Safe subprocess with proper encoding for Windows"""
+        # Add encoding for Windows compatibility
+        if sys.platform == "win32":
+            kwargs.setdefault('encoding', 'utf-8')
+            kwargs.setdefault('errors', 'replace')
+        return subprocess.run(*args, **kwargs)
 
     def __init__(self):
         self.project_root = Path.cwd()
@@ -40,7 +54,12 @@ class CCOMOrchestrator:
         self.mcp = None  # MCP disabled
 
         # Initialize auto-context capture
-        self.auto_context = get_auto_context()
+        try:
+            self.auto_context = get_auto_context()
+            self.logger.info("Auto-context initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize auto-context: {e}")
+            self.auto_context = None
 
         # Initialize conversation capture for Claude Code sessions
         self._init_conversation_bridge()
@@ -62,6 +81,10 @@ class CCOMOrchestrator:
     def capture_conversation_auto(self, input_text: str, output_text: str):
         """Automatically capture conversation with comprehensive analysis"""
         try:
+            if self.auto_context is None:
+                self.logger.warning("Auto-context not initialized, skipping capture")
+                return False
+
             # Use the enhanced auto-context system
             self.auto_context.capture_interaction(input_text, output_text)
             self.logger.info(f"Auto-captured: {input_text[:50]}...")
@@ -109,7 +132,7 @@ class CCOMOrchestrator:
         """Load existing CCOM memory"""
         memory_file = self.ccom_dir / "memory.json"
         if memory_file.exists():
-            with open(memory_file) as f:
+            with open(memory_file, encoding='utf-8', errors='replace') as f:
                 return json.load(f)
         return self.create_empty_memory()
 
@@ -134,8 +157,8 @@ class CCOMOrchestrator:
             memory_file = self.ccom_dir / "memory.json"
             self.ccom_dir.mkdir(exist_ok=True)
 
-            with open(memory_file, "w") as f:
-                json.dump(self.memory, f, indent=2)
+            with open(memory_file, "w", encoding='utf-8') as f:
+                json.dump(self.memory, f, indent=2, ensure_ascii=False)
 
             return True
         except Exception as e:
@@ -192,7 +215,7 @@ class CCOMOrchestrator:
         try:
             import subprocess
 
-            result = subprocess.run(
+            result = self._safe_subprocess(
                 ["node", ".claude/ccom.js", "check", feature_name],
                 capture_output=True,
                 text=True,
@@ -380,15 +403,8 @@ class CCOMOrchestrator:
                     output_summary = f"CCOM executed: {command} → {str(workflow_result)[:200]}"
 
                 # Simple capture call - no complex output redirection
-                self.mcp.capture_interaction(
-                    input_text=command,
-                    output_text=output_summary,
-                    metadata={
-                        'timestamp': datetime.now().isoformat(),
-                        'command_type': 'ccom_workflow',
-                        'success': True
-                    }
-                )
+                if self.auto_context:
+                    self.auto_context.capture_interaction(command, output_summary)
 
                 self.logger.info(f"Captured CCOM interaction: {command}")
 
@@ -400,14 +416,8 @@ class CCOMOrchestrator:
         else:
             error_output = "❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"
             print(error_output)
-            self.mcp.capture_interaction(
-                input_text=command,
-                output_text=error_output,
-                metadata={
-                    'execution_time': (datetime.now() - start_time).total_seconds(),
-                    'success': False
-                }
-            )
+            if self.auto_context:
+                self.auto_context.capture_interaction(command, error_output)
             return False
 
     def deploy_sequence(self):
@@ -726,7 +736,7 @@ class CCOMOrchestrator:
 
         # 1. Dependency vulnerability scanning
         try:
-            result = subprocess.run(
+            result = self._safe_subprocess(
                 "npm audit --json",
                 shell=True,
                 capture_output=True,
@@ -1220,15 +1230,11 @@ class CCOMOrchestrator:
 
         # Capture the interaction
         try:
-            self.mcp.capture_interaction(
-                input_text=f"memory command: {command}",
-                output_text=f"CCOM memory command executed: {command}",
-                metadata={
-                    'timestamp': datetime.now().isoformat(),
-                    'command_type': 'memory_command',
-                    'success': True
-                }
-            )
+            if self.auto_context:
+                self.auto_context.capture_interaction(
+                    f"memory command: {command}",
+                    f"CCOM memory command executed: {command}"
+                )
         except Exception as e:
             self.logger.warning(f"Failed to capture memory command: {e}")
 
@@ -1547,48 +1553,22 @@ class CCOMOrchestrator:
 
         # Capture the status check
         try:
-            self.mcp.capture_interaction(
-                input_text="show status",
-                output_text="CCOM status displayed",
-                metadata={
-                    'timestamp': datetime.now().isoformat(),
-                    'command_type': 'status_display',
-                    'success': True
-                }
-            )
+            if self.auto_context:
+                self.auto_context.capture_interaction("show status", "CCOM status displayed")
         except Exception as e:
             self.logger.warning(f"Failed to capture status display: {e}")
 
         return True
 
     def show_memory(self):
-        """Show memory contents - prioritize MCP over legacy JSON"""
-        result = None
-        try:
-            # Try MCP first (preferred system)
-            context = self.mcp.get_project_context()
-            activity = self.mcp.get_activity_summary(hours=48)
-
-            if "error" not in context and "error" not in activity and context.get('total_context_items', 0) > 0:
-                result = self.show_mcp_session_summary()
-            else:
-                # Fall back to legacy only if MCP has no data
-                result = self.show_legacy_memory()
-        except Exception as e:
-            print(f"⚠️ MCP error: {e}")
-            result = self.show_legacy_memory()
+        """Show memory contents using legacy JSON system"""
+        # MCP system removed - use legacy JSON memory only
+        result = self.show_legacy_memory()
 
         # Capture the memory access
         try:
-            self.mcp.capture_interaction(
-                input_text="show memory",
-                output_text="CCOM memory display accessed",
-                metadata={
-                    'timestamp': datetime.now().isoformat(),
-                    'command_type': 'memory_display',
-                    'success': True
-                }
-            )
+            if self.auto_context:
+                self.auto_context.capture_interaction("show memory", "CCOM memory display accessed")
         except Exception as e:
             self.logger.warning(f"Failed to capture memory display: {e}")
 
@@ -1611,53 +1591,11 @@ class CCOMOrchestrator:
         return True
 
     def show_mcp_session_summary(self):
-        """Show session summary using MCP Memory Keeper (prioritized over legacy)"""
-        print("\n🧠 **SESSION HISTORY FROM MCP MEMORY**")
+        """Legacy method - MCP system removed, redirect to legacy memory"""
+        print("\n🧠 **SESSION HISTORY**")
         print("=" * 60)
+        return self.show_legacy_memory()
 
-        try:
-            # Get MCP context and activity
-            context = self.mcp.get_project_context()
-            activity = self.mcp.get_activity_summary(hours=48)
-
-            if "error" not in context and "error" not in activity:
-                print(f"📊 **Total Interactions**: {context['total_context_items']} (preserved across sessions)")
-                print(f"📈 **Recent Activity**: {activity['total']} interactions in last 48 hours")
-
-                # Show categories
-                if activity.get("categories"):
-                    print("\n🎯 **Activity Breakdown**:")
-                    for cat, count in activity["categories"].items():
-                        print(f"   • {cat.title()}: {count}")
-
-                # Show recent successes
-                if context.get("recent_successes"):
-                    print("\n✅ **Key Achievements** (Recent Sessions):")
-                    for success in context["recent_successes"]:
-                        print(f"   • {success}")
-
-                # Show recent issues
-                if context.get("recent_issues"):
-                    print("\n⚠️ **Issues Encountered**:")
-                    for issue in context["recent_issues"]:
-                        print(f"   • {issue}")
-
-                # Show decisions
-                if context.get("recent_decisions"):
-                    print("\n💡 **Key Decisions Made**:")
-                    for decision in context["recent_decisions"]:
-                        print(f"   • {decision}")
-
-                print(f"\n💾 **MCP Database**: {context['database']} ({context['total_context_items']} items)")
-                print("\n🎯 **Context Continuity**: All past work and decisions preserved in MCP Memory")
-
-            else:
-                print("⚠️ MCP Memory not available - using legacy system")
-                return self.show_legacy_memory()
-
-        except Exception as e:
-            print(f"⚠️ MCP error: {e}")
-            return self.show_legacy_memory()
 
         return True
 
@@ -1676,59 +1614,24 @@ class CCOMOrchestrator:
         print("\n🎯 **SESSION CONTINUITY LOADED**")
         print("=" * 60)
 
-        # === MCP MEMORY FIRST ===
-        print("🧠 **MCP MEMORY CONTEXT** (Previous Sessions):")
+        # === MEMORY CONTEXT ===
+        print("🧠 **MEMORY CONTEXT** (Previous Sessions):")
         print("-" * 50)
 
-        try:
-            # Get MCP context
-            context = self.mcp.get_project_context()
+        feature_count = len(self.memory.get("features", {}))
+        print(f"📊 **Total Features**: {feature_count}")
 
-            if "error" not in context:
-                activity = context["activity_summary"]
-                print(f"📊 **Total Items**: {context['total_context_items']}")
-                print(f"📈 **Recent Activity**: {activity['total']} interactions ({activity['timeframe']})")
-
-                if activity.get("categories"):
-                    print("\n🎯 **Active Categories**:")
-                    for cat, count in activity["categories"].items():
-                        print(f"   • {cat.title()}: {count}")
-
-                if context.get("recent_successes"):
-                    print("\n✅ **Recent Successes**:")
-                    for success in context["recent_successes"][:3]:
-                        print(f"   • {success}")
-
-                if context.get("recent_issues"):
-                    print("\n⚠️ **Recent Issues**:")
-                    for issue in context["recent_issues"][:3]:
-                        print(f"   • {issue}")
-
-                print(f"\n💾 **Database**: {context['database']}")
-            else:
-                print("⚠️ MCP context not available - using legacy memory")
-        except Exception as e:
-            print(f"⚠️ MCP error: {e}")
-
-        # === LEGACY MEMORY CONTEXT ===
-        print("\n📋 **LEGACY MEMORY CONTEXT** (JSON System):")
-        print("-" * 50)
+        if feature_count > 0:
+            print("\n📋 **Stored Features**:")
+            for name, feature in self.memory["features"].items():
+                desc = feature.get("description", "No description")
+                print(f"   • {name}: {desc[:80]}{'...' if len(desc) > 80 else ''}")
 
         # === PROJECT OVERVIEW ===
         project_info = self.analyze_project_structure()
         print(
-            f"📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files"
+            f"\n📊 **{project_info['name']}** ({project_info['type']}) | {project_info['lines']} lines | {project_info['files']} files"
         )
-
-        # === MCP MEMORY STATUS ===
-        activity = context["activity_summary"]
-        print(f"🧠 **Memory**: {context['total_context_items']} items | Database: {context['database']}")
-        print(f"📊 **Activity**: {activity['total']} interactions ({activity['timeframe']})")
-
-        # === RECENT CONTEXT ===
-        if activity.get("categories"):
-            cat_summary = ", ".join([f"{k}: {v}" for k, v in activity["categories"].items()])
-            print(f"🎯 **Active Areas**: {cat_summary}")
 
         # === ARCHITECTURE ===
         print(f"🏗️ **Architecture**: {project_info['architecture']}")

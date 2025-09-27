@@ -13,6 +13,17 @@ from ccom.tools_manager import ToolsManager
 import io
 import contextlib
 
+# Fix Windows Unicode issues
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except AttributeError:
+        # Python < 3.7 fallback
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+
 
 def create_enhanced_cli():
     """Create enhanced CLI with natural language support"""
@@ -494,16 +505,15 @@ def capture_command_execution(command_text: str, orchestrator):
         if not output_text.strip():
             output_text = "Command executed" if result else "Command failed"
 
-        # Use MCP native integration to save everything
-        mcp = get_mcp_integration()
-        mcp.capture_interaction(
-            input_text=command_text,
-            output_text=output_text,
-            metadata={
-                'success': bool(result),
-                'command_type': 'natural_language'
-            }
-        )
+        # Use auto-context to save everything
+        orchestrator.capture_conversation_auto(command_text, output_text)
+
+        # RESTORE: Auto-capture comprehensive evaluations (like mcp_bridge did)
+        try:
+            from .auto_capture import capture_if_evaluation
+            capture_if_evaluation(output_text, project=None)
+        except Exception:
+            pass  # Don't break on auto-capture failure
 
         # Print the output to user (since we captured it)
         print(output_text)
@@ -515,16 +525,14 @@ def capture_command_execution(command_text: str, orchestrator):
         print(error_output)
 
         # Still capture the error
-        universal_capture = get_universal_capture()
-        universal_capture.capture_interaction(
-            input_text=command_text,
-            output_text=error_output,
-            metadata={
-                'success': False,
-                'error': str(e),
-                'command_type': 'natural_language'
-            }
-        )
+        orchestrator.capture_conversation_auto(command_text, error_output)
+
+        # Also try auto-capture on errors (in case evaluation had errors)
+        try:
+            from .auto_capture import capture_if_evaluation
+            capture_if_evaluation(error_output, project=None)
+        except Exception:
+            pass
 
         return False
 
@@ -835,8 +843,9 @@ For more info: https://github.com/your-repo/ccom
 def handle_mcp_memory_command():
     """Handle MCP memory display command"""
     try:
-        mcp = get_mcp_integration()
-        context = mcp.get_context(limit=20)
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         if not context:
             print("🧠 **MCP Memory**: No context stored yet")
@@ -861,8 +870,9 @@ def handle_mcp_memory_command():
 def handle_mcp_context_command():
     """Handle MCP project context command"""
     try:
-        mcp = get_mcp_integration()
-        context = mcp.get_project_context()
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         print("\n🎯 **MCP PROJECT CONTEXT**")
         print("=" * 50)
@@ -896,8 +906,9 @@ def handle_mcp_context_command():
 def handle_mcp_activity_command():
     """Handle MCP activity summary command"""
     try:
-        mcp = get_mcp_integration()
-        activity = mcp.get_activity_summary(hours=24)
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         print("\n📊 **MCP ACTIVITY SUMMARY** (Last 24h)")
         print("=" * 50)
@@ -929,8 +940,9 @@ def handle_mcp_activity_command():
 def handle_mcp_sessions_command():
     """Handle MCP sessions list command"""
     try:
-        mcp = get_mcp_integration()
-        sessions = mcp.list_sessions(limit=10)
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         print("\n📅 **MCP SESSIONS** (Recent)")
         print("=" * 50)
@@ -956,7 +968,9 @@ def handle_mcp_sessions_command():
 def handle_mcp_start_session_command(session_name):
     """Handle MCP start session command"""
     try:
-        mcp = get_mcp_integration()
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         if session_name == "auto":
             session_name = None  # Use auto-generated name
@@ -977,7 +991,9 @@ def handle_mcp_start_session_command(session_name):
 def handle_mcp_continue_command(session_id):
     """Handle MCP continue session command"""
     try:
-        mcp = get_mcp_integration()
+        print("⚠️ MCP commands deprecated - use Node.js memory system:")
+        print("   node .claude/ccom.js memory")
+        return
 
         # Start new session continuing from the specified one
         result = mcp.start_session(

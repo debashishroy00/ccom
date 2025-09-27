@@ -12,7 +12,10 @@
       "Read(//c/Users/DR/OneDrive/projects/**)",
       "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli --status)",
       "Bash(PYTHONPATH:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python \"../ccom/ccom/cli.py\" --init)",
+      "Bash(PYTHONPATH=\"../ccom\" python -c \"\nfrom ccom.auto_capture import capture_if_evaluation\ntest_output = ''''''\n🔍 CCOM ENTERPRISE EVALUATION - Google Play Store Compliance Report\n\nAPPLICATION ANALYSIS\n\nProject Type: Progressive Web App (PWA) - Todo/Task Management\nCurrent Status: Ready for TWA packaging with minor improvements needed\n\nTIER 1: RECOMMENDED - High Revenue Potential\nRevenue potential: $2,000-5,000/month through app store distribution\nImplementation complexity: Medium (2-3 weeks)\n''''''\nresult = capture_if_evaluation(test_output)\nprint(''Capture result:'', result)\n\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate blockchain integration potential for todo app - TEST_UNIQUE_ID_20250927_1958\")"
     ],
     "deny": [],
     "ask": []
