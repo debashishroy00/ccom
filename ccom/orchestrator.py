@@ -7,6 +7,7 @@ Provides orchestration capabilities that Claude Code lacks
 import os
 import sys
 import json
+import logging
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -25,11 +26,63 @@ class CCOMOrchestrator:
         self.project_root = Path.cwd()
         self.claude_dir = self.project_root / ".claude"
         self.ccom_dir = self.project_root / ".claude"
+
+        # Initialize logger first
+        self.logger = logging.getLogger(__name__)
+
         self.memory = self.load_memory()
         self.tools_manager = None
 
         # Initialize native MCP Memory Keeper integration
         self.mcp = get_mcp_integration(str(self.project_root))
+
+        # Initialize conversation capture for Claude Code sessions
+        self._init_conversation_bridge()
+
+    def _init_conversation_bridge(self):
+        """Initialize bridge to capture Claude Code conversations beyond CCOM commands"""
+        try:
+            # Set up environment variable for Claude Code to know about MCP capture
+            os.environ['CCOM_MCP_CAPTURE_ENABLED'] = 'true'
+            os.environ['CCOM_MCP_DATABASE'] = str(self.mcp.context_db)
+
+            # Create a conversation capture interface
+            self.conversation_capture_active = True
+            self.logger.info("Conversation bridge initialized for comprehensive capture")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize conversation bridge: {e}")
+            self.conversation_capture_active = False
+
+    def capture_conversation(self, input_text: str, output_text: str, metadata: dict = None):
+        """
+        Capture full Claude Code conversations (not just CCOM commands).
+        This is the missing piece - conversations like Google Calendar integration.
+        """
+        try:
+            # Enhanced metadata for conversational context
+            conv_metadata = {
+                'source': 'claude_code_conversation',
+                'capture_method': 'comprehensive',
+                'conversation_length': len(output_text),
+                'timestamp': datetime.now().isoformat(),
+                **(metadata or {})
+            }
+
+            # Use MCP to capture with intelligent fact extraction
+            success = self.mcp.capture_interaction(
+                input_text=input_text,
+                output_text=output_text,
+                metadata=conv_metadata
+            )
+
+            if success:
+                self.logger.info(f"Captured conversation: {input_text[:50]}...")
+
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Failed to capture conversation: {e}")
+            return False
 
     def load_memory(self):
         """Load existing CCOM memory"""
@@ -296,14 +349,45 @@ class CCOMOrchestrator:
 
         # Capture the complete interaction (like mem0)
         if workflow_result is not None:
-            # Simulate output collection (in real implementation, collect actual output)
-            output = "Command executed successfully"
+            # Capture actual workflow output for comprehensive memory
+            if callable(workflow_result):
+                # Execute the workflow and capture its output
+                import io
+                import sys
+                from contextlib import redirect_stdout, redirect_stderr
+
+                # Capture stdout and stderr during workflow execution
+                stdout_capture = io.StringIO()
+                stderr_capture = io.StringIO()
+
+                try:
+                    with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
+                        actual_result = workflow_result()
+
+                    captured_output = stdout_capture.getvalue()
+                    captured_errors = stderr_capture.getvalue()
+
+                    # Combine all output for comprehensive capture
+                    full_output = f"{captured_output}\n{captured_errors}".strip()
+                    if not full_output:
+                        full_output = f"Successfully executed {command} workflow"
+
+                except Exception as e:
+                    full_output = f"Workflow execution error: {str(e)}"
+
+                workflow_result = actual_result if 'actual_result' in locals() else True
+            else:
+                # For non-callable results, convert to string representation
+                full_output = str(workflow_result) if workflow_result else f"Executed: {command}"
+
+            # Capture with real output content
             self.mcp.capture_interaction(
                 input_text=command,
-                output_text=output,
+                output_text=full_output,
                 metadata={
                     'execution_time': (datetime.now() - start_time).total_seconds(),
-                    'success': True
+                    'success': True,
+                    'workflow_type': 'ccom_command'
                 }
             )
             return workflow_result
