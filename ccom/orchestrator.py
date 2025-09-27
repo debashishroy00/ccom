@@ -348,49 +348,34 @@ class CCOMOrchestrator:
         # Use pattern matcher to find the appropriate workflow
         workflow_result = self._match_command_pattern(command_lower, command)
 
-        # Capture the complete interaction (like mem0)
+        # Simple, reliable MCP capture
         if workflow_result is not None:
-            # Capture actual workflow output for comprehensive memory
-            if callable(workflow_result):
-                # Execute the workflow and capture its output
-                import io
-                import sys
-                from contextlib import redirect_stdout, redirect_stderr
+            try:
+                # Execute workflow if callable
+                if callable(workflow_result):
+                    actual_result = workflow_result()
+                    output_summary = f"CCOM executed: {command} → Success"
+                    workflow_result = actual_result
+                else:
+                    output_summary = f"CCOM executed: {command} → {str(workflow_result)[:200]}"
 
-                # Capture stdout and stderr during workflow execution
-                stdout_capture = io.StringIO()
-                stderr_capture = io.StringIO()
+                # Simple capture call - no complex output redirection
+                self.mcp.capture_interaction(
+                    input_text=command,
+                    output_text=output_summary,
+                    metadata={
+                        'timestamp': datetime.now().isoformat(),
+                        'command_type': 'ccom_workflow',
+                        'success': True
+                    }
+                )
 
-                try:
-                    with redirect_stdout(stdout_capture), redirect_stderr(stderr_capture):
-                        actual_result = workflow_result()
+                self.logger.info(f"Captured CCOM interaction: {command}")
 
-                    captured_output = stdout_capture.getvalue()
-                    captured_errors = stderr_capture.getvalue()
+            except Exception as e:
+                self.logger.warning(f"MCP capture failed (non-critical): {e}")
+                # Don't let capture failures break the workflow
 
-                    # Combine all output for comprehensive capture
-                    full_output = f"{captured_output}\n{captured_errors}".strip()
-                    if not full_output:
-                        full_output = f"Successfully executed {command} workflow"
-
-                except Exception as e:
-                    full_output = f"Workflow execution error: {str(e)}"
-
-                workflow_result = actual_result if 'actual_result' in locals() else True
-            else:
-                # For non-callable results, convert to string representation
-                full_output = str(workflow_result) if workflow_result else f"Executed: {command}"
-
-            # Capture with real output content
-            self.mcp.capture_interaction(
-                input_text=command,
-                output_text=full_output,
-                metadata={
-                    'execution_time': (datetime.now() - start_time).total_seconds(),
-                    'success': True,
-                    'workflow_type': 'ccom_command'
-                }
-            )
             return workflow_result
         else:
             error_output = "❓ Unknown command. Try: workflow, deploy, quality, security, memory, or init commands"

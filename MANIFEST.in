@@ -1,6 +1,10 @@
 include README.md
 include LICENSE
+include CLAUDE.md
 include MANIFEST.in
-recursive-include cco/templates *
+recursive-include ccom/templates *
+recursive-include .claude *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
+recursive-exclude * node_modules
+recursive-exclude * .git

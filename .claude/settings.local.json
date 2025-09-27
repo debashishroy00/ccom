@@ -34,7 +34,9 @@
       "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -m ccom.cli \"test native mcp in todo\")",
       "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -m ccom.cli --mcp-context)",
       "Bash(pip install:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
