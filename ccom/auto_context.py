@@ -515,3 +515,35 @@ def capture_interaction(input_text: str, output_text: str):
     """Quick helper for interaction capture"""
     auto = get_auto_context()
     auto.capture_interaction(input_text, output_text)
+
+def capture_claude_code_ccom(input_text: str, output_text: str, project_path: str = None):
+    """
+    Hook for Claude Code CCOM commands to trigger auto-capture
+    This bridges Claude Code CCOM commands to the CCOM auto-capture system
+    """
+    try:
+        import os
+        from pathlib import Path
+
+        # Set working directory if specified
+        original_cwd = None
+        if project_path:
+            original_cwd = os.getcwd()
+            project_path = Path(project_path).resolve()
+            if project_path.exists():
+                os.chdir(str(project_path))
+
+        # Use existing auto_context system
+        auto = get_auto_context()
+        auto.capture_interaction(input_text, output_text)
+
+        # Restore original directory
+        if original_cwd:
+            os.chdir(original_cwd)
+
+        return True
+    except Exception as e:
+        # Silent fail - don't break Claude Code if auto-capture fails
+        import logging
+        logging.getLogger(__name__).debug(f"Claude Code CCOM auto-capture failed: {e}")
+        return False

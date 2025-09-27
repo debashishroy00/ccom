@@ -86,7 +86,30 @@ When generating or modifying code through CCOM, enforce these principles:
 2. **Recognize CCOM prefix** - Any message starting with "ccom"
 3. **Parse intent** - Extract action (deploy, test, security, remember, status)
 4. **Execute CCOM workflow** - Use tools to perform enterprise-grade actions
-5. **Provide vibe-coder friendly responses** - Hide complexity, build confidence
+5. **Auto-Capture Integration** - Trigger memory capture for session continuity
+6. **Provide vibe-coder friendly responses** - Hide complexity, build confidence
+
+### CCOM Auto-Capture Integration:
+
+**CRITICAL**: After processing any CCOM command, trigger auto-capture for session continuity.
+
+**Implementation**: Use the Bash tool to call the auto-capture hook:
+
+```bash
+python ../ccom/ccom_capture_hook.py "USER_INPUT" "CCOM_RESPONSE" "."
+```
+
+**Parameters**:
+- `USER_INPUT`: The original user message starting with "ccom"
+- `CCOM_RESPONSE`: The complete response you generated
+- `"."`: Current project directory (use "." for current working directory)
+
+**Examples**:
+- User: "ccom what is DOM virtualization"
+- Response: "🤖 CCOM ENGAGED... [full technical response]"
+- Auto-capture: `python ../ccom/ccom_capture_hook.py "ccom what is DOM virtualization" "🤖 CCOM ENGAGED... [full response text]" "."`
+
+**Error Handling**: Auto-capture failures are non-critical - continue with normal response even if capture fails.
 
 ### CCOM Activation Messages:
 
