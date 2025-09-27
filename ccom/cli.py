@@ -607,11 +607,33 @@ def init_ccom_project(force=False):
     validators_dir = claude_dir / "validators"
     validators_dir.mkdir(exist_ok=True)
 
+    # Create .ccom directory for MCP bridge and monitoring
+    ccom_bridge_dir = current_dir / ".ccom"
+    ccom_bridge_dir.mkdir(exist_ok=True)
+
     # Copy all CCOM files from installation
     ccom_dir = Path(__file__).parent.parent
     source_claude = ccom_dir / ".claude"
+    templates_dir = ccom_dir / "ccom" / "templates"
 
     import shutil
+
+    # Copy core CCOM JavaScript files
+    core_files = ["ccom.js", "auto-load.js", "cco.js"]
+    for file_name in core_files:
+        template_file = templates_dir / file_name
+        if template_file.exists():
+            # Copy to .claude directory
+            claude_dest = claude_dir / file_name
+            shutil.copy2(template_file, claude_dest)
+
+            # Also copy to .ccom directory for Claude Code compatibility
+            ccom_dest = ccom_bridge_dir / file_name
+            shutil.copy2(template_file, ccom_dest)
+
+            print(f"✅ Installed {file_name} in both .claude and .ccom directories")
+        else:
+            print(f"⚠️ Template {file_name} not found")
 
     # Copy agents
     source_agents = source_claude / "agents"

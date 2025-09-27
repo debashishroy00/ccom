@@ -25,7 +25,8 @@ class CCOMOrchestrator:
     def __init__(self):
         self.project_root = Path.cwd()
         self.claude_dir = self.project_root / ".claude"
-        self.ccom_dir = self.project_root / ".claude"
+        self.ccom_dir = self.project_root / ".claude"  # Primary config location
+        self.ccom_bridge_dir = self.project_root / ".ccom"  # MCP bridge location
 
         # Initialize logger first
         self.logger = logging.getLogger(__name__)
