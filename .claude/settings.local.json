@@ -5,7 +5,10 @@
       "Bash(cat:*)",
       "Bash(npm info:*)",
       "Bash(python:*)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "Bash(sqlite3:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

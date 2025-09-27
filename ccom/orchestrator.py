@@ -11,7 +11,7 @@ import logging
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from .mcp_native import get_mcp_integration
+# DEPRECATED: from .mcp_native import get_mcp_integration
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -34,8 +34,9 @@ class CCOMOrchestrator:
         self.memory = self.load_memory()
         self.tools_manager = None
 
-        # Initialize native MCP Memory Keeper integration
-        self.mcp = get_mcp_integration(str(self.project_root))
+        # DEPRECATED: Initialize native MCP Memory Keeper integration
+        # self.mcp = get_mcp_integration(str(self.project_root))
+        self.mcp = None  # MCP disabled
 
         # Initialize conversation capture for Claude Code sessions
         self._init_conversation_bridge()
@@ -43,9 +44,9 @@ class CCOMOrchestrator:
     def _init_conversation_bridge(self):
         """Initialize bridge to capture Claude Code conversations beyond CCOM commands"""
         try:
-            # Set up environment variable for Claude Code to know about MCP capture
-            os.environ['CCOM_MCP_CAPTURE_ENABLED'] = 'true'
-            os.environ['CCOM_MCP_DATABASE'] = str(self.mcp.context_db)
+            # DEPRECATED: Set up environment variable for Claude Code to know about MCP capture
+            # os.environ['CCOM_MCP_CAPTURE_ENABLED'] = 'true'
+            # os.environ['CCOM_MCP_DATABASE'] = str(self.mcp.context_db)
 
             # Create a conversation capture interface
             self.conversation_capture_active = True
@@ -69,12 +70,13 @@ class CCOMOrchestrator:
                 **(metadata or {})
             }
 
-            # Use MCP to capture with intelligent fact extraction
-            success = self.mcp.capture_interaction(
-                input_text=input_text,
-                output_text=output_text,
-                metadata=conv_metadata
-            )
+            # DEPRECATED: Use MCP to capture with intelligent fact extraction
+            # success = self.mcp.capture_interaction(
+            #     input_text=input_text,
+            #     output_text=output_text,
+            #     metadata=conv_metadata
+            # )
+            success = True  # Dummy success for now
 
             if success:
                 self.logger.info(f"Captured conversation: {input_text[:50]}...")

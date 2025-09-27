@@ -9,7 +9,7 @@ import argparse
 from pathlib import Path
 from ccom.orchestrator import CCOMOrchestrator
 from ccom.tools_manager import ToolsManager
-from ccom.mcp_native import get_mcp_integration
+# DEPRECATED: from ccom.mcp_native import get_mcp_integration
 import io
 import contextlib
 
@@ -330,35 +330,29 @@ def handle_tools_status_command():
 
 
 def handle_context_note(feature: str, note: str):
-    """Save a note about a feature to memory"""
-    try:
-        bridge = MCPMemoryBridge()
-        success = bridge.save_context(feature, "note", note, "normal")
+    """Save a note about a feature to memory - DEPRECATED (use memory.json)"""
+    print("⚠️ Context commands deprecated - use Node.js memory system:")
+    print(f"   node .claude/ccom.js remember '{feature}_note' '{note}'")
+    return
+    # DEPRECATED MCP functionality below:
+    # try:
+    #     bridge = MCPMemoryBridge()
+    #     success = bridge.save_context(feature, "note", note, "normal")
 
-        if success:
-            print(f"✅ Saved note for {feature}: {note}")
-        else:
-            print(f"❌ Failed to save note for {feature}")
-    except Exception as e:
-        print(f"❌ Error saving context: {e}")
+    # DEPRECATED: if success:
+    #     print(f"✅ Saved note for {feature}: {note}")
+    # else:
+    #     print(f"❌ Failed to save note for {feature}")
+    # except Exception as e:
+    #     print(f"❌ Error saving context: {e}")
 
 
 def handle_context_resume(feature: str):
-    """Resume work on a feature with full context"""
-    try:
-        bridge = MCPMemoryBridge()
-        print(f"🧠 **Resuming work on: {feature}**\n")
-
-        context = bridge.get_resume_context(feature)
-        formatted_context = bridge.format_context_for_display(context)
-
-        if formatted_context.strip() and formatted_context != "No context found for this feature.":
-            print(formatted_context)
-        else:
-            print(f"No previous context found for {feature}")
-            print("💡 Use 'ccom --context-note' to start tracking context for this feature.")
-    except Exception as e:
-        print(f"❌ Error retrieving context: {e}")
+    """Resume work on a feature with full context - DEPRECATED (use memory.json)"""
+    print("⚠️ Context commands deprecated - use Node.js memory system:")
+    print(f"   node .claude/ccom.js list  # Show all features")
+    return
+    # DEPRECATED MCP functionality
 
 
 def handle_context_search(query: str):
