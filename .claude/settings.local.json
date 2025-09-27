@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -c \"\nimport sys\nsys.path.insert(0, ''/c/Users/DR/OneDrive/projects/ccom'')\nfrom ccom.orchestrator import CCOMOrchestrator\nimport os\nos.chdir(''/c/Users/DR/OneDrive/projects/todo'')\n\nprint(''=== TESTING ORCHESTRATOR CAPTURE ==='')\norchestrator = CCOMOrchestrator()\n\n# Check current count\nimport sqlite3\nwith sqlite3.connect(''data/context.db'') as conn:\n    count_before = conn.execute(''SELECT COUNT(*) FROM contexts'').fetchone()[0]\n    print(f''Contexts before: {count_before}'')\n\n# Test a memory command which should trigger capture\nresult = orchestrator.handle_memory_command(''memory'')\nprint(f''Memory command result: {result}'')\n\n# Check count after\nwith sqlite3.connect(''data/context.db'') as conn:\n    count_after = conn.execute(''SELECT COUNT(*) FROM contexts'').fetchone()[0]\n    print(f''Contexts after: {count_after}'')\n    print(f''New records added: {count_after - count_before}'')\n\")"
+      "Bash(PYTHONPATH=/c/Users/DR/OneDrive/projects/ccom python -c \"\nimport sys\nsys.path.insert(0, ''/c/Users/DR/OneDrive/projects/ccom'')\nfrom ccom.orchestrator import CCOMOrchestrator\n\nprint(''=== TESTING CCOM ORCHESTRATOR DIRECTLY ==='')\norchestrator = CCOMOrchestrator()\n\n# Check what MCP instance it''s using\nprint(f''MCP instance: {type(orchestrator.mcp)}'')\nprint(f''MCP database path: {orchestrator.mcp.context_db}'')\n\n# Test if capture works\nprint(''\\nTesting capture...'')\nresult = orchestrator.mcp.capture_interaction(\n    ''debug test'',\n    ''testing if MCP capture works'',\n    {''debug'': True}\n)\nprint(f''Capture result: {result}'')\n\")"
     ],
     "deny": [],
     "ask": []
