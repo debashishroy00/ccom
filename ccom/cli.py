@@ -508,12 +508,17 @@ def capture_command_execution(command_text: str, orchestrator):
         # Use auto-context to save everything
         orchestrator.capture_conversation_auto(command_text, output_text)
 
-        # RESTORE: Auto-capture comprehensive evaluations (like mcp_bridge did)
+        # DUAL-CAPTURE: MCP Keeper + Auto-capture (non-disruptive)
         try:
+            # NEW: Try MCP Keeper first (if available)
+            if hasattr(orchestrator, 'mcp_keeper') and orchestrator.mcp_keeper:
+                captured = orchestrator.mcp_keeper.capture_if_mcp_available(output_text)
+
+            # EXISTING: Always run auto-capture as backup/primary
             from .auto_capture import capture_if_evaluation
             capture_if_evaluation(output_text, project=None)
         except Exception:
-            pass  # Don't break on auto-capture failure
+            pass  # Don't break on capture failure
 
         # Print the output to user (since we captured it)
         print(output_text)
@@ -527,8 +532,13 @@ def capture_command_execution(command_text: str, orchestrator):
         # Still capture the error
         orchestrator.capture_conversation_auto(command_text, error_output)
 
-        # Also try auto-capture on errors (in case evaluation had errors)
+        # DUAL-CAPTURE: Also try capture on errors (in case evaluation had errors)
         try:
+            # NEW: Try MCP Keeper for error capture too
+            if hasattr(orchestrator, 'mcp_keeper') and orchestrator.mcp_keeper:
+                orchestrator.mcp_keeper.capture_if_mcp_available(error_output)
+
+            # EXISTING: Auto-capture for errors
             from .auto_capture import capture_if_evaluation
             capture_if_evaluation(error_output, project=None)
         except Exception:

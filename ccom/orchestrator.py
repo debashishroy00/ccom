@@ -61,8 +61,25 @@ class CCOMOrchestrator:
             self.logger.error(f"Failed to initialize auto-context: {e}")
             self.auto_context = None
 
+        # Initialize MCP Keeper bridge (optional, non-disruptive)
+        self._init_mcp_keeper_bridge()
+
         # Initialize conversation capture for Claude Code sessions
         self._init_conversation_bridge()
+
+    def _init_mcp_keeper_bridge(self):
+        """Initialize MCP Keeper bridge (optional, non-disruptive)"""
+        try:
+            from .mcp_keeper_bridge import get_mcp_keeper_bridge
+            self.mcp_keeper = get_mcp_keeper_bridge(str(self.project_root))
+            if self.mcp_keeper:
+                self.logger.info("MCP Keeper bridge initialized (experimental)")
+            else:
+                self.logger.debug("MCP Keeper bridge unavailable, using auto-capture")
+                self.mcp_keeper = None
+        except Exception as e:
+            self.logger.debug(f"MCP Keeper bridge initialization failed (graceful): {e}")
+            self.mcp_keeper = None
 
     def _init_conversation_bridge(self):
         """Initialize bridge to capture Claude Code conversations beyond CCOM commands"""

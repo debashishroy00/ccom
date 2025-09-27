@@ -34,7 +34,9 @@ class AutoContextCapture:
                 capture_output=True,
                 text=True,
                 timeout=10,
-                cwd=str(Path.cwd())
+                cwd=str(Path.cwd()),
+                encoding='utf-8',
+                errors='replace'
             )
 
             return result.returncode == 0
@@ -86,13 +88,19 @@ class AutoContextCapture:
         if not self.enabled:
             return
 
-        # Universal capture - extract ALL meaningful content
+        # FIXED: Universal capture - capture EVERYTHING, not just filtered facts
         feature = self._detect_feature(input_text)
-        facts = self._extract_facts(input_text, output_text)
 
-        # Save ALL meaningful facts (not just high priority)
+        # Always capture the basic interaction
+        combined_content = f"{input_text}\n{output_text}"
+        self._call_node_memory("remember", feature, combined_content)
+
+        # OPTIONAL: Also extract specific facts for detailed analysis
+        facts = self._extract_facts(input_text, output_text)
         for fact in facts:
-            self._call_node_memory("remember", fact['feature'], fact['content'])
+            # Only save additional facts if they're different from main content
+            if fact['content'] not in combined_content:
+                self._call_node_memory("remember", fact['feature'], fact['content'])
 
         # Additional universal patterns
         self._capture_universal_patterns(input_text, output_text, feature)
