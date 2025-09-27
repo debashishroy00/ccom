@@ -8,7 +8,11 @@
       "mcp__ide__executeCode",
       "Bash(sqlite3:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Read(//c/Users/DR/OneDrive/projects/**)",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli --status)",
+      "Bash(PYTHONPATH:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

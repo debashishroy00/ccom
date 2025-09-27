@@ -38,6 +38,7 @@ def create_enhanced_cli():
     parser.add_argument("--mcp-sessions", action="store_true", help="List recent MCP sessions")
     parser.add_argument("--mcp-start-session", type=str, nargs="?", const="auto", help="Start new MCP session")
     parser.add_argument("--mcp-continue", type=str, help="Continue from specific session ID")
+    parser.add_argument("--capture", nargs=2, metavar=('INPUT', 'OUTPUT'), help="Test auto-capture with input and output text")
     parser.add_argument(
         "--remember", type=str, help='Remember a feature: --remember "auth system"'
     )
@@ -168,6 +169,9 @@ def handle_traditional_commands(args, orchestrator):
         return True
     elif args.mcp_continue:
         handle_mcp_continue_command(args.mcp_continue)
+        return True
+    elif args.capture:
+        handle_capture_command(args.capture[0], args.capture[1], orchestrator)
         return True
     elif args.remember:
         orchestrator.handle_memory_command(f"remember {args.remember}")
@@ -996,6 +1000,27 @@ def handle_mcp_continue_command(session_id):
 
     except Exception as e:
         print(f"❌ Error continuing MCP session: {e}")
+
+def handle_capture_command(input_text: str, output_text: str, orchestrator):
+    """Handle manual auto-capture testing"""
+    try:
+        print("\n🔄 **TESTING AUTO-CAPTURE**")
+        print("=" * 50)
+
+        print(f"📥 Input: {input_text[:100]}...")
+        print(f"📤 Output: {output_text[:100]}...")
+
+        # Test the auto-capture system
+        success = orchestrator.capture_conversation_auto(input_text, output_text)
+
+        if success:
+            print("✅ Auto-capture successful!")
+            print("💾 Check memory with: ccom --memory")
+        else:
+            print("❌ Auto-capture failed!")
+
+    except Exception as e:
+        print(f"❌ Error testing auto-capture: {e}")
 
 def main():
     """Enhanced main CLI entry point"""

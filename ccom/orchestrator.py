@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 # DEPRECATED: from .mcp_native import get_mcp_integration
+from .auto_context import get_auto_context
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -38,6 +39,9 @@ class CCOMOrchestrator:
         # self.mcp = get_mcp_integration(str(self.project_root))
         self.mcp = None  # MCP disabled
 
+        # Initialize auto-context capture
+        self.auto_context = get_auto_context()
+
         # Initialize conversation capture for Claude Code sessions
         self._init_conversation_bridge()
 
@@ -54,6 +58,17 @@ class CCOMOrchestrator:
         except Exception as e:
             self.logger.error(f"Failed to initialize conversation bridge: {e}")
             self.conversation_capture_active = False
+
+    def capture_conversation_auto(self, input_text: str, output_text: str):
+        """Automatically capture conversation with comprehensive analysis"""
+        try:
+            # Use the enhanced auto-context system
+            self.auto_context.capture_interaction(input_text, output_text)
+            self.logger.info(f"Auto-captured: {input_text[:50]}...")
+            return True
+        except Exception as e:
+            self.logger.error(f"Auto-capture failed: {e}")
+            return False
 
     def capture_conversation(self, input_text: str, output_text: str, metadata: dict = None):
         """
@@ -76,7 +91,10 @@ class CCOMOrchestrator:
             #     output_text=output_text,
             #     metadata=conv_metadata
             # )
-            success = True  # Dummy success for now
+
+            # Use new auto-context capture system
+            self.auto_context.capture_interaction(input_text, output_text)
+            success = True
 
             if success:
                 self.logger.info(f"Captured conversation: {input_text[:50]}...")
