@@ -84,32 +84,50 @@ When generating or modifying code through CCOM, enforce these principles:
 
 1. **CCOM Engagement Acknowledgment** - Always start with clear CCOM activation message
 2. **Recognize CCOM prefix** - Any message starting with "ccom"
-3. **Parse intent** - Extract action (deploy, test, security, remember, status)
-4. **Execute CCOM workflow** - Use tools to perform enterprise-grade actions
-5. **Auto-Capture Integration** - Trigger memory capture for session continuity
-6. **Provide vibe-coder friendly responses** - Hide complexity, build confidence
+3. **Extract command** - Parse the full command after "ccom"
+4. **Execute Real CCOM CLI** - Use Bash tool to run actual CCOM command for auto-capture
+5. **Return Actual Output** - Show the real CCOM execution results to user
+6. **Auto-Capture Triggered** - Memory systems automatically capture the execution
 
-### CCOM Auto-Capture Integration:
+### CCOM Automatic Execution System:
 
-**CRITICAL**: After processing any CCOM command, trigger auto-capture for session continuity.
+**CRITICAL**: All CCOM commands must be executed through the real CLI for automatic capture.
 
-**Implementation**: Use the Bash tool to call the auto-capture hook:
+**Implementation**: When user types a CCOM command, execute it through the real CLI:
 
 ```bash
-python ../ccom/ccom_capture_hook.py "USER_INPUT" "CCOM_RESPONSE" "."
+PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"
 ```
 
-**Parameters**:
-- `USER_INPUT`: The original user message starting with "ccom"
-- `CCOM_RESPONSE`: The complete response you generated
-- `"."`: Current project directory (use "." for current working directory)
+**Dynamic Path Resolution**:
+- `[CCOM_PATH]` should be dynamically resolved based on project structure
+- `[MEMORY_SCRIPT]` should be resolved to the project's memory script location
+
+**Common Patterns**:
+- CCOM Path: `../ccom`, `./ccom`, or absolute path to CCOM installation
+- Memory Script: `.claude/ccom.js`, `memory.js`, or project-specific location
+
+**Auto-Detection Strategy**:
+1. Check if `../ccom` directory exists (sibling CCOM installation)
+2. Check if `./ccom` exists (local CCOM installation)
+3. Fall back to asking user for CCOM location
+4. For memory scripts: Check `.claude/ccom.js`, then project root
+
+**Command Extraction**:
+1. Remove "ccom" prefix from user message
+2. Extract the actual command text
+3. Execute via real CCOM CLI
+4. Return the actual output to user
 
 **Examples**:
-- User: "ccom what is DOM virtualization"
-- Response: "🤖 CCOM ENGAGED... [full technical response]"
-- Auto-capture: `python ../ccom/ccom_capture_hook.py "ccom what is DOM virtualization" "🤖 CCOM ENGAGED... [full response text]" "."`
+- User: "ccom evaluate deployment status"
+- Extract: "evaluate deployment status"
+- Execute: `PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "evaluate deployment status"`
+- Return: The actual CCOM execution output
 
-**Error Handling**: Auto-capture failures are non-critical - continue with normal response even if capture fails.
+**Auto-Capture**: Happens automatically when real CLI executes - no additional capture needed.
+
+**Error Handling**: If CLI execution fails, provide helpful guidance about available commands.
 
 ### CCOM Activation Messages:
 
@@ -129,7 +147,7 @@ python ../ccom/ccom_capture_hook.py "USER_INPUT" "CCOM_RESPONSE" "."
 **Triggers**: "build", "compile", "package", "production build", "prepare release"
 **Actions**:
 
-- **CHECK MEMORY FIRST**: Use `node .claude/ccom.js check "<feature_name>"` to detect duplicates
+- **CHECK MEMORY FIRST**: Use `node [MEMORY_SCRIPT] check "<feature_name>"` to detect duplicates
 - If duplicate exists: Stop and warn user to enhance instead of rebuild
 - If no duplicate: Proceed with build workflow
 - Detect project type (Node/Python/Static)
@@ -212,10 +230,10 @@ python ../ccom/ccom_capture_hook.py "USER_INPUT" "CCOM_RESPONSE" "."
 **Actions**:
 
 - **Project Context**: `ccom context` (CRITICAL for vibe coders - eliminates re-explaining projects)
-- **Remember**: `node .claude/ccom.js remember <name> [description]`
-- **Show Memory**: `node .claude/ccom.js memory`
-- **Status**: `node .claude/ccom.js start` (loads context)
-- **Stats**: `node .claude/ccom.js stats`
+- **Remember**: `node [MEMORY_SCRIPT] remember <name> [description]`
+- **Show Memory**: `node [MEMORY_SCRIPT] memory`
+- **Status**: `node [MEMORY_SCRIPT] start` (loads context)
+- **Stats**: `node [MEMORY_SCRIPT] stats`
 
 **Response Style**: "🎯 **PROJECT CONTEXT LOADED**" with comprehensive project intelligence
 
@@ -229,7 +247,7 @@ python ../ccom/ccom_capture_hook.py "USER_INPUT" "CCOM_RESPONSE" "."
 
 ```bash
 # STEP 1: Check memory for duplicates FIRST
-node .claude/ccom.js check "<feature_name>"
+node [MEMORY_SCRIPT] check "<feature_name>"
 # If EXISTS: Stop and warn about duplicate
 # If CLEAR: Proceed with build
 
@@ -271,10 +289,10 @@ node .claude/ccom.js check "<feature_name>"
 5. **Memory Operations**:
 
 ```bash
-# Load: node .claude/ccom.js start
-# Remember: node .claude/ccom.js remember "feature_name" "description"
-# Show: node .claude/ccom.js memory
-# Stats: node .claude/ccom.js stats
+# Load: node [MEMORY_SCRIPT] start
+# Remember: node [MEMORY_SCRIPT] remember "feature_name" "description"
+# Show: node [MEMORY_SCRIPT] memory
+# Stats: node [MEMORY_SCRIPT] stats
 ```
 
 ### Response Guidelines:
