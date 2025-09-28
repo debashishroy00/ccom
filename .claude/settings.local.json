@@ -2,13 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(PYTHONPATH:*)",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"final test auto capture is working - UNIQUE_FINAL_TEST_20250927_1756\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate auto-capture integration comprehensive analysis\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"what is DOM virtualization\")",
-      "mcp__ide__getDiagnostics",
-      "WebSearch",
-      "WebFetch(domain:lobehub.com)",
-      "WebFetch(domain:github.com)"
+      "Bash(claude mcp add memory-keeper npx mcp-memory-keeper)",
+      "Bash(claude mcp:*)",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"test MCP Memory Keeper integration - this should auto-capture to the real MCP system now\")"
     ],
     "deny": [],
     "ask": []
