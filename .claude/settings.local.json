@@ -5,7 +5,10 @@
       "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"final test auto capture is working - UNIQUE_FINAL_TEST_20250927_1756\")",
       "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate auto-capture integration comprehensive analysis\")",
       "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"what is DOM virtualization\")",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "WebSearch",
+      "WebFetch(domain:lobehub.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
