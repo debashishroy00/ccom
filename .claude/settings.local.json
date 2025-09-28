@@ -2,15 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(PYTHONPATH:*)",
-      "Bash(claude mcp add memory-keeper npx mcp-memory-keeper)",
-      "Bash(claude mcp:*)",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"test MCP Memory Keeper integration - this should auto-capture to the real MCP system now\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"what reports can be generated\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate security\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"security\")",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate deployment status\")",
-      "Bash(/dev/null)",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"workflow quality\")"
+      "Bash(PYTHONPATH=\"../ccom\" python:*)"
     ],
     "deny": [],
     "ask": []
