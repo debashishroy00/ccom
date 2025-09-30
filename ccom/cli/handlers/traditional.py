@@ -6,6 +6,7 @@ Handles basic CCOM commands and natural language processing
 
 from .base import BaseHandler
 from ...utils import Display
+from ...legacy.tools_manager import ToolsManager
 
 
 class TraditionalHandler(BaseHandler):
@@ -81,14 +82,16 @@ class TraditionalHandler(BaseHandler):
             if force:
                 Display.warning("Force initialization - existing configuration will be overwritten")
 
-            # Basic initialization logic
+            # Enhanced initialization logic
             config_created = self._create_basic_config(force)
             memory_initialized = self._initialize_memory(force)
+            tools_installed = self._install_development_tools(force)
 
-            if config_created and memory_initialized:
+            if config_created and memory_initialized and tools_installed:
                 Display.workflow_complete("Initialization", True)
                 Display.success("CCOM initialized successfully")
                 Display.info("Use 'ccom --status' to verify configuration")
+                Display.info("Use 'ccom check tools' to verify tool installation")
                 return True
             else:
                 Display.workflow_complete("Initialization", False)
@@ -138,6 +141,58 @@ class TraditionalHandler(BaseHandler):
             self.logger.error(f"Failed to initialize memory: {e}")
             Display.error("Failed to initialize memory")
             return False
+
+    def _install_development_tools(self, force: bool = False) -> bool:
+        """Install development tools using the legacy tools manager"""
+        try:
+            Display.section("🔧 Development Tools Setup")
+            Display.progress("Detecting project type and installing required tools...")
+
+            # Initialize tools manager
+            tools_manager = ToolsManager(self.orchestrator.project_root)
+
+            # Check current tool status
+            Display.info("Checking existing tool installation...")
+            status = tools_manager.get_installation_status()
+
+            project_type = status.get("project_type", "unknown")
+            Display.info(f"Detected project type: {project_type}")
+
+            if status["missing_tools"]:
+                Display.info(f"Installing {len(status['missing_tools'])} missing tools...")
+                Display.progress(f"Tools to install: {', '.join(status['missing_tools'])}")
+
+                # Install missing tools
+                success = tools_manager.install_missing_tools(force=force)
+
+                if success:
+                    Display.success("✅ Development tools installed successfully!")
+
+                    # Show final status
+                    final_status = tools_manager.get_installation_status()
+                    Display.info(f"Tools installed: {len(final_status['installed_tools'])}/{final_status['total_required']}")
+
+                    if final_status['installed_tools']:
+                        Display.info(f"Available tools: {', '.join(final_status['installed_tools'])}")
+
+                    return True
+                else:
+                    Display.warning("⚠️ Some tools failed to install but basic configuration was created")
+                    return True  # Don't fail initialization completely
+            else:
+                Display.success("✅ All required development tools are already installed!")
+
+                # Still ensure configurations are up to date
+                Display.progress("Verifying tool configurations...")
+                tools_manager.install_missing_tools(force=False)  # This will update configs
+
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to install development tools: {e}")
+            Display.error(f"Tool installation failed: {str(e)}")
+            Display.warning("⚠️ Continuing initialization without tool installation")
+            return True  # Don't fail initialization completely
 
     def _build_context_from_args(self, args) -> dict:
         """Build execution context from command line arguments"""

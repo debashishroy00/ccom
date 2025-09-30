@@ -74,23 +74,23 @@ class SDKIntegrationManager:
                 self.config.get("quality_enforcer", {})
             )
 
-            # Security Guardian (placeholder - to be implemented)
-            # agents["security-guardian"] = SecurityGuardianAgent(
-            #     self.project_root,
-            #     self.config.get("security_guardian", {})
-            # )
+            # Security Guardian - SDK Implementation (v5.1)
+            agents["security-guardian"] = SecurityGuardianAgent(
+                self.project_root,
+                self.config.get("security_guardian", {})
+            )
 
-            # Builder Agent (placeholder - to be implemented)
-            # agents["builder-agent"] = BuilderAgent(
-            #     self.project_root,
-            #     self.config.get("builder_agent", {})
-            # )
+            # Builder Agent - SDK Implementation (v5.1)
+            agents["builder-agent"] = BuilderAgent(
+                self.project_root,
+                self.config.get("builder_agent", {})
+            )
 
-            # Deployment Specialist (placeholder - to be implemented)
-            # agents["deployment-specialist"] = DeploymentSpecialistAgent(
-            #     self.project_root,
-            #     self.config.get("deployment_specialist", {})
-            # )
+            # Deployment Specialist - SDK Implementation (v5.2)
+            agents["deployment-specialist"] = DeploymentSpecialistAgent(
+                self.project_root,
+                self.config.get("deployment_specialist", {})
+            )
 
             self.logger.info(f"Initialized {len(agents)} SDK agents")
 

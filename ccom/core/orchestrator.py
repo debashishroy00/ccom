@@ -114,7 +114,16 @@ class CCOMOrchestrator:
         ]):
             return self._handle_principles_validation(original_command)
 
-        # Workflow patterns
+        # Enterprise workflow patterns
+        if self._matches_patterns(command_lower, [
+            "enterprise deployment", "deploy enterprise", "deployment pipeline",
+            "quality improvement", "continuous improvement", "improve quality",
+            "security hardening", "harden security", "security pipeline",
+            "performance optimization", "optimize performance", "performance pipeline"
+        ]):
+            return self._handle_enterprise_workflow(original_command)
+
+        # Legacy workflow patterns
         if self._matches_patterns(command_lower, [
             "workflow", "run workflow", "rag quality", "vector validation",
             "aws rag", "enterprise rag", "full pipeline"
@@ -161,37 +170,69 @@ class CCOMOrchestrator:
             return True
 
     def _handle_principles_validation(self, command: str) -> bool:
-        """Handle software engineering principles validation"""
+        """Handle software engineering principles validation using comprehensive validator"""
         try:
-            from ..quality import PrinciplesValidator
+            from ..quality.comprehensive_validator import ComprehensiveValidator
 
-            Display.section("📐 Software Engineering Principles Validation")
-            validator = PrinciplesValidator(self.project_root)
-
+            validator = ComprehensiveValidator(self.project_root)
             command_lower = command.lower()
 
-            if "kiss" in command_lower:
-                result = validator.validate_kiss()
-                validator.display_results({"kiss": result})
-            elif "dry" in command_lower:
-                result = validator.validate_dry()
-                validator.display_results({"dry": result})
-            elif "solid" in command_lower:
-                result = validator.validate_solid()
-                validator.display_results({"solid": result})
-            elif "yagni" in command_lower:
-                result = validator.validate_yagni()
-                validator.display_results({"yagni": result})
+            # Determine scope based on command
+            if "kiss" in command_lower or "dry" in command_lower or "solid" in command_lower or "yagni" in command_lower:
+                # Run specific principle or all principles
+                scope = "principles"
+            elif "quality" in command_lower:
+                # Run comprehensive quality check
+                scope = "all"
             else:
-                # Run all principles validation
-                results = validator.validate_all_principles()
-                validator.display_results(results)
+                # Default to principles validation
+                scope = "principles"
 
-            return True
+            # Auto-fix if requested
+            auto_fix = "fix" in command_lower or "auto" in command_lower
+
+            # Execute comprehensive validation
+            report = validator.run_comprehensive_validation(auto_fix=auto_fix, target_scope=scope)
+
+            return report.get("overall", {}).get("successful_validations", 0) > 0
 
         except Exception as e:
             self.logger.error(f"Principles validation failed: {e}")
-            Display.error(f"Principles validation error: {str(e)}")
+            Display.error(f"Validation error: {str(e)}")
+            return False
+
+    def _handle_enterprise_workflow(self, command: str) -> bool:
+        """Handle enterprise workflow execution"""
+        try:
+            from ..orchestration.enterprise_workflows import EnterpriseWorkflowOrchestrator
+
+            orchestrator = EnterpriseWorkflowOrchestrator(self.project_root)
+            command_lower = command.lower()
+
+            # Determine workflow type
+            workflow_name = None
+            if any(pattern in command_lower for pattern in ["enterprise deployment", "deploy enterprise", "deployment pipeline"]):
+                workflow_name = "enterprise_deployment"
+            elif any(pattern in command_lower for pattern in ["quality improvement", "continuous improvement", "improve quality"]):
+                workflow_name = "quality_improvement"
+            elif any(pattern in command_lower for pattern in ["security hardening", "harden security", "security pipeline"]):
+                workflow_name = "security_hardening"
+            elif any(pattern in command_lower for pattern in ["performance optimization", "optimize performance", "performance pipeline"]):
+                workflow_name = "performance_optimization"
+
+            if workflow_name:
+                # Execute the enterprise workflow
+                import asyncio
+                report = asyncio.run(orchestrator.execute_workflow(workflow_name))
+                return report.get("overall_success", False)
+            else:
+                # List available workflows
+                orchestrator.list_available_workflows()
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Enterprise workflow execution failed: {e}")
+            Display.error(f"Enterprise workflow error: {str(e)}")
             return False
 
     def _handle_workflow_command(self, command: str) -> bool:

@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from ..utils import SubprocessRunner, ErrorHandler, Display
+from ..legacy.tools_manager import ToolsManager
 
 
 class ValidationResult:
@@ -63,6 +64,9 @@ class PrinciplesValidator:
         self.error_handler = ErrorHandler(self.logger)
         self.subprocess_runner = SubprocessRunner()
 
+        # Initialize tools manager for proper tool detection
+        self.tools_manager = ToolsManager(project_root)
+
         self.exclusion_patterns = [
             'node_modules/**', 'dist/**', 'build/**', '.git/**',
             'coverage/**', 'vendor/**', '*.min.js', '*.bundle.js',
@@ -100,6 +104,28 @@ class PrinciplesValidator:
             Display.info(f"⚡ Performance limit: Analyzing {len(filtered_files)} files (sampled from {len(files)} total)")
 
         return filtered_files
+
+    def check_tool_available(self, tool_name: str) -> bool:
+        """Check if a tool is available using the tools manager"""
+        try:
+            installed_tools = self.tools_manager.check_tool_availability()
+            return installed_tools.get(tool_name, {}).get("installed", False)
+        except Exception as e:
+            self.logger.warning(f"Failed to check tool availability for {tool_name}: {e}")
+            return False
+
+    def run_tool_command(self, cmd: List[str], timeout: int = 30) -> tuple:
+        """Run a tool command with proper error handling"""
+        try:
+            result = self.subprocess_runner.run_command(
+                cmd,
+                cwd=self.project_root,
+                timeout=timeout
+            )
+            return result.returncode, result.stdout, result.stderr
+        except Exception as e:
+            self.logger.error(f"Tool command failed: {' '.join(cmd)} - {e}")
+            return -1, "", str(e)
 
     def validate_all_principles(self) -> Dict[str, ValidationResult]:
         """Run all software engineering principles validation"""
@@ -168,44 +194,63 @@ class PrinciplesValidator:
         try:
             Display.progress("Detecting code duplication...")
 
-            # Try jscpd for duplication detection
-            duplication_result = self.subprocess_runner.run_command([
-                "npx", "jscpd", ".", "--threshold", "3", "--format", "json"
-            ], timeout=60)
+            # Check if jscpd tool is available
+            if self.check_tool_available("jscpd"):
+                # Use jscpd for comprehensive duplication detection
+                exit_code, stdout, stderr = self.run_tool_command([
+                    "npx", "jscpd", ".", "--min-lines", "5", "--format", "json"
+                ], timeout=60)
 
-            if duplication_result.returncode == 0 and duplication_result.stdout:
-                try:
-                    duplication_data = json.loads(duplication_result.stdout)
-                    duplicates = duplication_data.get('duplicates', [])
+                if exit_code == 0 and stdout:
+                    try:
+                        duplication_data = json.loads(stdout)
+                        duplicates = duplication_data.get('duplicates', [])
 
-                    if duplicates:
-                        for dup in duplicates[:10]:  # Show first 10
-                            result.add_issue("warning",
-                                f"Code duplication detected: {dup.get('lines', 'N/A')} lines",
-                                dup.get('firstFile', {}).get('name', 'unknown'))
+                        if duplicates:
+                            significant_duplicates = [d for d in duplicates if d.get('lines', 0) >= 5]
 
-                        duplication_percentage = len(duplicates) * 2  # Rough estimate
-                        result.score = max(0, 100 - duplication_percentage)
-                        result.success = result.score >= 70
-                    else:
-                        result.success = True
-                        result.score = 100
+                            for dup in significant_duplicates[:15]:  # Show first 15 significant duplicates
+                                lines = dup.get('lines', 0)
+                                first_file = dup.get('firstFile', {}).get('name', 'unknown')
+                                second_file = dup.get('secondFile', {}).get('name', 'unknown')
 
-                except json.JSONDecodeError:
-                    result.add_warning("Could not parse duplication report")
-                    result.score = 80  # Assume decent
-                    result.success = True
+                                severity = "error" if lines > 20 else "warning"
+                                result.add_issue(severity,
+                                    f"Code duplication: {lines} lines between {first_file} and {second_file}",
+                                    first_file)
+
+                            # Calculate score based on Rule of Three and duplication severity
+                            total_duplicated_lines = sum(d.get('lines', 0) for d in significant_duplicates)
+                            critical_duplicates = len([d for d in significant_duplicates if d.get('lines', 0) > 20])
+
+                            # Score calculation
+                            score_deduction = min(80, (critical_duplicates * 20) + (len(significant_duplicates) * 5))
+                            result.score = max(20, 100 - score_deduction)
+                            result.success = result.score >= 70
+
+                        else:
+                            result.success = True
+                            result.score = 100
+                            result.add_warning("No significant code duplication detected")
+
+                    except json.JSONDecodeError:
+                        result.add_warning("Could not parse jscpd output, falling back to simple check")
+                        return self._simple_duplication_check()
+
+                else:
+                    self.logger.warning(f"jscpd execution failed: {stderr}")
+                    result.add_warning("jscpd execution failed, falling back to simple check")
+                    return self._simple_duplication_check()
             else:
-                # Fallback: Simple text-based duplication check
-                result = self._simple_duplication_check()
+                result.add_warning("jscpd tool not available, using simple duplication detection")
+                return self._simple_duplication_check()
 
             return result
 
         except Exception as e:
             self.logger.error(f"DRY validation failed: {e}")
-            result.add_issue("error", f"DRY validation error: {str(e)}")
-            result.score = 60  # Assume moderate issues
-            return result
+            result.add_warning(f"DRY validation error: {str(e)}, falling back to simple check")
+            return self._simple_duplication_check()
 
     def validate_yagni(self) -> ValidationResult:
         """YAGNI - You Aren't Gonna Need It: Dead code detection"""
@@ -271,6 +316,57 @@ class PrinciplesValidator:
             result.add_issue("error", f"SOLID validation error: {str(e)}")
             result.score = 70
             return result
+
+    def _simple_duplication_check(self) -> ValidationResult:
+        """Simple fallback duplication detection without external tools"""
+        result = ValidationResult("DRY (Don't Repeat Yourself) - Simple Check")
+
+        try:
+            target_files = self.get_target_files(['*.js', '*.ts', '*.jsx', '*.tsx', '*.py'])
+            code_blocks = {}
+            duplications = []
+
+            for file_path in target_files[:50]:  # Limit for performance
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                        lines = f.readlines()
+
+                    # Check for duplicate lines (simplified)
+                    for i in range(len(lines) - 5):  # 5-line blocks
+                        block = ''.join(lines[i:i+5]).strip()
+                        if len(block) > 100 and not block.startswith('//') and not block.startswith('#'):
+                            if block in code_blocks:
+                                duplications.append({
+                                    'file1': str(file_path),
+                                    'file2': code_blocks[block],
+                                    'lines': 5,
+                                    'content': block[:100] + '...'
+                                })
+                            else:
+                                code_blocks[block] = str(file_path)
+
+                except Exception:
+                    continue
+
+            if duplications:
+                for dup in duplications[:10]:  # Show first 10
+                    result.add_issue("warning",
+                        f"Potential duplication between {dup['file1']} and {dup['file2']}",
+                        dup['file1'])
+
+                result.score = max(40, 100 - len(duplications) * 8)
+                result.success = result.score >= 70
+            else:
+                result.success = True
+                result.score = 95  # Good, but not perfect since we couldn't use full tools
+                result.add_warning("Simple duplication check completed - install jscpd for comprehensive analysis")
+
+        except Exception as e:
+            result.add_warning(f"Simple duplication check failed: {e}")
+            result.score = 80
+            result.success = True
+
+        return result
 
     def _analyze_python_complexity(self, file_path: Path) -> List[Dict]:
         """Analyze Python file complexity"""

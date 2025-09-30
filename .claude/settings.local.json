@@ -16,7 +16,21 @@
       "Bash(PYTHONPATH=\".\" python -m ccom.cli \"check tools\")",
       "Bash(PYTHONPATH=\".\" python -m ccom.cli validate principles)",
       "Bash(PYTHONPATH=\".\" python -m ccom.cli check tools)",
-      "Bash(PYTHONPATH=\".\" python -m ccom.cli check kiss)"
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli check kiss)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli --status)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli --init --force)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli --check-tools)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"validate principles\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"quality check\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"check kiss\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"validate dry\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli --install-tools)",
+      "Bash(npx jscpd:*)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"run workflow quality\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"quality improvement\")",
+      "Bash(dir)",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"check tools\")",
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"install tools\")"
     ],
     "deny": [],
     "ask": []
