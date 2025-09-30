@@ -1,65 +1,149 @@
 {
-  "installed_tools": {
-    "radon": {
-      "installed": true,
-      "version": "6.0.1"
+  "timestamp": "2025-09-30T00:20:42.671042",
+  "tools": {
+    "javascript": {
+      "eslint": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "@eslint/js": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "globals": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "eslint-plugin-import": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "eslint-plugin-unused-imports": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "prettier": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "jshint": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      }
     },
-    "black": {
-      "installed": true,
-      "version": "python -m black, 25.1.0 (compiled: yes)"
+    "typescript": {
+      "typescript": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "@typescript-eslint/parser": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "@typescript-eslint/eslint-plugin": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      }
     },
-    "flake8": {
-      "installed": true,
-      "version": "7.3.0 (mccabe: 0.7.0, pycodestyle: 2.14.0, pyflakes: 3.4.0, radon: 6.0.1)"
+    "python": {
+      "black": {
+        "installed": true,
+        "type": "python",
+        "version": "3.11.9"
+      },
+      "pylint": {
+        "installed": true,
+        "type": "python",
+        "version": "(AMD64)]"
+      },
+      "flake8": {
+        "installed": true,
+        "type": "python",
+        "version": "Windows"
+      },
+      "mypy": {
+        "installed": true,
+        "type": "python",
+        "version": "yes)"
+      },
+      "bandit": {
+        "installed": true,
+        "type": "python",
+        "version": "(AMD64)]"
+      }
     },
-    "husky": {
-      "installed": true,
-      "version": "",
-      "scope": "local"
+    "testing": {
+      "jest": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "pytest": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "playwright": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      }
     },
-    "jscpd": {
-      "installed": true,
-      "version": "4.0.5",
-      "scope": "local"
+    "git": {
+      "husky": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "lint-staged": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      }
     },
-    "complexity-report": {
-      "installed": false,
-      "version": null
+    "security": {
+      "bandit": {
+        "installed": true,
+        "type": "python",
+        "version": "(AMD64)]"
+      },
+      "safety": {
+        "installed": true,
+        "type": "python",
+        "version": "3.6.1"
+      }
     },
-    "lint-staged": {
-      "installed": true,
-      "version": "16.2.1",
-      "scope": "local"
-    },
-    "safety": {
-      "installed": true,
-      "version": "safety, version 3.6.1"
-    },
-    "bandit": {
-      "installed": true,
-      "version": "__main__.py 1.8.6"
-    },
-    "madge": {
-      "installed": true,
-      "version": "8.0.0",
-      "scope": "local"
-    },
-    "mypy": {
-      "installed": true,
-      "version": "mypy 1.18.2 (compiled: yes)"
-    },
-    "pylint": {
-      "installed": true,
-      "version": "pylint 3.3.8"
-    },
-    "pytest": {
-      "installed": true,
-      "version": "pytest 8.3.5"
+    "complexity": {
+      "complexity-report": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "radon": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "jscpd": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      },
+      "madge": {
+        "installed": false,
+        "type": "npm",
+        "error": "[WinError 2] The system cannot find the file specified"
+      }
     }
-  },
-  "tool_versions": {},
-  "last_check": "2025-09-27T15:17:01.554080",
-  "project_type": "python",
-  "custom_tools": [],
-  "configurations": {}
+  }
 }

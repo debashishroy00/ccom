@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ccom"
-version = "0.3.0"
-description = "CCOM v0.3 - Claude Code Orchestrator and Memory with enterprise automation"
+version = "5.0.0"
+description = "CCOM v5.0 - Claude Code Orchestrator and Memory with SDK Integration"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [

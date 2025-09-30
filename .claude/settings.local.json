@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(PYTHONPATH:*)",
-      "Bash(PYTHONPATH=\"../ccom\" python:*)"
+      "Bash(PYTHONPATH=\"../ccom\" python:*)",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"evaluate if it works with internet explorer\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"context\")",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"evaluate test integration\")",
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Read(//c/Users/DR/OneDrive/projects/**)",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli --help)",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli --status)",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"quality check\")",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"validate principles\")",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"check tools\")",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli validate principles)",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli check tools)",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli check kiss)"
     ],
     "deny": [],
     "ask": []
