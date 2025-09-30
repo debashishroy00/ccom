@@ -33,11 +33,18 @@ class AdvancedMemoryKeeper:
         self.validation_history_file = self.project_root / ".claude" / "validation_history.json"
         self.pattern_learning_file = self.project_root / ".claude" / "pattern_learning.json"
         self.context_intelligence_file = self.project_root / ".claude" / "context_intelligence.json"
+        self.command_history_file = self.project_root / ".claude" / "command_history.json"
+        self.session_continuity_file = self.project_root / ".claude" / "session_continuity.json"
 
         # Initialize memory structures
         self.validation_history = self._load_validation_history()
         self.pattern_learning = self._load_pattern_learning()
         self.context_intelligence = self._load_context_intelligence()
+        self.command_history = self._load_command_history()
+        self.session_continuity = self._load_session_continuity()
+
+        # Auto-load context for new sessions
+        self._auto_load_session_context()
 
     def capture_validation_session(self, validation_report: Dict[str, Any]) -> None:
         """Capture comprehensive validation session with intelligent analysis"""
@@ -308,6 +315,267 @@ class AdvancedMemoryKeeper:
             self.logger.warning(f"Failed to generate intelligent recommendations: {e}")
 
         return recommendations
+
+    # === NEW SESSION CONTINUITY & COMMAND MEMORY METHODS ===
+
+    def _load_command_history(self) -> Dict[str, Any]:
+        """Load command execution history"""
+        try:
+            if self.command_history_file.exists():
+                with open(self.command_history_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            self.logger.warning(f"Failed to load command history: {e}")
+
+        return {
+            "sessions": {},
+            "global_commands": {},
+            "last_session": None,
+            "tool_installations": {},
+            "build_history": [],
+            "deployment_history": []
+        }
+
+    def _load_session_continuity(self) -> Dict[str, Any]:
+        """Load session continuity data"""
+        try:
+            if self.session_continuity_file.exists():
+                with open(self.session_continuity_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            self.logger.warning(f"Failed to load session continuity: {e}")
+
+        return {
+            "current_session_id": None,
+            "session_start_time": None,
+            "loaded_context": {},
+            "session_memory": {},
+            "continuity_enabled": True
+        }
+
+    def _auto_load_session_context(self) -> None:
+        """Automatically load context for new sessions"""
+        try:
+            # Generate new session ID
+            current_time = datetime.now()
+            session_id = f"session_{current_time.strftime('%Y%m%d_%H%M%S')}"
+
+            # Update session continuity
+            self.session_continuity.update({
+                "current_session_id": session_id,
+                "session_start_time": current_time.isoformat(),
+                "loaded_context": self.get_context_summary(),
+                "session_memory": {}
+            })
+
+            # Save updated continuity
+            self._save_session_continuity()
+
+            self.logger.info(f"Session context auto-loaded: {session_id}")
+
+        except Exception as e:
+            self.logger.warning(f"Auto-load session context failed: {e}")
+
+    def capture_command_execution(self, command: str, context: Dict[str, Any], result: Dict[str, Any]) -> None:
+        """Capture command execution for memory and continuity"""
+        try:
+            session_id = self.session_continuity.get("current_session_id", "unknown_session")
+            timestamp = datetime.now().isoformat()
+
+            # Add to session commands
+            if session_id not in self.command_history["sessions"]:
+                self.command_history["sessions"][session_id] = []
+
+            command_record = {
+                "command": command,
+                "timestamp": timestamp,
+                "context": context,
+                "result": result,
+                "success": result.get("success", False)
+            }
+
+            self.command_history["sessions"][session_id].append(command_record)
+
+            # Update global command tracking
+            self._update_global_command_tracking(command, command_record)
+
+            # Update session memory
+            self._update_session_memory(command, command_record)
+
+            # Save command history
+            self._save_command_history()
+
+            self.logger.info(f"Command captured: {command} (session: {session_id})")
+
+        except Exception as e:
+            self.logger.warning(f"Command capture failed: {e}")
+
+    def _update_global_command_tracking(self, command: str, record: Dict[str, Any]) -> None:
+        """Update global command tracking"""
+        global_commands = self.command_history["global_commands"]
+
+        if command not in global_commands:
+            global_commands[command] = {
+                "count": 0,
+                "last_executed": None,
+                "last_result": None,
+                "success_rate": 0.0,
+                "executions": []
+            }
+
+        cmd_data = global_commands[command]
+        cmd_data["count"] += 1
+        cmd_data["last_executed"] = record["timestamp"]
+        cmd_data["last_result"] = record["result"]
+        cmd_data["executions"].append({
+            "timestamp": record["timestamp"],
+            "success": record["success"]
+        })
+
+        # Keep last 10 executions
+        cmd_data["executions"] = cmd_data["executions"][-10:]
+
+        # Calculate success rate
+        successes = sum(1 for exe in cmd_data["executions"] if exe["success"])
+        cmd_data["success_rate"] = successes / len(cmd_data["executions"]) if cmd_data["executions"] else 0.0
+
+    def _update_session_memory(self, command: str, record: Dict[str, Any]) -> None:
+        """Update session-specific memory"""
+        session_memory = self.session_continuity["session_memory"]
+
+        # Track tools installations in this session
+        if "install" in command.lower() and "tool" in command.lower():
+            session_memory["tools_installed"] = session_memory.get("tools_installed", []) + [{
+                "timestamp": record["timestamp"],
+                "success": record["success"],
+                "command": command
+            }]
+
+        # Track validations in this session
+        if "validate" in command.lower() or "check" in command.lower():
+            session_memory["validations_run"] = session_memory.get("validations_run", []) + [{
+                "timestamp": record["timestamp"],
+                "command": command,
+                "result": record.get("result", {})
+            }]
+
+        # Track builds in this session
+        if "build" in command.lower() or "deploy" in command.lower():
+            session_memory["builds_run"] = session_memory.get("builds_run", []) + [{
+                "timestamp": record["timestamp"],
+                "command": command,
+                "success": record["success"]
+            }]
+
+    def query_command_memory(self, command_pattern: str, timeframe_hours: int = 24) -> Dict[str, Any]:
+        """Query command memory to check if similar commands were executed recently"""
+        try:
+            cutoff_time = datetime.now() - timedelta(hours=timeframe_hours)
+            recent_commands = []
+
+            # Check global command history
+            for cmd, data in self.command_history["global_commands"].items():
+                if command_pattern.lower() in cmd.lower():
+                    last_exec = data.get("last_executed")
+                    if last_exec:
+                        last_time = datetime.fromisoformat(last_exec)
+                        if last_time > cutoff_time:
+                            recent_commands.append({
+                                "command": cmd,
+                                "last_executed": last_exec,
+                                "success_rate": data.get("success_rate", 0.0),
+                                "count": data.get("count", 0),
+                                "last_result": data.get("last_result", {})
+                            })
+
+            # Check current session memory
+            session_memory = self.session_continuity.get("session_memory", {})
+
+            return {
+                "recent_commands": recent_commands,
+                "session_context": session_memory,
+                "has_recent_execution": len(recent_commands) > 0,
+                "recommendations": self._generate_memory_recommendations(command_pattern, recent_commands)
+            }
+
+        except Exception as e:
+            self.logger.warning(f"Command memory query failed: {e}")
+            return {
+                "recent_commands": [],
+                "session_context": {},
+                "has_recent_execution": False,
+                "recommendations": []
+            }
+
+    def _generate_memory_recommendations(self, command_pattern: str, recent_commands: List[Dict]) -> List[str]:
+        """Generate intelligent recommendations based on command memory"""
+        recommendations = []
+
+        if not recent_commands:
+            return recommendations
+
+        # Check for recent tool installations
+        if "install" in command_pattern.lower() and "tool" in command_pattern.lower():
+            for cmd in recent_commands:
+                if cmd["success_rate"] > 0.8:  # Recent successful installation
+                    recommendations.append(f"🔍 Tools were recently installed successfully. Consider checking current status first.")
+                    break
+
+        # Check for recent validations
+        if "validate" in command_pattern.lower() or "check" in command_pattern.lower():
+            recent_validation = max(recent_commands, key=lambda x: x["last_executed"], default=None)
+            if recent_validation:
+                recommendations.append(f"📊 Recent validation completed. Review results before re-running.")
+
+        # Check for repeated failures
+        failed_commands = [cmd for cmd in recent_commands if cmd["success_rate"] < 0.5]
+        if failed_commands:
+            recommendations.append(f"⚠️ Previous attempts had low success rate. Review configuration before retrying.")
+
+        return recommendations
+
+    def get_session_intelligence(self) -> Dict[str, Any]:
+        """Get intelligent session context for Claude Code"""
+        try:
+            session_id = self.session_continuity.get("current_session_id")
+            session_memory = self.session_continuity.get("session_memory", {})
+
+            # Get recent session commands
+            recent_commands = []
+            if session_id and session_id in self.command_history["sessions"]:
+                recent_commands = self.command_history["sessions"][session_id][-5:]  # Last 5 commands
+
+            return {
+                "session_id": session_id,
+                "session_start_time": self.session_continuity.get("session_start_time"),
+                "loaded_context": self.session_continuity.get("loaded_context", {}),
+                "session_memory": session_memory,
+                "recent_commands": recent_commands,
+                "context_summary": self.get_context_summary(),
+                "intelligent_recommendations": self.get_intelligent_recommendations()
+            }
+
+        except Exception as e:
+            self.logger.warning(f"Session intelligence failed: {e}")
+            return {}
+
+    def _save_command_history(self) -> None:
+        """Save command history to file"""
+        try:
+            self.command_history_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.command_history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.command_history, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            self.logger.warning(f"Failed to save command history: {e}")
+
+    def _save_session_continuity(self) -> None:
+        """Save session continuity to file"""
+        try:
+            self.session_continuity_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.session_continuity_file, 'w', encoding='utf-8') as f:
+                json.dump(self.session_continuity, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            self.logger.warning(f"Failed to save session continuity: {e}")
 
     def get_context_summary(self) -> Dict[str, Any]:
         """Get intelligent context summary for Claude Code"""

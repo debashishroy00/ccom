@@ -17,6 +17,7 @@ from .agent_manager import AgentManager
 from .context_manager import ContextManager
 from ccom.utils import ErrorHandler, Display
 from ccom.auto_context import get_auto_context
+from ..memory.advanced_memory_keeper import AdvancedMemoryKeeper
 
 # Handle Windows console encoding
 if sys.platform == "win32":
@@ -55,8 +56,14 @@ class CCOMOrchestrator:
         self.agent_manager = AgentManager(self.project_root, self.memory_manager, self.config)
         self.context_manager = ContextManager(self.project_root, self.memory_manager)
 
+        # Initialize advanced memory keeper for session continuity
+        self.advanced_memory = AdvancedMemoryKeeper(self.project_root, self.memory_manager)
+
         # Initialize auto-context capture
         self._init_auto_context()
+
+        # Display session intelligence on startup (quiet)
+        self._show_session_intelligence()
 
     def _init_auto_context(self) -> None:
         """Initialize auto-context capture system"""
@@ -263,22 +270,16 @@ class CCOMOrchestrator:
             return False
 
     def _handle_tools_command(self, command: str) -> bool:
-        """Handle tools management commands"""
+        """Handle tools management commands with memory intelligence"""
         try:
-            from ..quality import ComprehensiveToolsManager
-
-            tools_manager = ComprehensiveToolsManager(self.project_root)
             command_lower = command.lower()
 
             if "install" in command_lower:
-                Display.progress("Installing development tools...")
-                success = tools_manager.install_missing_tools()
-                if success:
-                    Display.success("✅ Tools installation completed")
-                return success
+                # Use memory intelligence for tool installation
+                return self._handle_install_tools_with_memory()
             elif "status" in command_lower or "check" in command_lower:
-                tools_manager.display_comprehensive_status()
-                return True
+                # Use memory intelligence for tool checking
+                return self._handle_check_tools_with_memory()
             else:
                 Display.info("Tools commands: install tools, check tools, tools status")
                 return True
@@ -286,6 +287,110 @@ class CCOMOrchestrator:
         except Exception as e:
             self.logger.error(f"Tools management failed: {e}")
             Display.error(f"Tools error: {str(e)}")
+            return False
+
+    def _handle_install_tools_with_memory(self) -> bool:
+        """Handle install tools with memory intelligence"""
+        try:
+            Display.header("🧠 CCOM Intelligence: Checking Memory Before Installation")
+
+            # Query memory for recent tool installations
+            memory_query = self.advanced_memory.query_command_memory("install tools", timeframe_hours=24)
+
+            # Check if tools were recently installed successfully
+            if memory_query["has_recent_execution"]:
+                Display.section("🔍 Memory Intelligence Found Recent Activity")
+
+                for cmd in memory_query["recent_commands"]:
+                    if cmd["success_rate"] > 0.8:  # Recent successful installation
+                        Display.warning(f"⚠️  Tools were successfully installed recently: {cmd['last_executed']}")
+                        Display.info(f"📊 Success Rate: {cmd['success_rate']:.1%} ({cmd['count']} attempts)")
+
+                        # Check current tool status first
+                        Display.progress("Checking current tool status...")
+                        from ..legacy.tools_manager import ToolsManager
+                        tools_manager = ToolsManager(self.project_root)
+                        installed_tools = tools_manager.check_tool_availability()
+                        required_tools = tools_manager.get_tools_for_project()
+
+                        missing_count = len([t for t in required_tools if not installed_tools.get(t, {}).get("installed", False)])
+
+                        if missing_count == 0:
+                            Display.success("✅ All required tools are already installed")
+                            Display.info("💡 Memory Intelligence: No installation needed")
+
+                            # Capture this decision in memory
+                            self.advanced_memory.capture_command_execution(
+                                "install tools",
+                                {"memory_check": True, "tools_already_installed": True},
+                                {"success": True, "action": "skipped_unnecessary_installation", "missing_tools": 0}
+                            )
+
+                            return True
+                        else:
+                            Display.info(f"📋 Found {missing_count} missing tools - proceeding with installation")
+                            break
+
+                # Show memory recommendations
+                if memory_query["recommendations"]:
+                    Display.section("🧠 Memory Recommendations")
+                    for rec in memory_query["recommendations"]:
+                        Display.info(f"  {rec}")
+
+            # Proceed with installation using the comprehensive tools manager
+            Display.progress("Installing development tools...")
+            from ..quality import ComprehensiveToolsManager
+            tools_manager = ComprehensiveToolsManager(self.project_root)
+            success = tools_manager.install_missing_tools()
+
+            # Capture command execution in memory
+            context = {
+                "memory_check_performed": True,
+                "had_recent_execution": memory_query["has_recent_execution"]
+            }
+
+            if success:
+                Display.success("✅ Tools installation completed")
+                # Capture successful installation
+                self.advanced_memory.capture_command_execution(
+                    "install tools",
+                    context,
+                    {"success": True, "installation_completed": True}
+                )
+            else:
+                # Capture failed installation
+                self.advanced_memory.capture_command_execution(
+                    "install tools",
+                    context,
+                    {"success": False, "error": "installation_failed"}
+                )
+
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Tool installation with memory failed: {e}")
+            Display.error(f"Tool installation failed: {str(e)}")
+            return False
+
+    def _handle_check_tools_with_memory(self) -> bool:
+        """Handle check tools with memory intelligence"""
+        try:
+            from ..quality import ComprehensiveToolsManager
+            tools_manager = ComprehensiveToolsManager(self.project_root)
+            result = tools_manager.display_comprehensive_status()
+
+            # Capture tool check in memory
+            self.advanced_memory.capture_command_execution(
+                "check tools",
+                {"orchestrator_check": True},
+                {"success": True, "status_displayed": True}
+            )
+
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Tool check with memory failed: {e}")
+            Display.error(f"Tool check failed: {str(e)}")
             return False
 
     def _extract_workflow_name(self, command_lower: str) -> str:
@@ -322,6 +427,16 @@ class CCOMOrchestrator:
                 self.logger.debug(f"Captured interaction: {command}")
             except Exception as e:
                 self.logger.warning(f"Failed to capture interaction: {e}")
+
+        # Also capture in advanced memory for session continuity
+        try:
+            self.advanced_memory.capture_command_execution(
+                command,
+                {"orchestrator_execution": True},
+                {"success": bool(result), "result_type": type(result).__name__}
+            )
+        except Exception as e:
+            self.logger.debug(f"Advanced memory capture failed: {e}")
 
     # === WORKFLOW SEQUENCES ===
 
@@ -450,6 +565,42 @@ class CCOMOrchestrator:
     def memory(self) -> Dict[str, Any]:
         """Legacy compatibility property for memory access"""
         return self.memory_manager.memory
+
+    def _show_session_intelligence(self) -> None:
+        """Show quiet session intelligence on startup (non-intrusive)"""
+        try:
+            # Only show if there's meaningful session continuity
+            session_intel = self.advanced_memory.get_session_intelligence()
+
+            if session_intel and session_intel.get("recent_commands"):
+                # Only show minimal intelligence to avoid clutter
+                context_summary = session_intel.get("context_summary", {})
+                quality_status = context_summary.get("project_quality_status", {})
+
+                if quality_status.get("validation_count", 0) > 0:
+                    grade = quality_status.get("current_grade", "N/A")
+                    # Quiet intelligence notice - no intrusive display
+                    self.logger.info(f"Session context loaded: {grade} quality profile, {len(session_intel['recent_commands'])} recent commands")
+
+        except Exception as e:
+            # Fail silently - don't disrupt startup for memory issues
+            self.logger.debug(f"Session intelligence display failed: {e}")
+
+    def get_session_intelligence(self) -> Dict[str, Any]:
+        """Get current session intelligence for external access"""
+        try:
+            return self.advanced_memory.get_session_intelligence()
+        except Exception as e:
+            self.logger.warning(f"Failed to get session intelligence: {e}")
+            return {}
+
+    def query_command_memory(self, command_pattern: str, timeframe_hours: int = 24) -> Dict[str, Any]:
+        """Query command memory for intelligent decision making"""
+        try:
+            return self.advanced_memory.query_command_memory(command_pattern, timeframe_hours)
+        except Exception as e:
+            self.logger.warning(f"Command memory query failed: {e}")
+            return {"has_recent_execution": False, "recent_commands": [], "recommendations": []}
 
     def save_memory(self) -> bool:
         """Legacy compatibility method for memory saving"""

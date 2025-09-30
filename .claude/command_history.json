@@ -1,0 +1,133 @@
+{
+  "sessions": {
+    "session_20250930_014258": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:42:58.366640",
+        "context": {
+          "test_run": true,
+          "simulated": true
+        },
+        "result": {
+          "success": true,
+          "tools_installed": 5,
+          "test_simulation": true
+        },
+        "success": true
+      }
+    ],
+    "session_20250930_014310": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:43:10.645581",
+        "context": {
+          "test_run": true,
+          "simulated": true
+        },
+        "result": {
+          "success": true,
+          "tools_installed": 5,
+          "test_simulation": true
+        },
+        "success": true
+      }
+    ],
+    "session_20250930_014326": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:43:32.836797",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20250930_014342": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:43:48.453440",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20250930_014453": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:44:59.315236",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20250930_014518": [
+      {
+        "command": "install tools",
+        "timestamp": "2025-09-30T01:45:24.507322",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ]
+  },
+  "global_commands": {
+    "install tools": {
+      "count": 6,
+      "last_executed": "2025-09-30T01:45:24.507322",
+      "last_result": {
+        "success": false,
+        "result_type": "bool"
+      },
+      "success_rate": 0.3333333333333333,
+      "executions": [
+        {
+          "timestamp": "2025-09-30T01:42:58.366640",
+          "success": true
+        },
+        {
+          "timestamp": "2025-09-30T01:43:10.645581",
+          "success": true
+        },
+        {
+          "timestamp": "2025-09-30T01:43:32.836797",
+          "success": false
+        },
+        {
+          "timestamp": "2025-09-30T01:43:48.453440",
+          "success": false
+        },
+        {
+          "timestamp": "2025-09-30T01:44:59.315236",
+          "success": false
+        },
+        {
+          "timestamp": "2025-09-30T01:45:24.507322",
+          "success": false
+        }
+      ]
+    }
+  },
+  "last_session": null,
+  "tool_installations": {},
+  "build_history": [],
+  "deployment_history": []
+}

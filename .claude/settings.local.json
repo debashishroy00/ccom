@@ -30,7 +30,8 @@
       "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"quality improvement\")",
       "Bash(dir)",
       "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"check tools\")",
-      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"install tools\")"
+      "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"install tools\")",
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"install tools\")"
     ],
     "deny": [],
     "ask": []
