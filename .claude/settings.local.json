@@ -31,7 +31,12 @@
       "Bash(dir)",
       "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"check tools\")",
       "Bash(PYTHONPATH=\"C:\\Users\\DR\\OneDrive\\projects\\ccom\" python -m ccom.cli \"install tools\")",
-      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"install tools\")"
+      "Bash(PYTHONPATH=\".\" python -m ccom.cli \"install tools\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"install tools\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"check tools\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"validate principles\")",
+      "Bash(cat:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
