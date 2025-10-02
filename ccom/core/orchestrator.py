@@ -164,6 +164,9 @@ class CCOMOrchestrator:
             "implement", "implement from", "build from", "code from", "following",
             "implement prd", "build prd", "from requirements", "from specs",
             "implement features/", "implement docs/", "implement specs/",
+            "review prd", "analyze prd", "read prd", "parse prd",
+            "create plan", "implementation plan", "analyze requirements",
+            "review requirements", "plan from", "analyze", "review",
             ".md", "requirements.md", "prd.md", "specs.md"
         ]):
             import asyncio
