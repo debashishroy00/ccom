@@ -84,14 +84,22 @@ class TraditionalHandler(BaseHandler):
 
             # Enhanced initialization logic
             config_created = self._create_basic_config(force)
+            templates_copied = self._copy_template_files(force)
             memory_initialized = self._initialize_memory(force)
             tools_installed = self._install_development_tools(force)
 
-            if config_created and memory_initialized and tools_installed:
+            if config_created and templates_copied and memory_initialized and tools_installed:
                 Display.workflow_complete("Initialization", True)
-                Display.success("CCOM initialized successfully")
-                Display.info("Use 'ccom --status' to verify configuration")
-                Display.info("Use 'ccom check tools' to verify tool installation")
+                Display.success("✅ CCOM initialized successfully!")
+                Display.info("")
+                Display.info("📋 Files created:")
+                Display.info("  • .claude/ - CCOM configuration directory")
+                Display.info("  • CLAUDE.md - Integration instructions for Claude Code")
+                Display.info("")
+                Display.info("🚀 Next steps:")
+                Display.info("  1. Review CLAUDE.md for Claude Code integration")
+                Display.info("  2. Run: ccom --status")
+                Display.info("  3. Start using: ccom <natural language command>")
                 return True
             else:
                 Display.workflow_complete("Initialization", False)
@@ -116,13 +124,56 @@ class TraditionalHandler(BaseHandler):
             claude_dir.mkdir(exist_ok=True)
             (claude_dir / "agents").mkdir(exist_ok=True)
 
-            Display.success("Configuration directory created")
+            Display.success("✅ Configuration directory created")
             return True
 
         except Exception as e:
             self.logger.error(f"Failed to create config: {e}")
             Display.error("Failed to create configuration")
             return False
+
+    def _copy_template_files(self, force: bool = False) -> bool:
+        """Copy template files to project root"""
+        try:
+            import shutil
+            from pathlib import Path
+
+            # Find CCOM installation directory
+            ccom_package_dir = Path(__file__).parent.parent.parent
+            templates_dir = ccom_package_dir / "templates"
+
+            if not templates_dir.exists():
+                Display.warning("Templates directory not found - skipping template copy")
+                return True  # Don't fail init if templates missing
+
+            # Copy CLAUDE.md to project root
+            claude_md_template = templates_dir / "CLAUDE.md"
+            claude_md_dest = self.orchestrator.project_root / "CLAUDE.md"
+
+            if claude_md_template.exists():
+                if claude_md_dest.exists() and not force:
+                    Display.info("CLAUDE.md already exists - skipping")
+                else:
+                    shutil.copy2(claude_md_template, claude_md_dest)
+                    Display.success("✅ CLAUDE.md created - Claude Code integration guide")
+
+            # Copy ccom.js to .claude directory
+            ccom_js_template = templates_dir / "ccom.js"
+            ccom_js_dest = self.orchestrator.project_root / ".claude" / "ccom.js"
+
+            if ccom_js_template.exists():
+                if ccom_js_dest.exists() and not force:
+                    Display.info("ccom.js already exists - skipping")
+                else:
+                    shutil.copy2(ccom_js_template, ccom_js_dest)
+                    Display.success("✅ Memory script created (.claude/ccom.js)")
+
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to copy templates: {e}")
+            Display.warning(f"Template copy failed: {str(e)}")
+            return True  # Don't fail init if template copy fails
 
     def _initialize_memory(self, force: bool = False) -> bool:
         """Initialize memory system"""

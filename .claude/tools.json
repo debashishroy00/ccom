@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-30T01:45:24.433362",
+  "timestamp": "2025-10-01T00:37:01.970714",
   "tools": {
     "javascript": {
       "eslint": {
@@ -145,5 +145,36 @@
         "error": "[WinError 2] The system cannot find the file specified"
       }
     }
-  }
+  },
+  "installed_tools": {
+    "madge": {
+      "installed": true,
+      "version": "8.0.0",
+      "scope": "local"
+    },
+    "radon": {
+      "installed": true,
+      "version": "6.0.1"
+    },
+    "husky": {
+      "installed": true,
+      "version": "",
+      "scope": "local"
+    },
+    "jscpd": {
+      "installed": true,
+      "version": "4.0.5",
+      "scope": "local"
+    },
+    "lint-staged": {
+      "installed": true,
+      "version": "16.2.3",
+      "scope": "local"
+    },
+    "complexity-report": {
+      "installed": false,
+      "version": null
+    }
+  },
+  "last_check": "2025-10-01T00:40:01.550697"
 }

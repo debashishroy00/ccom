@@ -1,0 +1,55 @@
+[
+  {
+    "session_id": "validation_20251001_003945",
+    "timestamp": "2025-10-01T00:40:03.211860",
+    "overall_score": 0.0,
+    "overall_grade": "D",
+    "principles_score": 0.0,
+    "principles_grade": "D",
+    "quality_score": 0.0,
+    "security_score": 100,
+    "total_issues": 0,
+    "total_warnings": 98,
+    "recommendations": [
+      "\u26a0\ufe0f Code quality needs improvement. Prioritize fixing errors first.",
+      "\ud83d\udcd0 Simplify complex functions and reduce file sizes (KISS principle)",
+      "\ud83c\udfd7\ufe0f Review class responsibilities and dependencies (SOLID principles)",
+      "\ud83e\uddf9 Remove unused code and over-engineered abstractions (YAGNI principle)",
+      "\ud83d\udcdd Review and resolve 98 warnings for better code health"
+    ],
+    "validation_results": [
+      {
+        "validator": "KISS (Keep It Simple)",
+        "score": 0,
+        "success": false,
+        "issues_count": 82,
+        "warnings_count": 0,
+        "fixes_applied": 0
+      },
+      {
+        "validator": "YAGNI (You Aren't Gonna Need It)",
+        "score": 0,
+        "success": false,
+        "issues_count": 46,
+        "warnings_count": 0,
+        "fixes_applied": 0
+      },
+      {
+        "validator": "DRY (Simple Check)",
+        "score": 0,
+        "success": false,
+        "issues_count": 1,
+        "warnings_count": 0,
+        "fixes_applied": 0
+      },
+      {
+        "validator": "SOLID Principles",
+        "score": 0,
+        "success": false,
+        "issues_count": 15,
+        "warnings_count": 0,
+        "fixes_applied": 0
+      }
+    ]
+  }
+]

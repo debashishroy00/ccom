@@ -15,7 +15,8 @@ from .agents import (
     QualityEnforcerAgent,
     SecurityGuardianAgent,
     BuilderAgent,
-    DeploymentSpecialistAgent
+    DeploymentSpecialistAgent,
+    ProactiveDeveloperAgent
 )
 from .agents.sdk_agent_base import AgentResult, StreamingUpdate
 
@@ -90,6 +91,12 @@ class SDKIntegrationManager:
             agents["deployment-specialist"] = DeploymentSpecialistAgent(
                 self.project_root,
                 self.config.get("deployment_specialist", {})
+            )
+
+            # Proactive Developer - SDK Implementation (v5.2+)
+            agents["proactive-developer"] = ProactiveDeveloperAgent(
+                self.project_root,
+                self.config.get("proactive_developer", {})
             )
 
             self.logger.info(f"Initialized {len(agents)} SDK agents")

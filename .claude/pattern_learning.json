@@ -1,0 +1,37 @@
+{
+  "score_trends": {
+    "overall": [
+      {
+        "timestamp": "2025-10-01T00:40:03.211860",
+        "score": 0.0,
+        "grade": "D"
+      }
+    ],
+    "principles": [
+      {
+        "timestamp": "2025-10-01T00:40:03.211860",
+        "score": 0.0,
+        "grade": "D"
+      }
+    ]
+  },
+  "recurring_issues": {
+    "KISS (Keep It Simple)": {
+      "count": 1,
+      "last_seen": "2025-10-01T00:40:03.211860"
+    },
+    "YAGNI (You Aren't Gonna Need It)": {
+      "count": 1,
+      "last_seen": "2025-10-01T00:40:03.211860"
+    },
+    "DRY (Simple Check)": {
+      "count": 1,
+      "last_seen": "2025-10-01T00:40:03.211860"
+    },
+    "SOLID Principles": {
+      "count": 1,
+      "last_seen": "2025-10-01T00:40:03.211860"
+    }
+  },
+  "improvements": []
+}

@@ -87,6 +87,144 @@
         },
         "success": false
       }
+    ],
+    "session_20251001_003655": [
+      {
+        "command": "check tools",
+        "timestamp": "2025-10-01T00:37:01.972603",
+        "context": {
+          "orchestrator_check": true
+        },
+        "result": {
+          "success": true,
+          "status_displayed": true
+        },
+        "success": true
+      },
+      {
+        "command": "check tools",
+        "timestamp": "2025-10-01T00:37:02.042760",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": true,
+          "result_type": "bool"
+        },
+        "success": true
+      }
+    ],
+    "session_20251001_003835": [
+      {
+        "command": "auto orchestrate quality_check",
+        "timestamp": "2025-10-01T00:38:35.540055",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20251001_003858": [
+      {
+        "command": "generate code",
+        "timestamp": "2025-10-01T00:38:58.946475",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20251001_003938": [
+      {
+        "command": "enable hooks",
+        "timestamp": "2025-10-01T00:39:38.473365",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": true,
+          "result_type": "bool"
+        },
+        "success": true
+      }
+    ],
+    "session_20251001_003945": [
+      {
+        "command": "validate principles",
+        "timestamp": "2025-10-01T00:40:03.284421",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20251001_004953": [
+      {
+        "command": "check my code quality",
+        "timestamp": "2025-10-01T00:49:53.347698",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": false,
+          "result_type": "bool"
+        },
+        "success": false
+      }
+    ],
+    "session_20251001_005001": [
+      {
+        "command": "enable live help",
+        "timestamp": "2025-10-01T00:50:01.931667",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": true,
+          "result_type": "bool"
+        },
+        "success": true
+      }
+    ],
+    "session_20251001_005011": [
+      {
+        "command": "run everything",
+        "timestamp": "2025-10-01T00:50:11.837778",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": true,
+          "result_type": "bool"
+        },
+        "success": true
+      }
+    ],
+    "session_20251001_223224": [
+      {
+        "command": "context",
+        "timestamp": "2025-10-01T22:32:27.430345",
+        "context": {
+          "orchestrator_execution": true
+        },
+        "result": {
+          "success": true,
+          "result_type": "bool"
+        },
+        "success": true
+      }
     ]
   },
   "global_commands": {
@@ -122,6 +260,145 @@
         {
           "timestamp": "2025-09-30T01:45:24.507322",
           "success": false
+        }
+      ]
+    },
+    "check tools": {
+      "count": 2,
+      "last_executed": "2025-10-01T00:37:02.042760",
+      "last_result": {
+        "success": true,
+        "result_type": "bool"
+      },
+      "success_rate": 1.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:37:01.972603",
+          "success": true
+        },
+        {
+          "timestamp": "2025-10-01T00:37:02.042760",
+          "success": true
+        }
+      ]
+    },
+    "auto orchestrate quality_check": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:38:35.540055",
+      "last_result": {
+        "success": false,
+        "result_type": "bool"
+      },
+      "success_rate": 0.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:38:35.540055",
+          "success": false
+        }
+      ]
+    },
+    "generate code": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:38:58.946475",
+      "last_result": {
+        "success": false,
+        "result_type": "bool"
+      },
+      "success_rate": 0.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:38:58.946475",
+          "success": false
+        }
+      ]
+    },
+    "enable hooks": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:39:38.473365",
+      "last_result": {
+        "success": true,
+        "result_type": "bool"
+      },
+      "success_rate": 1.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:39:38.473365",
+          "success": true
+        }
+      ]
+    },
+    "validate principles": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:40:03.284421",
+      "last_result": {
+        "success": false,
+        "result_type": "bool"
+      },
+      "success_rate": 0.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:40:03.284421",
+          "success": false
+        }
+      ]
+    },
+    "check my code quality": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:49:53.347698",
+      "last_result": {
+        "success": false,
+        "result_type": "bool"
+      },
+      "success_rate": 0.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:49:53.347698",
+          "success": false
+        }
+      ]
+    },
+    "enable live help": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:50:01.931667",
+      "last_result": {
+        "success": true,
+        "result_type": "bool"
+      },
+      "success_rate": 1.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:50:01.931667",
+          "success": true
+        }
+      ]
+    },
+    "run everything": {
+      "count": 1,
+      "last_executed": "2025-10-01T00:50:11.837778",
+      "last_result": {
+        "success": true,
+        "result_type": "bool"
+      },
+      "success_rate": 1.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T00:50:11.837778",
+          "success": true
+        }
+      ]
+    },
+    "context": {
+      "count": 1,
+      "last_executed": "2025-10-01T22:32:27.430345",
+      "last_result": {
+        "success": true,
+        "result_type": "bool"
+      },
+      "success_rate": 1.0,
+      "executions": [
+        {
+          "timestamp": "2025-10-01T22:32:27.430345",
+          "success": true
         }
       ]
     }
