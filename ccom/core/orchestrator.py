@@ -126,9 +126,9 @@ class CCOMOrchestrator:
         ]):
             return self.agent_manager.invoke_security_guardian()
 
-        # Build patterns - but exclude PRD-related build commands
-        has_prd_ref = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec", "from"])
-        if not has_prd_ref and self._matches_patterns(command_lower, [
+        # Build patterns - but exclude PRD/plan-related build commands
+        has_context_ref = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec", "from", "based on", "plan", "using"])
+        if not has_context_ref and self._matches_patterns(command_lower, [
             "build", "compile", "package", "bundle", "production build",
             "create build", "make production build", "bundle my app",
             "compile my code", "prepare for production", "build for production",

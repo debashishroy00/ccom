@@ -237,14 +237,28 @@ class ProactiveDeveloperAgent(SDKAgentBase):
     def _parse_generation_spec(self, context: Dict[str, Any]) -> CodeGenerationSpec:
         """Parse code generation specification from context with PRD support"""
 
-        # Check for PRD document
+        # Check for PRD document in multiple ways
         prd_requirements = None
+
+        # 1. Explicit PRD document in context
         if context.get("prd_document"):
             prd_requirements = self._parse_prd_document(context["prd_document"])
+
+        # 2. PRD reference in command
         elif self._has_prd_reference(context.get("requirements", "")):
             prd_path = self._extract_prd_path(context.get("requirements", ""))
             if prd_path:
                 prd_requirements = self._parse_prd_document(prd_path)
+
+        # 3. Auto-detect PRD file in project directory (prd.md, requirements.md, PRD.md)
+        if not prd_requirements:
+            for prd_filename in ["prd.md", "PRD.md", "requirements.md", "REQUIREMENTS.md"]:
+                prd_file = self.project_root / prd_filename
+                if prd_file.exists():
+                    Display.info(f"📋 Auto-detected {prd_filename}")
+                    prd_requirements = self._parse_prd_document(str(prd_file))
+                    if prd_requirements:
+                        break
 
         # Use PRD requirements if available
         if prd_requirements:

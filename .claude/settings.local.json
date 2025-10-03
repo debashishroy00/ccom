@@ -56,7 +56,12 @@
       "Bash(git push:*)",
       "Bash(git add:*)",
       "Bash(grep:*)",
-      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli --init --force)"
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli --init --force)",
+      "Bash(dir:*)",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"analyze prd.md\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"create an implementation plan based on prd.md\")",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"build from prd.md\")",
+      "Bash(set PYTHONPATH=../ccom)"
     ],
     "deny": [],
     "ask": []
