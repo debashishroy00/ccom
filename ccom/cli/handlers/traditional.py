@@ -90,16 +90,24 @@ class TraditionalHandler(BaseHandler):
 
             if config_created and templates_copied and memory_initialized and tools_installed:
                 Display.workflow_complete("Initialization", True)
-                Display.success("✅ CCOM initialized successfully!")
+                Display.success("✅ CCOM v5.1 initialized successfully!")
                 Display.info("")
                 Display.info("📋 Files created:")
-                Display.info("  • .claude/ - CCOM configuration directory")
-                Display.info("  • CLAUDE.md - Integration instructions for Claude Code")
+                Display.info("  • .claude/ - CCOM configuration and memory")
+                Display.info("  • CLAUDE.md - v5.1 integration guide (374 lines)")
+                Display.info("  • README.md - Quick start and usage guide")
+                Display.info("  • Development tools - ESLint, Prettier, etc.")
                 Display.info("")
                 Display.info("🚀 Next steps:")
-                Display.info("  1. Review CLAUDE.md for Claude Code integration")
-                Display.info("  2. Run: ccom --status")
-                Display.info("  3. Start using: ccom <natural language command>")
+                Display.info("  1. Review CLAUDE.md for full v5.1 features")
+                Display.info("  2. Check README.md for quick start guide")
+                Display.info("  3. Run: ccom --status")
+                Display.info("  4. Start using: ccom <natural language command>")
+                Display.info("")
+                Display.info("💡 Examples:")
+                Display.info("  • ccom what is this project?")
+                Display.info("  • ccom check my code quality")
+                Display.info("  • ccom implement features/auth.md")
                 return True
             else:
                 Display.workflow_complete("Initialization", False)
@@ -146,7 +154,7 @@ class TraditionalHandler(BaseHandler):
                 Display.warning("Templates directory not found - skipping template copy")
                 return True  # Don't fail init if templates missing
 
-            # Copy CLAUDE.md to project root
+            # Copy CLAUDE.md to project root (v5.1 - 374 lines)
             claude_md_template = templates_dir / "CLAUDE.md"
             claude_md_dest = self.orchestrator.project_root / "CLAUDE.md"
 
@@ -155,7 +163,18 @@ class TraditionalHandler(BaseHandler):
                     Display.info("CLAUDE.md already exists - skipping")
                 else:
                     shutil.copy2(claude_md_template, claude_md_dest)
-                    Display.success("✅ CLAUDE.md created - Claude Code integration guide")
+                    Display.success("✅ CLAUDE.md created - v5.1 integration guide (374 lines)")
+
+            # Copy README.md to project root (if it doesn't exist)
+            readme_template = templates_dir / "README.md"
+            readme_dest = self.orchestrator.project_root / "README.md"
+
+            if readme_template.exists():
+                if readme_dest.exists() and not force:
+                    Display.info("README.md already exists - skipping")
+                else:
+                    shutil.copy2(readme_template, readme_dest)
+                    Display.success("✅ README.md created - CCOM quick start guide")
 
             # Copy ccom.js to .claude directory
             ccom_js_template = templates_dir / "ccom.js"

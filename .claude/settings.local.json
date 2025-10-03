@@ -54,7 +54,9 @@
       "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli \"xyz random command\")",
       "Bash(PYTHONPATH=\".\" python -m ccom.cli \"context\")",
       "Bash(git push:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(grep:*)",
+      "Bash(PYTHONPATH=\"../ccom\" python -m ccom.cli --init --force)"
     ],
     "deny": [],
     "ask": []
