@@ -102,20 +102,28 @@ When generating or modifying code through CCOM, enforce these principles:
 PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"
 ```
 
-**🚨 IMPORTANT - Working Directory Rules**:
-- **ALWAYS** execute CCOM CLI from the **current project directory** where the user is working
-- **NEVER** cd to the CCOM directory before running commands
-- CCOM needs to analyze files in the current project, not in the CCOM source directory
-- Only set PYTHONPATH to point to CCOM installation, keep working directory as current project
+**🚨 CRITICAL - Working Directory & PYTHONPATH Rules**:
+- **Working Directory**: ALWAYS stay in **current project directory** (where user's files are)
+- **PYTHONPATH**: MUST point to **CCOM installation directory** (where CCOM Python modules are)
+- **NEVER** use `PYTHONPATH="."` (current dir) - this won't find CCOM modules!
+- **NEVER** cd to CCOM directory before running commands
 
-**Correct Execution Pattern**:
+**Execution Pattern - MUST USE EXACTLY**:
 ```bash
-# ✅ CORRECT - stays in current project directory
+# ✅ CORRECT - Working dir: project, PYTHONPATH: CCOM installation
 PYTHONPATH="../ccom" python -m ccom.cli "analyze prd.md"
 
-# ❌ WRONG - changes to CCOM directory
+# ❌ WRONG #1 - PYTHONPATH="." points to current dir (no CCOM modules there!)
+PYTHONPATH="." python -m ccom.cli "analyze prd.md"
+
+# ❌ WRONG #2 - Changes to CCOM directory (loses project files)
 cd ../ccom && PYTHONPATH="." python -m ccom.cli "analyze prd.md"
 ```
+
+**Why This Matters**:
+- `PYTHONPATH="../ccom"` tells Python where CCOM modules are installed
+- Current directory (`.`) has user's project files (prd.md, code, etc.)
+- CCOM needs both: modules from `../ccom`, files from current directory
 
 **Dynamic Path Resolution**:
 - `[CCOM_PATH]` should be dynamically resolved based on project structure
