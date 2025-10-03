@@ -98,9 +98,11 @@ When generating or modifying code through CCOM, enforce these principles:
 **Implementation**: When user types a CCOM command, execute it through the real CLI **FROM THE CURRENT PROJECT DIRECTORY**:
 
 ```bash
-# CRITICAL: Execute from current working directory, NOT from CCOM directory
-PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"
+# CRITICAL: Use this EXACT command pattern
+PYTHONPATH="../ccom" python -m ccom.cli "EXTRACTED_COMMAND"
 ```
+
+**🚨 MANDATORY**: PYTHONPATH must be `"../ccom"` - NOT `"."`, NOT a placeholder, use the literal string `"../ccom"`
 
 **🚨 CRITICAL - Working Directory & PYTHONPATH Rules**:
 - **Working Directory**: ALWAYS stay in **current project directory** (where user's files are)
@@ -139,8 +141,8 @@ cd ../ccom && PYTHONPATH="." python -m ccom.cli "analyze prd.md"
 **Command Extraction and Execution**:
 1. Remove "ccom" prefix from user message
 2. Extract the actual command text
-3. Detect CCOM installation path
-4. Execute: `PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"`
+3. Execute: `PYTHONPATH="../ccom" python -m ccom.cli "EXTRACTED_COMMAND"`
+4. **Critical**: Always use `PYTHONPATH="../ccom"` - this is the standard CCOM location
 5. **Critical**: Stay in current project directory during execution
 
 **Examples**:
