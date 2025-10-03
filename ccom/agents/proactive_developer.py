@@ -98,6 +98,29 @@ class ProactiveDeveloperAgent(SDKAgentBase):
     async def _execute_code_generation(self, context: Dict[str, Any]) -> AgentResult:
         """Execute proactive code generation with principle enforcement"""
         try:
+            # Check if user wants analysis vs code generation
+            requirements = context.get("requirements", "").lower()
+            is_analysis_request = any(word in requirements for word in ["analyze", "review", "understand", "explain", "what is", "tell me", "show me", "plan"])
+
+            # If it's analysis and PRD exists, show PRD analysis
+            if is_analysis_request:
+                for prd_file in ["prd.md", "PRD.md", "requirements.md", "REQUIREMENTS.md"]:
+                    prd_path = self.project_root / prd_file
+                    if prd_path.exists():
+                        Display.header("📋 PRD Analysis")
+                        prd_data = self._parse_prd_document(str(prd_path))
+                        if prd_data:
+                            self._display_prd_analysis(prd_data, prd_file)
+                            Display.section("📐 Implementation Plan")
+                            impl_plan = self._create_implementation_plan(prd_data)
+                            self._display_implementation_plan(impl_plan)
+
+                            return AgentResult(
+                                success=True,
+                                data={"prd_data": prd_data, "implementation_plan": impl_plan},
+                                message="PRD analysis completed"
+                            )
+
             Display.header("🏗️ Proactive Developer: Generating Clean Code")
 
             generation_spec = self._parse_generation_spec(context)
