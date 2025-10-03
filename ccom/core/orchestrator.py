@@ -126,7 +126,9 @@ class CCOMOrchestrator:
         ]):
             return self.agent_manager.invoke_security_guardian()
 
-        if self._matches_patterns(command_lower, [
+        # Build patterns - but exclude PRD-related build commands
+        has_prd_ref = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec", "from"])
+        if not has_prd_ref and self._matches_patterns(command_lower, [
             "build", "compile", "package", "bundle", "production build",
             "create build", "make production build", "bundle my app",
             "compile my code", "prepare for production", "build for production",
@@ -623,10 +625,23 @@ class CCOMOrchestrator:
         command_lower = command.lower()
 
         # Determine operation type (analyze vs generate)
+        # Check for PRD references first
+        has_prd_reference = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec"])
+
         operation = "generate_code"
-        if any(term in command_lower for term in ["analyze", "review", "parse", "read", "summarize", "plan"]):
+
+        # If PRD is referenced and user wants analysis/planning
+        if has_prd_reference and any(term in command_lower for term in ["analyze", "review", "parse", "read", "summarize", "plan", "overview", "understand"]):
             operation = "analyze_prd"
-        elif any(term in command_lower for term in ["implement", "create", "build", "generate", "write"]):
+        # If user wants to implement/generate from PRD
+        elif has_prd_reference and any(term in command_lower for term in ["implement", "build from", "generate from", "create from", "code from"]):
+            operation = "generate_code"
+        # Default analysis for PRD files
+        elif has_prd_reference:
+            # If just mentioning PRD file without clear action, default to analysis
+            operation = "analyze_prd"
+        # Non-PRD code generation
+        elif any(term in command_lower for term in ["create", "generate", "write", "build"]):
             operation = "generate_code"
 
         # Default context
