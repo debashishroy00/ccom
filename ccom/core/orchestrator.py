@@ -571,13 +571,14 @@ class CCOMOrchestrator:
             return False
 
     async def _handle_proactive_generation(self, command: str) -> bool:
-        """Handle proactive code generation with natural language"""
+        """Handle proactive operations (code generation or PRD analysis)"""
         try:
             Display.header("🏗️ Proactive Code Generation")
             command_lower = command.lower()
 
             # Extract generation context from natural language
             context = self._extract_generation_context(command)
+            operation = context.get("operation", "generate_code")
 
             # Use the SDK integration to invoke proactive developer
             result = await self.agent_manager.sdk_integration.invoke_agent(
@@ -586,36 +587,51 @@ class CCOMOrchestrator:
             )
 
             if result.success:
-                Display.success("✅ Code generated with principle enforcement")
-                if result.data:
-                    Display.section("📝 Generated Code")
-                    Display.info(result.data.get("generated_code", "Code generation completed"))
+                # Different success messages based on operation
+                if operation == "analyze_prd":
+                    # PRD analysis already displays its own comprehensive output
+                    # No additional summary needed
+                    pass
+                else:
+                    # Code generation - show summary
+                    Display.success("✅ Code generated with principle enforcement")
+                    if result.data:
+                        Display.section("📝 Generated Code")
+                        Display.info(result.data.get("generated_code", "Code generation completed"))
 
-                if result.metrics:
-                    Display.section("📊 Generation Metrics")
-                    Display.info(f"Complexity: {result.metrics.get('complexity', 'N/A')}")
-                    Display.info(f"Principles Score: {result.metrics.get('principles_score', 'N/A')}/100")
+                    if result.metrics:
+                        Display.section("📊 Generation Metrics")
+                        Display.info(f"Complexity: {result.metrics.get('complexity', 'N/A')}")
+                        Display.info(f"Principles Score: {result.metrics.get('principles_score', 'N/A')}/100")
 
                 return True
             else:
-                Display.error("❌ Proactive code generation failed")
+                operation_name = "PRD analysis" if operation == "analyze_prd" else "code generation"
+                Display.error(f"❌ Proactive {operation_name} failed")
                 if result.errors:
                     for error in result.errors:
                         Display.error(f"  • {error}")
                 return False
 
         except Exception as e:
-            self.logger.error(f"Proactive generation failed: {e}")
-            Display.error(f"Code generation failed: {str(e)}")
+            self.logger.error(f"Proactive operation failed: {e}")
+            Display.error(f"Proactive operation failed: {str(e)}")
             return False
 
     def _extract_generation_context(self, command: str) -> Dict[str, Any]:
         """Extract code generation context from natural language command"""
         command_lower = command.lower()
 
+        # Determine operation type (analyze vs generate)
+        operation = "generate_code"
+        if any(term in command_lower for term in ["analyze", "review", "parse", "read", "summarize", "plan"]):
+            operation = "analyze_prd"
+        elif any(term in command_lower for term in ["implement", "create", "build", "generate", "write"]):
+            operation = "generate_code"
+
         # Default context
         context = {
-            "operation": "generate_code",
+            "operation": operation,
             "language": "auto-detect",
             "requirements": command,
             "enforce_principles": True

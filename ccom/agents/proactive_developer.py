@@ -92,6 +92,94 @@ class ProactiveDeveloperAgent(SDKAgentBase):
         ]
 
     async def execute(self, context: Dict[str, Any]) -> AgentResult:
+        """Execute proactive operations (analyze or generate)"""
+        try:
+            operation = context.get("operation", "generate_code")
+
+            # Route to appropriate operation
+            if operation == "analyze_prd":
+                return await self._execute_prd_analysis(context)
+            else:
+                return await self._execute_code_generation(context)
+
+        except Exception as e:
+            self.logger.error(f"Proactive operation failed: {e}")
+            return AgentResult(
+                success=False,
+                error=str(e),
+                message="Proactive operation failed"
+            )
+
+    async def _execute_prd_analysis(self, context: Dict[str, Any]) -> AgentResult:
+        """Analyze PRD document and create implementation plan"""
+        try:
+            Display.header("📋 PRD Analysis: Reviewing Requirements Document")
+
+            # Extract PRD path from context
+            prd_path = None
+            requirements = context.get("requirements", "")
+
+            if self._has_prd_reference(requirements):
+                prd_path = self._extract_prd_path(requirements)
+            elif context.get("prd_document"):
+                prd_path = context["prd_document"]
+
+            if not prd_path:
+                return AgentResult(
+                    success=False,
+                    error="No PRD document specified",
+                    message="Please specify a PRD document to analyze (e.g., 'analyze prd.md')"
+                )
+
+            # Parse PRD document
+            Display.progress(f"Reading and parsing {prd_path}...")
+            prd_data = self._parse_prd_document(prd_path)
+
+            if not prd_data:
+                return AgentResult(
+                    success=False,
+                    error="Failed to parse PRD document",
+                    message=f"Could not parse {prd_path}"
+                )
+
+            # Display comprehensive PRD analysis
+            self._display_prd_analysis(prd_data, prd_path)
+
+            # Create implementation plan
+            Display.section("📐 Implementation Plan")
+            impl_plan = self._create_implementation_plan(prd_data)
+            self._display_implementation_plan(impl_plan)
+
+            result = {
+                "success": True,
+                "operation": "prd_analysis",
+                "prd_path": prd_path,
+                "prd_data": prd_data,
+                "implementation_plan": impl_plan,
+                "metrics": {
+                    "requirements_count": len(prd_data.get("requirements", [])),
+                    "acceptance_criteria_count": len(prd_data.get("acceptance_criteria", [])),
+                    "components_count": len(prd_data.get("components", [])),
+                    "tech_stack_categories": len(prd_data.get("tech_stack", {}))
+                }
+            }
+
+            Display.success("✅ PRD analysis completed")
+            return AgentResult(
+                success=True,
+                data=result,
+                message="PRD analysis completed successfully"
+            )
+
+        except Exception as e:
+            self.logger.error(f"PRD analysis failed: {e}")
+            return AgentResult(
+                success=False,
+                error=str(e),
+                message="PRD analysis failed"
+            )
+
+    async def _execute_code_generation(self, context: Dict[str, Any]) -> AgentResult:
         """Execute proactive code generation with principle enforcement"""
         try:
             Display.header("🏗️ Proactive Developer: Generating Clean Code")
@@ -704,38 +792,76 @@ export function {function_name}({', '.join(f'{param}: any' for param in paramete
             "requirements": [],
             "tech_stack": {},
             "acceptance_criteria": [],
-            "components": []
+            "components": [],
+            "deliverables": [],
+            "phases": []
         }
 
         lines = content.split('\n')
-        current_section = None
-        current_content = []
+        all_content = []  # Collect all content for flexible parsing
 
         for line in lines:
-            line = line.strip()
+            stripped = line.strip()
 
             # Extract title
-            if line.startswith('# ') and not prd_data["title"]:
-                prd_data["title"] = line[2:].strip()
+            if stripped.startswith('# ') and not prd_data["title"]:
+                prd_data["title"] = stripped[2:].strip()
                 continue
 
-            # Section headers
-            if line.startswith('## '):
-                # Process previous section
-                if current_section and current_content:
-                    self._process_prd_section(prd_data, current_section, current_content)
+            all_content.append(stripped)
 
-                current_section = line[3:].lower().strip()
-                current_content = []
-                continue
+        # Join all content for pattern-based extraction
+        full_text = '\n'.join(all_content)
+        full_text_lower = full_text.lower()
 
-            # Collect content for current section
-            if current_section and line:
-                current_content.append(line)
+        # Extract bullet points as requirements/deliverables
+        bullet_pattern = r'^[-*+]\s+(.+)$'
+        for line in all_content:
+            match = re.match(bullet_pattern, line)
+            if match:
+                item = match.group(1).strip()
+                # Categorize based on context keywords
+                item_lower = item.lower()
+                if any(kw in item_lower for kw in ['deliver', 'output', 'produce', 'create']):
+                    prd_data["deliverables"].append(item)
+                elif any(kw in item_lower for kw in ['test', 'verify', 'validate', 'check', 'assert']):
+                    prd_data["acceptance_criteria"].append(item)
+                elif any(kw in item_lower for kw in ['component', 'module', 'service', 'api', 'ui']):
+                    prd_data["components"].append(item)
+                else:
+                    prd_data["requirements"].append(item)
 
-        # Process last section
-        if current_section and current_content:
-            self._process_prd_section(prd_data, current_section, current_content)
+        # Extract tech stack from table or text
+        tech_patterns = {
+            "ai_model": ["claude", "gpt", "llm", "ai model"],
+            "framework": ["playwright", "selenium", "cypress", "puppeteer"],
+            "language": ["python", "typescript", "javascript", "java"],
+            "testing": ["pytest", "jest", "mocha", "junit"],
+            "cicd": ["github actions", "jenkins", "gitlab ci", "circle ci"]
+        }
+
+        for category, keywords in tech_patterns.items():
+            for keyword in keywords:
+                if keyword in full_text_lower:
+                    if category not in prd_data["tech_stack"]:
+                        prd_data["tech_stack"][category] = []
+                    prd_data["tech_stack"][category].append(keyword)
+
+        # Extract phases from numbered sections or phase headers
+        phase_pattern = r'(?:phase|week|sprint)\s+(\d+).*?:\s*(.+?)(?=\n(?:phase|week|sprint|\Z))'
+        phases = re.findall(phase_pattern, full_text_lower, re.DOTALL | re.IGNORECASE)
+        for phase_num, phase_desc in phases:
+            prd_data["phases"].append(f"Phase {phase_num}: {phase_desc[:100].strip()}")
+
+        # Extract overview from executive summary or first paragraph
+        if 'executive summary' in full_text_lower:
+            summary_idx = full_text_lower.find('executive summary')
+            next_section = full_text_lower.find('##', summary_idx + 10)
+            if next_section > 0:
+                prd_data["overview"] = full_text[summary_idx:next_section].strip()[:500]
+        elif 'objective' in full_text_lower:
+            obj_idx = full_text_lower.find('objective')
+            prd_data["overview"] = full_text[obj_idx:obj_idx+300].strip()
 
         return prd_data
 
@@ -786,3 +912,125 @@ export function {function_name}({', '.join(f'{param}: any' for param in paramete
                     component = line.lstrip('- *+ ').strip()
                     if component:
                         prd_data["components"].append(component)
+
+    def _display_prd_analysis(self, prd_data: Dict[str, Any], prd_path: str) -> None:
+        """Display comprehensive PRD analysis"""
+        Display.section(f"📄 PRD Document: {prd_path}")
+
+        # Title
+        if prd_data.get("title"):
+            Display.info(f"Title: {prd_data['title']}\n")
+
+        # Overview
+        if prd_data.get("overview"):
+            Display.section("📖 Overview")
+            Display.info(prd_data["overview"] + "\n")
+
+        # Tech Stack
+        if prd_data.get("tech_stack"):
+            Display.section("🛠️ Tech Stack")
+            for category, technologies in prd_data["tech_stack"].items():
+                Display.info(f"  {category.replace('_', ' ').title()}: {', '.join(set(technologies))}")
+            Display.info("")
+
+        # Requirements
+        if prd_data.get("requirements"):
+            Display.section(f"✅ Requirements ({len(prd_data['requirements'])})")
+            for i, req in enumerate(prd_data["requirements"][:10], 1):  # Limit to first 10
+                Display.info(f"  {i}. {req}")
+            if len(prd_data["requirements"]) > 10:
+                Display.info(f"  ... and {len(prd_data['requirements']) - 10} more")
+            Display.info("")
+
+        # Deliverables
+        if prd_data.get("deliverables"):
+            Display.section(f"📦 Deliverables ({len(prd_data['deliverables'])})")
+            for i, deliverable in enumerate(prd_data["deliverables"][:10], 1):
+                Display.info(f"  {i}. {deliverable}")
+            if len(prd_data["deliverables"]) > 10:
+                Display.info(f"  ... and {len(prd_data['deliverables']) - 10} more")
+            Display.info("")
+
+        # Components
+        if prd_data.get("components"):
+            Display.section(f"🏗️ Components ({len(prd_data['components'])})")
+            for component in prd_data["components"][:10]:
+                Display.info(f"  • {component}")
+            if len(prd_data["components"]) > 10:
+                Display.info(f"  ... and {len(prd_data['components']) - 10} more")
+            Display.info("")
+
+        # Acceptance Criteria
+        if prd_data.get("acceptance_criteria"):
+            Display.section(f"🎯 Acceptance Criteria ({len(prd_data['acceptance_criteria'])})")
+            for i, criteria in enumerate(prd_data["acceptance_criteria"][:10], 1):
+                Display.info(f"  {i}. {criteria}")
+            if len(prd_data["acceptance_criteria"]) > 10:
+                Display.info(f"  ... and {len(prd_data['acceptance_criteria']) - 10} more")
+            Display.info("")
+
+        # Phases
+        if prd_data.get("phases"):
+            Display.section(f"📅 Implementation Phases ({len(prd_data['phases'])})")
+            for i, phase in enumerate(prd_data["phases"], 1):
+                Display.info(f"  {i}. {phase}")
+            Display.info("")
+
+    def _create_implementation_plan(self, prd_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create implementation plan from PRD data"""
+        plan = {
+            "phases": [],
+            "estimated_complexity": "medium",
+            "recommended_approach": "incremental"
+        }
+
+        # Phase 1: Setup and Architecture
+        phase1_tasks = ["Project setup", "Directory structure"]
+        if prd_data.get("tech_stack"):
+            phase1_tasks.append(f"Install dependencies ({', '.join(prd_data['tech_stack'].keys())})")
+        plan["phases"].append({
+            "name": "Phase 1: Setup & Architecture",
+            "tasks": phase1_tasks
+        })
+
+        # Phase 2: Core Components
+        if prd_data.get("components"):
+            plan["phases"].append({
+                "name": "Phase 2: Core Components",
+                "tasks": [f"Implement {comp}" for comp in prd_data["components"][:5]]
+            })
+
+        # Phase 3: Feature Implementation
+        if prd_data.get("requirements"):
+            plan["phases"].append({
+                "name": "Phase 3: Feature Implementation",
+                "tasks": prd_data["requirements"][:5]
+            })
+
+        # Phase 4: Validation
+        if prd_data.get("acceptance_criteria"):
+            plan["phases"].append({
+                "name": "Phase 4: Testing & Validation",
+                "tasks": ["Unit tests", "Integration tests", "Validate acceptance criteria"]
+            })
+
+        # Estimate complexity
+        total_items = len(prd_data.get("requirements", [])) + len(prd_data.get("components", []))
+        if total_items < 5:
+            plan["estimated_complexity"] = "low"
+        elif total_items < 15:
+            plan["estimated_complexity"] = "medium"
+        else:
+            plan["estimated_complexity"] = "high"
+
+        return plan
+
+    def _display_implementation_plan(self, plan: Dict[str, Any]) -> None:
+        """Display implementation plan"""
+        Display.info(f"Estimated Complexity: {plan['estimated_complexity'].upper()}")
+        Display.info(f"Recommended Approach: {plan['recommended_approach'].capitalize()}\n")
+
+        for phase in plan["phases"]:
+            Display.section(phase["name"])
+            for i, task in enumerate(phase["tasks"], 1):
+                Display.info(f"  {i}. {task}")
