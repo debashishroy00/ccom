@@ -108,167 +108,36 @@ class CCOMOrchestrator:
             return False
 
     def _route_command(self, command_lower: str, original_command: str) -> bool:
-        """Route command to appropriate handler"""
-        # Agent execution patterns (Enhanced Natural Language)
-        if self._matches_patterns(command_lower, [
-            "quality", "clean", "fix", "lint", "format", "prettier", "eslint",
-            "check my code quality", "clean up my code", "fix code issues",
-            "format my code", "make my code prettier", "run quality checks",
-            "improve code quality", "lint my files", "fix formatting"
-        ]):
+        """Route command to appropriate handler - SIMPLE routing, let Claude Code handle complexity"""
+
+        # Simple keyword-based routing - just check for core feature words
+        if "quality" in command_lower or "lint" in command_lower or "format" in command_lower:
             return self.agent_manager.invoke_quality_enforcer()
 
-        if self._matches_patterns(command_lower, [
-            "secure", "safety", "protect", "scan", "security", "vulnerabilities",
-            "check for security issues", "scan for vulnerabilities", "make my code secure",
-            "check security", "protect my app", "security audit", "vulnerability scan",
-            "is my code safe", "security check", "find security issues"
-        ]):
+        if "security" in command_lower or "secure" in command_lower or "vulnerabilities" in command_lower:
             return self.agent_manager.invoke_security_guardian()
 
-        # Build patterns - but exclude PRD/plan-related build commands
-        has_context_ref = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec", "from", "based on", "plan", "using"])
-        if not has_context_ref and self._matches_patterns(command_lower, [
-            "build", "compile", "package", "bundle", "production build",
-            "create build", "make production build", "bundle my app",
-            "compile my code", "prepare for production", "build for production",
-            "create package", "bundle files", "optimize build"
-        ]):
-            return self.agent_manager.invoke_builder_agent()
-
-        if self._matches_patterns(command_lower, [
-            "deploy", "ship", "go live", "launch", "publish", "release",
-            "deploy my app", "ship to production", "make it live", "publish app",
-            "deploy to server", "release my code", "go to production",
-            "launch my app", "put it online", "deploy now"
-        ]):
+        if "deploy" in command_lower:
             return self.agent_manager.invoke_deployment_specialist()
 
-        # Principles validation patterns (Enhanced Natural Language)
-        if self._matches_patterns(command_lower, [
-            "principles", "validate principles", "kiss", "dry", "solid", "yagni",
-            "complexity", "validate complexity", "check principles", "software principles",
-            "check my code complexity", "is my code too complex", "validate software principles",
-            "check coding standards", "analyze code quality", "review coding principles",
-            "check if code is simple", "find duplicate code", "check solid principles",
-            "is my code maintainable", "code review", "principle check"
-        ]):
+        if "principles" in command_lower or "kiss" in command_lower or "dry" in command_lower or "solid" in command_lower:
             return self._handle_principles_validation(original_command)
 
-        # Proactive code generation patterns (Natural Language + PRD Support)
-        if self._matches_patterns(command_lower, [
-            "generate code", "create code", "write code", "build me", "make me",
-            "help me code", "code this", "implement this", "write this feature",
-            "generate", "create", "build", "implement", "develop", "write me",
-            "can you code", "please write", "i need code for", "create a function",
-            "build a component", "make a class", "write a script",
-            # PRD-specific patterns
-            "implement", "implement from", "build from", "code from", "following",
-            "implement prd", "build prd", "from requirements", "from specs",
-            "implement features/", "implement docs/", "implement specs/",
-            "review prd", "analyze prd", "read prd", "parse prd",
-            "create plan", "implementation plan", "analyze requirements",
-            "review requirements", "plan from", "analyze", "review",
-            ".md", "requirements.md", "prd.md", "specs.md"
-        ]):
-            import asyncio
-            return asyncio.run(self._handle_proactive_generation(original_command))
-
-        # Smart orchestration patterns (Natural Language)
-        if self._matches_patterns(command_lower, [
-            "smart execute", "parallel execute", "auto orchestrate", "intelligent workflow",
-            "run everything", "check everything", "do all checks", "run all agents",
-            "orchestrate", "run pipeline", "execute workflow", "run checks",
-            "check my code", "validate everything", "run quality checks",
-            "check quality and security", "run all tests", "full check"
-        ]):
-            import asyncio
-            return asyncio.run(self._handle_smart_orchestration(original_command))
-
-        # Development hooks patterns (Natural Language)
-        if self._matches_patterns(command_lower, [
-            "enable hooks", "disable hooks", "start hooks", "stop hooks", "hooks status",
-            "watch my files", "monitor changes", "real-time help", "live assistance",
-            "enable live help", "start watching", "turn on monitoring", "activate hooks",
-            "help me while coding", "watch for issues", "monitor my code",
-            "enable real-time", "start real-time", "live code help"
-        ]):
-            return self._handle_hooks_command(original_command)
-
-        # Enterprise workflow patterns
-        if self._matches_patterns(command_lower, [
-            "enterprise deployment", "deploy enterprise", "deployment pipeline",
-            "quality improvement", "continuous improvement", "improve quality",
-            "security hardening", "harden security", "security pipeline",
-            "performance optimization", "optimize performance", "performance pipeline"
-        ]):
-            return self._handle_enterprise_workflow(original_command)
-
-        # Legacy workflow patterns
-        if self._matches_patterns(command_lower, [
-            "workflow", "run workflow", "rag quality", "vector validation",
-            "aws rag", "enterprise rag", "full pipeline"
-        ]):
-            return self._handle_workflow_command(original_command)
-
-        # Tools management patterns (Enhanced Natural Language)
-        if self._matches_patterns(command_lower, [
-            "install tools", "check tools", "tools status", "setup tools", "tools",
-            "install development tools", "setup my environment", "check my tools",
-            "what tools do i need", "install required tools", "setup development environment",
-            "check if tools are installed", "install eslint prettier", "setup linting",
-            "install quality tools", "check tool status", "setup my dev tools"
-        ]):
-            return self._handle_tools_command(original_command)
-
-        # Context patterns (Enhanced Natural Language)
-        if self._matches_patterns(command_lower, [
-            "context", "project context", "show context", "project summary",
-            "what is this project", "catch me up", "bring me up to speed",
-            "tell me about this project", "project overview", "what am i working on",
-            "show me project details", "project info", "what does this project do",
-            "explain this project", "project description", "give me context",
-            "where am i", "what is this codebase", "project status"
-        ]):
+        if "context" in command_lower:
             return self.context_manager.show_project_context()
 
-        # Memory patterns (Enhanced Natural Language)
-        if self._matches_patterns(command_lower, [
-            "remember", "memory", "status", "show memory", "what do you remember",
-            "remember this", "save this", "show what you know", "memory status",
-            "what have we done", "project memory", "session memory", "recall",
-            "show previous work", "what was discussed", "memory summary"
-        ]):
+        if "memory" in command_lower or "remember" in command_lower:
             return self._handle_memory_command(original_command)
 
-        # Default: unknown command with helpful suggestions
-        Display.warning("""❓ I didn't understand that command. Try natural language like:
+        if "tools" in command_lower:
+            return self._handle_tools_command(original_command)
 
-🏗️ Code Generation:
-  • "generate code for a login function"
-  • "create a React component"
-  • "write me a Python script"
-
-🔍 Quality & Security:
-  • "check my code quality"
-  • "scan for security issues"
-  • "format my code"
-
-🚀 Build & Deploy:
-  • "build my app"
-  • "deploy to production"
-
-📐 Analysis:
-  • "check my code complexity"
-  • "validate principles"
-  • "run everything"
-
-🔧 Setup:
-  • "install tools"
-  • "what is this project"
-  • "enable live help"
-        """)
-        return False
+        # Default: Pass everything else to Claude Code via natural language handler
+        # This includes: code generation, PRD analysis, implementation, builds, etc.
+        # Let Claude Code's intelligence figure out what to do
+        Display.info(f"🤖 Passing to Claude Code AI: {original_command}")
+        import asyncio
+        return asyncio.run(self._handle_proactive_generation(original_command))
 
     def _matches_patterns(self, command_lower: str, patterns: list) -> bool:
         """Check if command matches any of the given patterns"""
@@ -573,133 +442,27 @@ class CCOMOrchestrator:
             return False
 
     async def _handle_proactive_generation(self, command: str) -> bool:
-        """Handle proactive operations (code generation or PRD analysis)"""
+        """Handle ALL natural language commands - let the agent figure out what to do"""
         try:
-            Display.header("🏗️ Proactive Code Generation")
-            command_lower = command.lower()
+            # Simple context - just pass the command through
+            context = {
+                "requirements": command,
+                "enforce_principles": True
+            }
 
-            # Extract generation context from natural language
-            context = self._extract_generation_context(command)
-            operation = context.get("operation", "generate_code")
-
-            # Use the SDK integration to invoke proactive developer
+            # Let the proactive developer agent handle everything
             result = await self.agent_manager.sdk_integration.invoke_agent(
                 "proactive-developer",
                 context
             )
 
-            if result.success:
-                # Different success messages based on operation
-                if operation == "analyze_prd":
-                    # PRD analysis already displays its own comprehensive output
-                    # No additional summary needed
-                    pass
-                else:
-                    # Code generation - show summary
-                    Display.success("✅ Code generated with principle enforcement")
-                    if result.data:
-                        Display.section("📝 Generated Code")
-                        Display.info(result.data.get("generated_code", "Code generation completed"))
-
-                    if result.metrics:
-                        Display.section("📊 Generation Metrics")
-                        Display.info(f"Complexity: {result.metrics.get('complexity', 'N/A')}")
-                        Display.info(f"Principles Score: {result.metrics.get('principles_score', 'N/A')}/100")
-
-                return True
-            else:
-                operation_name = "PRD analysis" if operation == "analyze_prd" else "code generation"
-                Display.error(f"❌ Proactive {operation_name} failed")
-                if result.errors:
-                    for error in result.errors:
-                        Display.error(f"  • {error}")
-                return False
+            return result.success
 
         except Exception as e:
-            self.logger.error(f"Proactive operation failed: {e}")
-            Display.error(f"Proactive operation failed: {str(e)}")
+            self.logger.error(f"Command failed: {e}")
+            Display.error(f"Failed: {str(e)}")
             return False
 
-    def _extract_generation_context(self, command: str) -> Dict[str, Any]:
-        """Extract code generation context from natural language command"""
-        command_lower = command.lower()
-
-        # Determine operation type (analyze vs generate)
-        # Check for PRD references first
-        has_prd_reference = any(term in command_lower for term in [".md", "prd", "requirements", "specification", "spec"])
-
-        operation = "generate_code"
-
-        # If PRD is referenced and user wants analysis/planning
-        if has_prd_reference and any(term in command_lower for term in ["analyze", "review", "parse", "read", "summarize", "plan", "overview", "understand"]):
-            operation = "analyze_prd"
-        # If user wants to implement/generate from PRD
-        elif has_prd_reference and any(term in command_lower for term in ["implement", "build from", "generate from", "create from", "code from"]):
-            operation = "generate_code"
-        # Default analysis for PRD files
-        elif has_prd_reference:
-            # If just mentioning PRD file without clear action, default to analysis
-            operation = "analyze_prd"
-        # Non-PRD code generation
-        elif any(term in command_lower for term in ["create", "generate", "write", "build"]):
-            operation = "generate_code"
-
-        # Default context
-        context = {
-            "operation": operation,
-            "language": "auto-detect",
-            "requirements": command,
-            "enforce_principles": True
-        }
-
-        # Detect language
-        if any(lang in command_lower for lang in ["python", "py", ".py"]):
-            context["language"] = "python"
-        elif any(lang in command_lower for lang in ["javascript", "js", ".js", "node"]):
-            context["language"] = "javascript"
-        elif any(lang in command_lower for lang in ["typescript", "ts", ".ts"]):
-            context["language"] = "typescript"
-        elif any(lang in command_lower for lang in ["react", "jsx", "component"]):
-            context["language"] = "react"
-
-        # Detect code type
-        if any(term in command_lower for term in ["function", "method", "def"]):
-            context["code_type"] = "function"
-        elif any(term in command_lower for term in ["class", "object"]):
-            context["code_type"] = "class"
-        elif any(term in command_lower for term in ["component", "widget"]):
-            context["code_type"] = "component"
-        elif any(term in command_lower for term in ["api", "endpoint", "route"]):
-            context["code_type"] = "api"
-        elif any(term in command_lower for term in ["script", "automation"]):
-            context["code_type"] = "script"
-
-        # Extract specific requirements
-        if "for" in command_lower:
-            # Extract what comes after "for"
-            parts = command_lower.split("for", 1)
-            if len(parts) > 1:
-                context["specific_requirement"] = parts[1].strip()
-
-        return context
-
-    def _extract_trigger_event(self, command_lower: str) -> str:
-        """Extract trigger event from command"""
-
-        if "deploy" in command_lower:
-            return "deployment_request"
-        elif "build" in command_lower:
-            return "build_request"
-        elif "quality" in command_lower:
-            return "quality_check"
-        elif "security" in command_lower:
-            return "security_scan"
-        elif "code" in command_lower:
-            return "code_changed"
-        elif "generate" in command_lower:
-            return "generate_code"
-        else:
-            return "full_pipeline"
 
     def _parse_agent_groups(self, command: str) -> List[List[str]]:
         """Parse agent groups from command"""
