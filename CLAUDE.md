@@ -95,37 +95,52 @@ When generating or modifying code through CCOM, enforce these principles:
 
 **CRITICAL**: All CCOM commands must be executed through the real CLI for automatic capture.
 
-**Implementation**: When user types a CCOM command, execute it through the real CLI:
+**Implementation**: When user types a CCOM command, execute it through the real CLI **FROM THE CURRENT PROJECT DIRECTORY**:
 
 ```bash
+# CRITICAL: Execute from current working directory, NOT from CCOM directory
 PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"
+```
+
+**🚨 IMPORTANT - Working Directory Rules**:
+- **ALWAYS** execute CCOM CLI from the **current project directory** where the user is working
+- **NEVER** cd to the CCOM directory before running commands
+- CCOM needs to analyze files in the current project, not in the CCOM source directory
+- Only set PYTHONPATH to point to CCOM installation, keep working directory as current project
+
+**Correct Execution Pattern**:
+```bash
+# ✅ CORRECT - stays in current project directory
+PYTHONPATH="../ccom" python -m ccom.cli "analyze prd.md"
+
+# ❌ WRONG - changes to CCOM directory
+cd ../ccom && PYTHONPATH="." python -m ccom.cli "analyze prd.md"
 ```
 
 **Dynamic Path Resolution**:
 - `[CCOM_PATH]` should be dynamically resolved based on project structure
-- `[MEMORY_SCRIPT]` should be resolved to the project's memory script location
-
-**Common Patterns**:
-- CCOM Path: `../ccom`, `./ccom`, or absolute path to CCOM installation
-- Memory Script: `.claude/ccom.js`, `memory.js`, or project-specific location
+- Common CCOM paths: `../ccom` (sibling), `./ccom` (local), or absolute path
+- Working directory: **Always stay in current project directory**
 
 **Auto-Detection Strategy**:
-1. Check if `../ccom` directory exists (sibling CCOM installation)
-2. Check if `./ccom` exists (local CCOM installation)
-3. Fall back to asking user for CCOM location
-4. For memory scripts: Check `.claude/ccom.js`, then project root
+1. Detect CCOM location (check `../ccom`, `./ccom`, or absolute path)
+2. Set PYTHONPATH to CCOM location
+3. Execute from **current directory** (where project files are)
+4. CCOM will analyze files in current directory
 
-**Command Extraction**:
+**Command Extraction and Execution**:
 1. Remove "ccom" prefix from user message
 2. Extract the actual command text
-3. Execute via real CCOM CLI
-4. Return the actual output to user
+3. Detect CCOM installation path
+4. Execute: `PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "EXTRACTED_COMMAND"`
+5. **Critical**: Stay in current project directory during execution
 
 **Examples**:
-- User: "ccom evaluate deployment status"
-- Extract: "evaluate deployment status"
-- Execute: `PYTHONPATH="[CCOM_PATH]" python -m ccom.cli "evaluate deployment status"`
-- Return: The actual CCOM execution output
+- User in `/projects/testag`: "ccom analyze prd.md"
+- Extract: "analyze prd.md"
+- Execute: `PYTHONPATH="../ccom" python -m ccom.cli "analyze prd.md"`
+- Working dir: `/projects/testag` (NOT `/projects/ccom`)
+- Result: CCOM analyzes `testag/prd.md`
 
 **Auto-Capture**: Happens automatically when real CLI executes - no additional capture needed.
 
